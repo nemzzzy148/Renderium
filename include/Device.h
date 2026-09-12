@@ -7,6 +7,7 @@
 
 #include "Queue.h"
 #include "Result.h"
+#include "Shader.h"
 
 namespace rhi {
 template<typename Api>
@@ -28,10 +29,6 @@ class RenderPipeline;
 class Queue;
 class Surface;
 
-struct ShaderCreateInfo {
-    const char* code;
-};
-
 enum class PowerPreferences {
     HighPerformance,
     LowPower,
@@ -48,8 +45,8 @@ class Device {
 public:
     Device() = delete;
 
-    using ShaderResult = Result<ComputePipeline, Error>;
-    ShaderResult createShader(const ShaderCreateInfo& createInfo);
+    using ShaderResult = Result<Shader, Error>;
+    ShaderResult createShader(const char* code);
     using PipelineLayoutResult = Result<PipelineLayout, Error>;
     PipelineLayoutResult createPipelineLayout(const PipelineLayoutCreateInfo& createInfo);
     using RenderPipelineResult = Result<RenderPipeline, Error>;
@@ -59,6 +56,8 @@ public:
 private:
     struct Impl {
         virtual ~Impl() = default;
+
+        virtual Result<std::unique_ptr<Shader::Impl>, Error> createShader(const char* code) = 0;
 
         virtual Result<std::unique_ptr<Queue::Impl>, Error> createQueue() = 0;
     };

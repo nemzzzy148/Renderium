@@ -36,6 +36,8 @@ class VulkanDevice;
 class VulkanDeviceSelector;
 class VulkanInstance;
 enum class VulkanError;
+class VulkanRenderPipeline;
+class VulkanComputePipeline;
 }
 
 struct VulkanApi {
@@ -46,6 +48,8 @@ struct VulkanApi {
     using InternalSurface = VkSurfaceKHR;
     using Surface = vulkan::VulkanSurface;
     using Error = vulkan::VulkanError;
+    using RenderPipeline = vulkan::VulkanRenderPipeline;
+    using ComputePipeline = vulkan::VulkanComputePipeline;
 };
 
 }

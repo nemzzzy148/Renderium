@@ -10,7 +10,10 @@ enum class Error {
     InstanceCreateError,
     DeviceCreateError,
     QueueCreateError,
-    SurfaceCreateError
+    SurfaceCreateError,
+    ShaderCompileError,
+    FailedToCreateShaderCompiler,
+    RenderPipelineCreateError
 };
 
 }

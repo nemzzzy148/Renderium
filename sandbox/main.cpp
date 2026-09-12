@@ -42,7 +42,7 @@ int main() {
     });
 
     // pipeline
-    renderium::Vert
+    renderium::Shader
     
 
     // main loop

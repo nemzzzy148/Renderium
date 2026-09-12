@@ -3,7 +3,7 @@
 //
 
 #pragma once
-#include <cstddef>
+
 #include <string>
 #include "Shader.h"
 
@@ -31,9 +31,9 @@ struct VertexState {
     Shader& shader;
     EntryPointType entryPointType = EntryPointType::AttributeIndication;
     // only necessary with function name entry point indication
-    std::string functionEntryPointName = "";
+    std::string functionEntryPointName;
     size_t layoutCount;
-    VertexLayout layouts[];
+    std::vector<VertexLayout> layouts;
 };
 
 }

@@ -3,3 +3,13 @@
 //
 
 #include "VulkanPipeline.h"
+
+namespace rhi::vulkan {
+
+VulkanRenderPipeline::PipelineResult
+VulkanRenderPipeline::create(const renderium::RenderPipelineCreateInfo& createInfo) {
+
+}
+
+}
+

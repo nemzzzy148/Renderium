@@ -4,6 +4,7 @@
 
 #pragma once
 #include <cstddef>
+#include <vector>
 
 namespace renderium {
 enum class TextureFormat;
@@ -16,7 +17,7 @@ struct ColorAttachmentState {
 struct FragmentState {
     Shader& shader;
     size_t targetCount;
-    ColorAttachmentState targets[];
+    std::vector<ColorAttachmentState> targets;
 };
 
 }

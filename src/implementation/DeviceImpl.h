@@ -28,12 +28,13 @@ public:
 
     [[nodiscard]] const Device& getBackendDevice() const { return device; }
 
+
+
     QueueImpl<Api>::QueueResult createQueue() override {
         return QueueImpl<Api>::create(device);
     }
 private:
     explicit DeviceImpl(Device device) : device(std::move(device)) {}
-private:
     Device device;
 
     friend class SurfaceImpl<Api>;

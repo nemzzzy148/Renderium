@@ -5,8 +5,13 @@
 #include "Device.h"
 
 #include "Queue.h"
+#include "Shader.h"
 
 namespace renderium {
+
+Device::ShaderResult Device::createShader(const char* code) {
+
+}
 
 Queue Device::getQueue() const {
     if (!queueImpl) // normally this error is impossible
