@@ -57,14 +57,17 @@ private:
     struct Impl {
         virtual ~Impl() = default;
 
-        virtual Result<std::unique_ptr<Shader::Impl>, Error> createShader(const char* code) = 0;
+        virtual Result<std::unique_ptr<Shader::Impl>, Error> createShader(const char* compiledCode) = 0;
 
         virtual Result<std::unique_ptr<Queue::Impl>, Error> createQueue() = 0;
     };
-    explicit Device(std::unique_ptr<Impl> impl, std::unique_ptr<Queue::Impl> queueImpl)
-        : impl(std::move(impl)), queueImpl(std::move(queueImpl)) {}
+    explicit Device(std::unique_ptr<Impl> impl, std::unique_ptr<Queue::Impl> queueImpl,
+        std::unique_ptr<ShaderCompiler> shaderCompiler) : impl(std::move(impl)),
+        queueImpl(std::move(queueImpl)), shaderCompiler(std::move(shaderCompiler)) {}
+
     std::unique_ptr<Impl> impl;
     std::unique_ptr<Queue::Impl> queueImpl;
+    std::unique_ptr<ShaderCompiler> shaderCompiler;
 
     template<typename Api>
     friend class rhi::DeviceImpl;

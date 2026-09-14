@@ -1,0 +1,8 @@
+//
+// Created by Nemesis Verstraete on 13/09/2026.
+//
+
+#ifndef RENDERIUM_SHADERCOMPILER_H
+#define RENDERIUM_SHADERCOMPILER_H
+
+#endif //RENDERIUM_SHADERCOMPILER_H

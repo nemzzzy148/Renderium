@@ -3,10 +3,10 @@
 //
 
 #pragma once
+#include <Error.h>
 #include <memory>
 
 #include "API.h"
-#include "Error.h"
 #include "Result.h"
 #include "Window.h"
 
@@ -23,7 +23,7 @@ template<typename GraphicsApi, typename WindowApi>
 TemplateInternalSurfaceResult<GraphicsApi, WindowApi> createSurface(const typename GraphicsApi::Instance& instance, void* windowHandle);
 
 template<typename GraphicsApi>
-using InternalSurfaceResult = renderium::Result<typename GraphicsApi::InternalSurface, Error>;
+using InternalSurfaceResult = renderium::Result<typename GraphicsApi::InternalSurface, renderium::Error>;
 
 template<typename GraphicsApi>
 InternalSurfaceResult<GraphicsApi> createSurface(const typename GraphicsApi::Instance& instance, const renderium::Window& window) {
@@ -31,12 +31,12 @@ InternalSurfaceResult<GraphicsApi> createSurface(const typename GraphicsApi::Ins
         case renderium::WindowBackend::Glfw: {
             auto result = createSurface<GraphicsApi, window::GlfwApi>(instance, window.getNativeWindowHandle());
             if (!result.isOk()) {
-                return InternalSurfaceResult<GraphicsApi>::err(Error::SurfaceCreationFailed);
+                return InternalSurfaceResult<GraphicsApi>::err(renderium::Error::SurfaceCreateError);
             }
             return InternalSurfaceResult<GraphicsApi>::ok(result.unwrap());
         }
         default:
-            return InternalSurfaceResult<GraphicsApi>::err(Error::SurfaceCreationFailed);
+            return InternalSurfaceResult<GraphicsApi>::err(renderium::Error::SurfaceCreateError);
     }
 }
 

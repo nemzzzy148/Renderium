@@ -10,7 +10,7 @@
 namespace renderium {
 
 Device::ShaderResult Device::createShader(const char* code) {
-
+    std::string compiledCode = shaderCompiler
 }
 
 Queue Device::getQueue() const {

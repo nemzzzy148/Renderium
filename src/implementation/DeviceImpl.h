@@ -6,6 +6,10 @@
 #include "Device.h"
 #include "QueueImpl.h"
 
+namespace shader {
+struct IShaderCompiler;
+}
+
 namespace renderium {
 struct DeviceCreateInfo;
 }
@@ -27,8 +31,6 @@ public:
     using Device = Api::Device;
 
     [[nodiscard]] const Device& getBackendDevice() const { return device; }
-
-
 
     QueueImpl<Api>::QueueResult createQueue() override {
         return QueueImpl<Api>::create(device);

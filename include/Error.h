@@ -7,6 +7,7 @@
 namespace renderium {
 
 enum class Error {
+    UnhandledException,
     InstanceCreateError,
     DeviceCreateError,
     QueueCreateError,

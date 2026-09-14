@@ -1,6 +1,9 @@
 # Renderium
 
+<img align="right" width="20%" src="Renderium_logo.png">
+
 `Renderium` is cross-platform, modern graphics API that can translate your gpu instructions to the optimal underlying graphics API.
+
 
 ## General info
 

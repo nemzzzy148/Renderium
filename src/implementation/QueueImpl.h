@@ -27,7 +27,6 @@ public:
     }
 private:
     explicit QueueImpl(Queue queue) : queue(std::move(queue)) {}
-
     Queue queue;
 };
 

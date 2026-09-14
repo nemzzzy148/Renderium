@@ -1,3 +1,5 @@
 .VSCodeCounter
 cmake-build-debug
 .idea
+assets
+.harper-dictionary.txt

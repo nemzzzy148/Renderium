@@ -9,6 +9,7 @@
 #include "Instance.h"
 #include "Result.h"
 #include "DeviceImpl.h"
+#include "ShaderCompilerImpl.h"
 #include "SurfaceImpl.h"
 
 namespace renderium {
@@ -37,11 +38,13 @@ public:
             .surface = createInfo.compatibleSurface ? reinterpret_cast<const Api::Surface*>(createInfo.compatibleSurface->impl.get()) : nullptr,
             .powerPreferences = createInfo.powerPreferences
         };
-        auto result = instance.createDevice(implCreateInfo);
-        if (!result.isOk()) {
+        auto deviceResult = instance.createDevice(implCreateInfo);
+        if (!deviceResult.isOk()) {
             return DeviceResult::err(renderium::Error::DeviceCreateError);
         }
-        return DeviceResult::ok(std::unique_ptr<renderium::Device::Impl>(new DeviceImpl<Api>(std::move(result.unwrap()))));
+
+        auto shaderCompilerResult = ShaderCompilerImpl<shader::SlangApi>::create();
+        return DeviceResult::ok(std::unique_ptr<renderium::Device::Impl>(new DeviceImpl<Api>(std::move(deviceResult.unwrap()))));
     }
 
     using SurfaceResult = renderium::Result<std::unique_ptr<renderium::Surface::Impl>, renderium::Error>;

@@ -7,28 +7,10 @@
 #include "vulkan/vulkan.h"
 
 namespace rhi {
-namespace window {
 
-namespace glfw {
-enum class GlfwError;
-class GlfwWindow;
-}
+// --- Graphics API ---
 
-struct GlfwApi {
-    using Window = glfw::GlfwWindow;
-    using Error = glfw::GlfwError;
-};
-
-template<renderium::WindowBackend backend>
-struct windowBackendStruct;
-
-template<> struct windowBackendStruct<renderium::WindowBackend::Glfw> { using type = GlfwApi; };
-
-template<renderium::WindowBackend backend>
-using WindowBackendType = windowBackendStruct<backend>::type;
-
-}
-
+// Vulkan
 namespace vulkan {
 class VulkanQueue;
 class VulkanSurface;
@@ -51,5 +33,46 @@ struct VulkanApi {
     using RenderPipeline = vulkan::VulkanRenderPipeline;
     using ComputePipeline = vulkan::VulkanComputePipeline;
 };
+
+// --- Window API ---
+
+namespace window {
+
+// GLFW
+namespace glfw {
+enum class GlfwError;
+class GlfwWindow;
+}
+
+struct GlfwApi {
+    using Window = glfw::GlfwWindow;
+    using Error = glfw::GlfwError;
+};
+
+template<renderium::WindowBackend backend>
+struct windowBackendStruct;
+
+template<> struct windowBackendStruct<renderium::WindowBackend::Glfw> { using type = GlfwApi; };
+
+template<renderium::WindowBackend backend>
+using WindowBackendType = windowBackendStruct<backend>::type;
+
+}
+
+// --- Shader API ---
+
+// slang
+
+namespace shader {
+
+namespace slang {
+class SlangCompiler;
+}
+
+struct SlangApi {
+    using ShaderCompiler = slang::SlangCompiler;
+};
+
+}
 
 }

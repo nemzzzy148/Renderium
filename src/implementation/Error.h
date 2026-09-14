@@ -6,18 +6,10 @@
 
 namespace rhi {
 
-enum class Error {
-    UnhandledException,
-    SurfaceCreationFailed
-};
+// --- Graphics API's Errors ---
 
-
+// Vulkan
 namespace vulkan {
-
-/*
- * If there is a bug in renderium while trying to catch an error, it could return an unhandled error.
- * The integer linked with this unhandled error is always 0.
-*/
 enum class VulkanError {
     UnhandledException,
     RequiredExtensionMissing,
@@ -28,10 +20,12 @@ enum class VulkanError {
     NoPhysicalDevicesSuitable,
     NoQueueFamilySuitable
 };
-
 }
-namespace window::glfw {
 
+// --- Window API's Errors ---
+
+// GLFW
+namespace window::glfw {
 enum class GlfwError {
     UnhandledException,
     CreateInfoOtherBackend,
@@ -39,6 +33,16 @@ enum class GlfwError {
     FailedToCreateWindow,
     FailedToCreateVulkanSurface
 };
-
 }
+
+// --- Shader API's Errors ---
+
+// Slang
+namespace shader::slang {
+enum class SlangError {
+    FailedToCreateGlobalSession,
+    FailedToCreateSession
+};
+}
+
 }
