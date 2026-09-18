@@ -9,7 +9,6 @@
 #include "Instance.h"
 #include "Result.h"
 #include "DeviceImpl.h"
-#include "ShaderCompilerImpl.h"
 #include "SurfaceImpl.h"
 
 namespace renderium {
@@ -40,10 +39,8 @@ public:
         };
         auto deviceResult = instance.createDevice(implCreateInfo);
         if (!deviceResult.isOk()) {
-            return DeviceResult::err(renderium::Error::DeviceCreateError);
+            return DeviceResult::err(renderium::Error::RequestDeviceError);
         }
-
-        auto shaderCompilerResult = ShaderCompilerImpl<shader::SlangApi>::create();
         return DeviceResult::ok(std::unique_ptr<renderium::Device::Impl>(new DeviceImpl<Api>(std::move(deviceResult.unwrap()))));
     }
 

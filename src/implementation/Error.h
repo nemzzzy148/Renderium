@@ -40,8 +40,16 @@ enum class GlfwError {
 // Slang
 namespace shader::slang {
 enum class SlangError {
+    UnsupportedShadingLanguage,
+    UnknownTargetProfile,
     FailedToCreateGlobalSession,
-    FailedToCreateSession
+    FailedToCreateSession,
+    FailedToCreateSlangShaderModule,
+    ShaderCompilationError,
+    MissingShaderEntryPoints,
+    FailedToComposeShader,
+    FailedToLinkShader,
+    FailedToGenerateEntryPointCode,
 };
 }
 

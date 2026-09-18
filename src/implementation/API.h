@@ -4,6 +4,7 @@
 
 #pragma once
 #include "Window.h"
+#include "ShaderCompiler.h"
 #include "vulkan/vulkan.h"
 
 namespace rhi {
@@ -72,6 +73,15 @@ class SlangCompiler;
 struct SlangApi {
     using ShaderCompiler = slang::SlangCompiler;
 };
+
+template<renderium::shader::ShadingLanguage>
+struct ShaderCompilerTypeWrapper;
+
+template<> struct ShaderCompilerTypeWrapper<renderium::shader::ShadingLanguage::SLANG> { using Type = SlangApi; };
+
+template<renderium::shader::ShadingLanguage ShadingLanguage>
+
+using ShaderCompilerType = ShaderCompilerTypeWrapper<ShadingLanguage>::Type;
 
 }
 

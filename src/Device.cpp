@@ -6,11 +6,12 @@
 
 #include "Queue.h"
 #include "Shader.h"
+#include "Error.h"
 
 namespace renderium {
 
-Device::ShaderResult Device::createShader(const char* code) {
-    std::string compiledCode = shaderCompiler
+Device::ShaderResult Device::createShader(const std::string& shaderCode) {
+    return ShaderResult::err(Error::ShaderCompilationError);
 }
 
 Queue Device::getQueue() const {

@@ -8,6 +8,7 @@
 #include "Queue.h"
 #include "Result.h"
 #include "Shader.h"
+#include "ShaderCompiler.h"
 
 namespace rhi {
 template<typename Api>
@@ -19,6 +20,7 @@ class SurfaceImpl;
 }
 
 namespace renderium {
+
 struct PipelineLayoutCreateInfo;
 class PipelineLayout;
 class Shader;
@@ -46,7 +48,7 @@ public:
     Device() = delete;
 
     using ShaderResult = Result<Shader, Error>;
-    ShaderResult createShader(const char* code);
+    ShaderResult createShader(const std::string& shaderCode);
     using PipelineLayoutResult = Result<PipelineLayout, Error>;
     PipelineLayoutResult createPipelineLayout(const PipelineLayoutCreateInfo& createInfo);
     using RenderPipelineResult = Result<RenderPipeline, Error>;
@@ -57,17 +59,18 @@ private:
     struct Impl {
         virtual ~Impl() = default;
 
-        virtual Result<std::unique_ptr<Shader::Impl>, Error> createShader(const char* compiledCode) = 0;
+        virtual Result<shader::CompiledShader, Error> createShader(const char* compiledCode) = 0;
 
         virtual Result<std::unique_ptr<Queue::Impl>, Error> createQueue() = 0;
     };
     explicit Device(std::unique_ptr<Impl> impl, std::unique_ptr<Queue::Impl> queueImpl,
-        std::unique_ptr<ShaderCompiler> shaderCompiler) : impl(std::move(impl)),
-        queueImpl(std::move(queueImpl)), shaderCompiler(std::move(shaderCompiler)) {}
+        std::unique_ptr<shader::ShaderCompiler> shaderCompiler) : impl(std::move(impl)),
+                                                                  queueImpl(std::move(queueImpl)),
+                                                                  shaderCompiler(std::move(shaderCompiler)) {}
 
     std::unique_ptr<Impl> impl;
     std::unique_ptr<Queue::Impl> queueImpl;
-    std::unique_ptr<ShaderCompiler> shaderCompiler;
+    std::unique_ptr<shader::ShaderCompiler> shaderCompiler;
 
     template<typename Api>
     friend class rhi::DeviceImpl;

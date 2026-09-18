@@ -9,11 +9,12 @@ namespace renderium {
 enum class Error {
     UnhandledException,
     InstanceCreateError,
-    DeviceCreateError,
+    RequestDeviceError,
     QueueCreateError,
     SurfaceCreateError,
-    ShaderCompileError,
+    ShaderCompilationError,
     FailedToCreateShaderCompiler,
+    UnknownShadingLanguage,
     RenderPipelineCreateError
 };
 

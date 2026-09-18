@@ -42,8 +42,10 @@ private:
         virtual Result<std::unique_ptr<Device::Impl>, Error> createDevice(const DeviceCreateInfo& createInfo) = 0;
     };
 
-    explicit Instance(std::unique_ptr<Impl> impl) : impl(std::move(impl)) {}
+    explicit Instance(std::unique_ptr<Impl> impl, const Backend backend)
+        : impl(std::move(impl)), backend(backend) {}
     std::unique_ptr<Impl> impl;
+    Backend backend;
 
     template<typename Api>
     friend class rhi::InstanceImpl;

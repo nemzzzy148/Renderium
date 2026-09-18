@@ -37,11 +37,11 @@ add_library(Renderium SHARED
         include/Renderium.h
         include/ComputeRenderium.h
         src/implementation/PipelineImpl.h
-        src/implementation/ShaderImpl.h
         src/implementation/ShaderCompilerImpl.h
         src/implementation/shader/slang/SlangCompiler.cpp
         src/implementation/shader/slang/SlangCompiler.h
         include/ShaderCompiler.h
+        src/ShaderCompiler.cpp
 )
 
 target_include_directories( Renderium PUBLIC

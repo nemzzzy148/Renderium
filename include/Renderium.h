@@ -13,3 +13,5 @@
 #include "Texture.h"
 #include "Vertex.h"
 #include "Window.h"
+#include "Device.h"
+#include "Queue.h"

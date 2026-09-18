@@ -19,7 +19,7 @@ Instance::InstanceResult Instance::create(const InstanceCreateInfo &createInfo) 
             if (!result.isOk()) {
                 return InstanceResult::err(Error::InstanceCreateError);
             }
-            return InstanceResult::ok(Instance(result.unwrap()));
+            return InstanceResult::ok(Instance(result.unwrap(), Backend::Vulkan));
         }
     }
     return InstanceResult::err(Error::InstanceCreateError);
@@ -44,7 +44,17 @@ Instance::DeviceResult Instance::createDevice(const DeviceCreateInfo &createInfo
     if (!queueResult.isOk()) {
         return DeviceResult::err(queueResult.unwrapError());
     }
-    return DeviceResult::ok(Device(std::move(device), std::move(queueResult.unwrap())));
+
+    auto shaderCompilerResult = shader::ShaderCompiler::create(
+        shader::DefaultShadingLanguage, shader::apiToShadingLanguage(backend));
+    if (!shaderCompilerResult.isOk()) {
+        return DeviceResult::err(shaderCompilerResult.unwrapError());
+    }
+
+    return DeviceResult::ok(Device(
+        std::move(device),
+        std::move(queueResult.unwrap()),
+        std::make_unique<shader::ShaderCompiler>(std::move(shaderCompilerResult.unwrap()))));
 }
 
 }
