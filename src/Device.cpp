@@ -10,8 +10,12 @@
 
 namespace renderium {
 
-Device::ShaderResult Device::createShader(const std::string& shaderCode) {
-    return ShaderResult::err(Error::ShaderCompilationError);
+Device::ShaderResult Device::createShader(const std::string& shaderCode) const {
+    auto compiledShaderResult = shaderCompiler->compileShader(shaderCode);
+    if (!compiledShaderResult.isOk()) {
+        return ShaderResult::err(compiledShaderResult.unwrapError());
+    }
+    return ShaderResult::ok(Shader(std::move(compiledShaderResult.unwrap())));
 }
 
 Queue Device::getQueue() const {

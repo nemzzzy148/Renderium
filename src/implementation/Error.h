@@ -18,7 +18,9 @@ enum class VulkanError {
     WindowBackendFailedToCreateSurface,
     NoPhysicalDevicesFound,
     NoPhysicalDevicesSuitable,
-    NoQueueFamilySuitable
+    NoQueueFamilySuitable,
+    VertexEntryPointNotFound,
+    FragmentEntryPointNotFound
 };
 }
 

@@ -72,22 +72,13 @@ int main() {
     });
 
     // shader
-    auto shaderCompilerResult = renderium::shader::ShaderCompiler::create(
-        renderium::shader::ShadingLanguage::SLANG, renderium::shader::ShadingOutputLanguage::MSL);
-    assert(shaderCompilerResult.isOk());
-    const auto shaderCompiler = shaderCompilerResult.unwrap();
-
-    renderium::shader::ShaderCompiler::ShaderResult compiledShaderResult = shaderCompiler.compileShader(slangShaderCode);
-    assert(compiledShaderResult.isOk());
-    auto compiledShader = compiledShaderResult.unwrap();
-    assert(!compiledShader.shaderEntryPoints.empty());
-
-    const auto& code = compiledShader.shaderEntryPoints[0].code;
-    printUInt8Vector(code);
+    auto shaderResult = device.createShader(slangShaderCode);
+    assert(shaderResult.isOk());
+    const auto shader = shaderResult.unwrap();
 
     // pipeline
 
-    return 0;
+    //return 0;
 
     // main loop
     while (!window.shouldClose()) {

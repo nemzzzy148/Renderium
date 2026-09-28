@@ -35,6 +35,8 @@ public:
     QueueImpl<Api>::QueueResult createQueue() override {
         return QueueImpl<Api>::create(device);
     }
+
+
 private:
     explicit DeviceImpl(Device device) : device(std::move(device)) {}
     Device device;

@@ -14,7 +14,7 @@ public:
     static Result ok(V value) { return Result(std::move(value)); }
     static Result err(E error) { return Result(std::move(error)); }
 
-    bool isOk() const { return data.index() == 0; }
+    [[nodiscard]] bool isOk() const { return data.index() == 0; }
 
     bool operator==(const Result &) const {
         return isOk();

@@ -13,27 +13,32 @@ class Shader;
 enum class VertexFormat {
     Float32,
     Float32x2,
-    Float32x3
+    Float32x3,
+    Float32x4
 };
 
 struct VertexAttribute {
     VertexFormat format;
     size_t offset;
+    uint32_t location;
+};
+
+enum class VertexStepMode {
+    Vertex,
+    Instance
 };
 
 struct VertexLayout {
+    uint32_t binding;
     size_t vertexStride;
-    size_t attributeCount;
-    VertexAttribute attributes[];
+    VertexStepMode stepMode;
+    std::span<const VertexAttribute> attributes;
 };
 
 struct VertexState {
     Shader& shader;
-    EntryPointType entryPointType = EntryPointType::AttributeIndication;
-    // only necessary with function name entry point indication
     std::string functionEntryPointName;
-    size_t layoutCount;
-    std::vector<VertexLayout> layouts;
+    std::span<const VertexLayout> layouts;
 };
 
 }

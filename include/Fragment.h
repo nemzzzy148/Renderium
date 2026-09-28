@@ -16,8 +16,8 @@ struct ColorAttachmentState {
 
 struct FragmentState {
     Shader& shader;
-    size_t targetCount;
-    std::vector<ColorAttachmentState> targets;
+    std::string functionEntryPointName;
+    std::span<const ColorAttachmentState> targets;
 };
 
 }

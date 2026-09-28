@@ -48,7 +48,7 @@ public:
     Device() = delete;
 
     using ShaderResult = Result<Shader, Error>;
-    ShaderResult createShader(const std::string& shaderCode);
+    ShaderResult createShader(const std::string& shaderCode) const;
     using PipelineLayoutResult = Result<PipelineLayout, Error>;
     PipelineLayoutResult createPipelineLayout(const PipelineLayoutCreateInfo& createInfo);
     using RenderPipelineResult = Result<RenderPipeline, Error>;
@@ -58,8 +58,6 @@ public:
 private:
     struct Impl {
         virtual ~Impl() = default;
-
-        virtual Result<shader::CompiledShader, Error> createShader(const char* compiledCode) = 0;
 
         virtual Result<std::unique_ptr<Queue::Impl>, Error> createQueue() = 0;
     };

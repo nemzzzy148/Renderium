@@ -32,17 +32,10 @@ class VulkanSurface {
 public:
     using SurfaceResult = renderium::Result<VulkanSurface, VulkanError>;
     static SurfaceResult create(const VulkanInstance& instance, const renderium::Window& window);
-private:
-    static std::optional<renderium::TextureFormat> vulkanFormatConverter(vk::Format format);
-    static std::optional<renderium::PresentMode> vulkanPresentModeConverter(vk::PresentModeKHR presentMode);
-    static renderium::TextureUsages vulkanUsageConverter(vk::ImageUsageFlags usage);
-public:
+
     [[nodiscard]] renderium::SurfaceCapabilities getCapabilities(const VulkanDevice& device) const;
 private:
     void destroySwapChain(const VulkanDevice& device);
-    static vk::Format formatConverter(renderium::TextureFormat format);
-    static vk::PresentModeKHR presentModeConverter(renderium::PresentMode presentMode);
-    static vk::ImageUsageFlags usageConverter(renderium::TextureUsages usages);
     void createSwapChain(const SurfaceImplConfiguration<VulkanApi>& configuration);
 public:
     void configure(const SurfaceImplConfiguration<VulkanApi>& configuration);

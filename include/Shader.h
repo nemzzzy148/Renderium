@@ -7,14 +7,21 @@
 
 namespace rhi {
 template<typename Api>
-class ShaderImpl;
+class PipelineImpl;
 }
 
 namespace renderium {
 
 class Shader {
+public:
+    const shader::CompiledShader& getCompiledShader() const { return compiledShader; }
+private:
     explicit Shader(shader::CompiledShader compiledShader) : compiledShader(std::move(compiledShader)) {}
     shader::CompiledShader compiledShader;
+
+    friend class Device;
+    template<typename Api>
+    friend class rhi::PipelineImpl;
 };
 
 }

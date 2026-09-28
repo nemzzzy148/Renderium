@@ -42,6 +42,8 @@ add_library(Renderium SHARED
         src/implementation/shader/slang/SlangCompiler.h
         include/ShaderCompiler.h
         src/ShaderCompiler.cpp
+        src/implementation/vulkan/VulkanConversion.cpp
+        src/implementation/vulkan/VulkanConversion.h
 )
 
 target_include_directories( Renderium PUBLIC

@@ -7,6 +7,7 @@
 #include <memory>
 
 #include "Fragment.h"
+#include "Primitive.h"
 #include "Result.h"
 #include "Vertex.h"
 
@@ -22,6 +23,8 @@ class ComputePipelineImpl;
 namespace renderium {
 enum class Error;
 
+// for descriptors, IMPLEMENT
+
 struct PipelineLayoutCreateInfo {
 
 };
@@ -32,15 +35,13 @@ class PipelineLayout {
 
 struct RenderPipelineCreateInfo {
     //PipelineLayout pipelineLayout;
-    FragmentState fragmentState;
     VertexState vertexState;
+    FragmentState fragmentState;
+    PrimitiveState primitiveState;
+
 };
 
 class RenderPipeline {
-public:
-    using PipelineResult = Result<RenderPipeline, Error>;
-    static PipelineResult create(const RenderPipelineCreateInfo& createInfo);
-private:
     struct Impl {
 
     };

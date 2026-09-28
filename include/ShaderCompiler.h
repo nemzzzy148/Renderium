@@ -57,7 +57,7 @@ struct ShaderEntryPoint {
 
 struct CompiledShader {
     ShadingOutputLanguage langauge;
-    std::vector<ShaderEntryPoint> shaderEntryPoints;
+    std::vector<ShaderEntryPoint> entryPoints;
 };
 
 class ShaderCompiler {
