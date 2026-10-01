@@ -84,6 +84,20 @@ std::optional<renderium::shader::ShaderEntryPointType> SlangCompiler::classifySt
     }
 }
 
+std::string SlangCompiler::compiledEntryPointName(const renderium::shader::ShadingOutputLanguage shadingOutputLanguage,
+    const std::string &sourceName) {
+    switch (shadingOutputLanguage) {
+        case renderium::shader::ShadingOutputLanguage::SPIRV:
+        case renderium::shader::ShadingOutputLanguage::GLSL:
+            return "main";
+        case renderium::shader::ShadingOutputLanguage::HLSL:
+        case renderium::shader::ShadingOutputLanguage::MSL:
+            return sourceName;
+        default:
+            return sourceName;
+    }
+}
+
 SlangCompiler::ShaderResult SlangCompiler::compileShader(const std::string& shaderCode) const {
     Slang::ComPtr<::slang::IBlob> diagnostics;
     const Slang::ComPtr<::slang::IModule> module = loadModuleFromString(shaderCode, diagnostics);
@@ -132,8 +146,10 @@ SlangCompiler::ShaderResult SlangCompiler::compileShader(const std::string& shad
             static_cast<const uint8_t*>(blob->getBufferPointer()),
             static_cast<const uint8_t*>(blob->getBufferPointer()) + blob->getBufferSize());
 
+        const std::string& entryName = epReflec->getName();
         shaderEntryPoints.emplace_back(renderium::shader::ShaderEntryPoint{
-            *classified, epReflec->getName(), std::move(bytes)
+            *classified, entryName,
+            compiledEntryPointName(compileLanguage, entryName),std::move(bytes)
         });
     }
 

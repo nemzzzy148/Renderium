@@ -6,13 +6,15 @@
 #include <Error.h>
 #include <memory>
 
+#include "Adapter.h"
+#include "AdapterImpl.h"
 #include "Instance.h"
 #include "Result.h"
 #include "DeviceImpl.h"
 #include "SurfaceImpl.h"
 
 namespace renderium {
-struct InstanceCreateInfo;
+struct InstanceDescriptor;
 }
 
 namespace rhi {
@@ -23,25 +25,27 @@ public:
     using Error = Api::Error;
 
     using InstanceResult = renderium::Result<std::unique_ptr<InstanceImpl>, Error>;
-    static InstanceResult create(const renderium::InstanceCreateInfo& createInfo) {
-        auto result = Instance::create(createInfo);
+    static InstanceResult create(const renderium::InstanceDescriptor& descriptor) {
+        auto result = Instance::create(descriptor);
         if (!result.isOk()) {
             return InstanceResult::err(std::move(result.unwrapError()));
         }
         return InstanceResult::ok(std::unique_ptr<InstanceImpl>(new InstanceImpl(std::move(result.unwrap()))));
     }
 
-    using DeviceResult = renderium::Result<std::unique_ptr<renderium::Device::Impl>, renderium::Error>;
-    DeviceResult createDevice(const renderium::DeviceCreateInfo& createInfo) override {
-        DeviceImplCreateInfo<Api> implCreateInfo{
-            .surface = createInfo.compatibleSurface ? reinterpret_cast<const Api::Surface*>(createInfo.compatibleSurface->impl.get()) : nullptr,
-            .powerPreferences = createInfo.powerPreferences
+    using AdapterResult = renderium::Result<std::unique_ptr<renderium::Adapter::Impl>, renderium::Error>;
+    AdapterResult requestAdapter(const renderium::RequestAdapterOptions& options) override {
+        AdapterImplOptions<Api> adapterOptions {
+            .surface = options.compatibleSurface ?
+                &static_cast<const SurfaceImpl<Api>&>(*options.compatibleSurface->impl).surface : nullptr,
+            .powerPreference = options.powerPreference
         };
-        auto deviceResult = instance.createDevice(implCreateInfo);
-        if (!deviceResult.isOk()) {
-            return DeviceResult::err(renderium::Error::RequestDeviceError);
+        auto result = Api::Adapter::create(instance, adapterOptions);
+        if (!result.isOk()) {
+            return AdapterResult::err(renderium::Error::RequestAdapterError);
         }
-        return DeviceResult::ok(std::unique_ptr<renderium::Device::Impl>(new DeviceImpl<Api>(std::move(deviceResult.unwrap()))));
+        return AdapterResult::ok(
+            std::unique_ptr<renderium::Adapter::Impl>(new AdapterImpl<Api>(std::move(result.unwrap()))));
     }
 
     using SurfaceResult = renderium::Result<std::unique_ptr<renderium::Surface::Impl>, renderium::Error>;

@@ -11,7 +11,7 @@
 #include "Window.h"
 
 namespace renderium {
-struct WindowCreateInfo;
+struct WindowDescriptor;
 }
 
 namespace rhi {
@@ -53,8 +53,8 @@ public:
     using Window = Api::Window;
     using Error = Api::Error;
     using Result = renderium::Result<std::unique_ptr<WindowImpl>, Error>;
-    static Result create(const renderium::WindowCreateInfo &createInfo) {
-        auto result = Window::create(createInfo);
+    static Result create(const renderium::WindowDescriptor& descriptor) {
+        auto result = Window::create(descriptor);
         if (!result.isOk()) {
             return Result::err(result.unwrapError());
         }

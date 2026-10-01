@@ -8,6 +8,7 @@
 #include "Buffer.h"
 #include "CommandBuffer.h"
 #include "Descriptor.h"
+#include "Adapter.h"
 #include "Device.h"
 #include "Error.h"
 #include "Instance.h"

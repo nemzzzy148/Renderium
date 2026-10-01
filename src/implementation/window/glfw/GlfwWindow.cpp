@@ -30,15 +30,15 @@ TemplateInternalSurfaceResult<VulkanApi, window::GlfwApi> createSurface<VulkanAp
 
 namespace window::glfw {
 
-GlfwWindow::WindowResult GlfwWindow::create(const renderium::WindowCreateInfo &createInfo) {
-    if (createInfo.backend != renderium::WindowBackend::Glfw)
-        return WindowResult::err(GlfwError::CreateInfoOtherBackend);
+GlfwWindow::WindowResult GlfwWindow::create(const renderium::WindowDescriptor& descriptor) {
+    if (descriptor.backend != renderium::WindowBackend::Glfw)
+        return WindowResult::err(GlfwError::WindowDescriptorBackendMismatch);
     if (!glfwInit()) return WindowResult::err(GlfwError::FailedToInit);
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
-    GLFWwindow* window = glfwCreateWindow(static_cast<int>(createInfo.width), static_cast<int>(createInfo.height),
-        createInfo.title.c_str(), nullptr, nullptr);
+    GLFWwindow* window = glfwCreateWindow(static_cast<int>(descriptor.width), static_cast<int>(descriptor.height),
+        descriptor.title.c_str(), nullptr, nullptr);
     if (!window) return WindowResult::err(GlfwError::FailedToCreateWindow);
 
     return WindowResult::ok(GlfwWindow(window));

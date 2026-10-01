@@ -22,7 +22,7 @@ namespace shader {
 struct ShaderEntryPoint;
 }
 
-struct RenderPipelineCreateInfo;
+struct RenderPipelineDescriptor;
 }
 
 namespace rhi::vulkan {
@@ -45,24 +45,26 @@ class VulkanRenderPipeline {
         const renderium::shader::ShaderEntryPoint& entryPoint);
     template<IsState State>
     static std::optional<vk::PipelineShaderStageCreateInfo> createShaderStage(const vk::raii::Device& device,
-        const State& state, vk::ShaderModule& shaderModule);
+        const State& state, vk::raii::ShaderModule& shaderModule);
 
     // vertex state
     static size_t totalVertexAttributeCount(const renderium::VertexState& vertexState);
     static std::vector<vk::VertexInputBindingDescription> createVertexBindings(const renderium::VertexState& vertexState);
     static std::vector<vk::VertexInputAttributeDescription> createVertexAttributes(const renderium::VertexState& vertexState);
     static vk::PipelineVertexInputStateCreateInfo createVertexInputInfo(const renderium::VertexState& vertexState,
-        std::vector<vk::VertexInputBindingDescription>& bindings, std::vector<vk::VertexInputAttributeDescription> attributes);
+        std::vector<vk::VertexInputBindingDescription>& bindings, std::vector<vk::VertexInputAttributeDescription>& attributes);
 
     // rasterizer
     static vk::PipelineRasterizationStateCreateInfo createRasterizer(const renderium::PrimitiveState& primitiveState);
 
     // color
     static vk::PipelineColorBlendStateCreateInfo createColorBlendAttachments(const renderium::FragmentState& fragmentState,
-        std::vector<vk::PipelineColorBlendAttachmentState> attachments);
+        std::vector<vk::PipelineColorBlendAttachmentState>& attachments);
+    static vk::PipelineRenderingCreateInfo createPipelineRenderingInfo(const renderium::FragmentState& fragmentState,
+        std::vector<vk::Format>& attachmentFormats);
 public:
     using PipelineResult = renderium::Result<VulkanRenderPipeline, VulkanError>;
-    static PipelineResult create(const VulkanDevice& device, const renderium::RenderPipelineCreateInfo& createInfo);
+    static PipelineResult create(const VulkanDevice& device, const renderium::RenderPipelineDescriptor& descriptor);
 private:
     vk::raii::Pipeline pipeline = nullptr;
 };

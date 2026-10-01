@@ -27,7 +27,7 @@ enum class WindowBackend {
     Glfw
 };
 
-struct WindowCreateInfo {
+struct WindowDescriptor {
     WindowBackend backend = WindowBackend::Glfw;
     std::string title = "Renderium Window";
     uint32_t width = 800;
@@ -37,7 +37,7 @@ struct WindowCreateInfo {
 class Window {
 public:
     using WindowResult = Result<Window, WindowError>;
-    static WindowResult create(const WindowCreateInfo &createInfo);
+    static WindowResult create(const WindowDescriptor& descriptor);
 
     void waitEvents() const { impl->waitEvents(); }
     void pollEvents() const { impl->pollEvents(); }

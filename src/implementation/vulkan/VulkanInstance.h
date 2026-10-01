@@ -12,8 +12,8 @@
 #include "Window.h"
 
 namespace renderium {
-struct DeviceCreateInfo;
-struct InstanceCreateInfo;
+struct DeviceDescriptor;
+struct InstanceDescriptor;
 }
 
 namespace rhi::vulkan {
@@ -22,13 +22,9 @@ enum class VulkanError;
 class VulkanInstance {
 public:
     using InstanceResult = renderium::Result<VulkanInstance, VulkanError>;
-    static InstanceResult create(const renderium::InstanceCreateInfo& createInfo);
+    static InstanceResult create(const renderium::InstanceDescriptor& descriptor);
 
     [[nodiscard]] const vk::raii::Instance& getHandle() const { return instance; }
-
-    [[nodiscard]] VulkanDevice::DeviceResult createDevice(const DeviceImplCreateInfo<VulkanApi>& createInfo) const {
-        return VulkanDevice::create(*this, createInfo);
-    }
 private:
     VulkanInstance(vk::raii::Context context, vk::raii::Instance instance)
         : context(std::move(context)), instance(std::move(instance)) {}
@@ -41,7 +37,7 @@ private:
     vk::raii::Context context;
     vk::raii::Instance instance = nullptr;
 
-    friend class VulkanDevice;
+    friend class VulkanAdapter;
     friend class VulkanSurface;
 };
 

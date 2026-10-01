@@ -22,7 +22,7 @@ class Queue {
 public:
 private:
     struct Impl {
-
+        ~Impl() = default;
     };
     const Impl& impl;
 

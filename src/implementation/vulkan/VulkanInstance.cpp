@@ -28,7 +28,7 @@ std::vector<char const*> VulkanInstance::validationLayers = {
     "VK_LAYER_KHRONOS_validation"
 };
 
-VulkanInstance::InstanceResult VulkanInstance::create(const renderium::InstanceCreateInfo &createInfo) {
+VulkanInstance::InstanceResult VulkanInstance::create(const renderium::InstanceDescriptor& descriptor) {
     vk::raii::Context context;
     vk::ApplicationInfo appInfo{
         .pApplicationName = "ObsidiumGame",
@@ -38,7 +38,7 @@ VulkanInstance::InstanceResult VulkanInstance::create(const renderium::InstanceC
         .apiVersion = vk::ApiVersion14
     };
     std::vector<const char*> requiredLayers;
-    if (createInfo.debug) {
+    if (descriptor.debug) {
         requiredLayers.assign(validationLayers.begin(), validationLayers.end());
     }
 
@@ -53,7 +53,7 @@ VulkanInstance::InstanceResult VulkanInstance::create(const renderium::InstanceC
 
     auto requiredExtensions = getRequiredSurfaceExtensions();
 
-    if (createInfo.debug) {
+    if (descriptor.debug) {
         requiredExtensions.push_back(vk::EXTDebugUtilsExtensionName);
     }
     auto extensionProps = context.enumerateInstanceExtensionProperties();

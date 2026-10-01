@@ -3,9 +3,7 @@
 #include <iomanip>
 #include <iostream>
 
-#include "Surface.h"
-#include "Window.h"
-#include "../src/implementation/InstanceImpl.h"
+#include "Renderium.h"
 
 void printUInt8Vector(const std::vector<uint8_t>& text) {
     for (const uint8_t byte : text) {
@@ -21,18 +19,45 @@ void printUInt8Vector(const std::vector<uint8_t>& text) {
 }
 
 const std::string slangShaderCode = R"(
-        // Slang supports HLSL-style structures and attributes
-        StructuredBuffer<float>   buffer0;
-        StructuredBuffer<float>   buffer1;
-        RWStructuredBuffer<float> result;
+        struct VertexOutput
+{
+    float4 position : SV_Position;
+    float3 color    : COLOR0;
+};
 
-        [shader("compute")]
-        [numthreads(1, 1, 1)]
-        void computeMain(uint3 threadId : SV_DispatchThreadID)
-        {
-            uint index = threadId.x;
-            result[index] = buffer0[index] + buffer1[index];
-        }
+// Vertex shader
+[shader("vertex")]
+VertexOutput vertMain(uint vertexID : SV_VertexID)
+{
+    // Hardcoded triangle vertices
+    float2 positions[3] =
+    {
+        float2( 0.0,  0.5),
+        float2( 0.5, -0.5),
+        float2(-0.5, -0.5)
+    };
+
+    float3 colors[3] =
+    {
+        float3(1.0, 0.0, 0.0), // Red
+        float3(0.0, 1.0, 0.0), // Green
+        float3(0.0, 0.0, 1.0)  // Blue
+    };
+
+    VertexOutput output;
+
+    output.position = float4(positions[vertexID], 0.0, 1.0);
+    output.color = colors[vertexID];
+
+    return output;
+}
+
+// Fragment shader
+[shader("fragment")]
+float4 fragMain(VertexOutput input) : SV_Target0
+{
+    return float4(input.color, 1.0);
+}
     )";
 
 int main() {
@@ -51,8 +76,13 @@ int main() {
     assert(surfaceResult.isOk());
     const auto surface = surfaceResult.unwrap();
 
+    // adapter
+    auto adapterResult = instance.requestAdapter({.compatibleSurface = &surface, .powerPreference = renderium::PowerPreference::None});
+    assert(adapterResult.isOk());
+    const auto adapter = adapterResult.unwrap();
+
     // device
-    auto deviceResult = instance.createDevice({.compatibleSurface = &surface});
+    auto deviceResult = adapter.requestDevice({});
     assert(deviceResult.isOk());
     const auto device = deviceResult.unwrap();
 
@@ -72,13 +102,32 @@ int main() {
     });
 
     // shader
-    auto shaderResult = device.createShader(slangShaderCode);
+    auto shaderResult = device.createShaderModule({.code = slangShaderCode});
     assert(shaderResult.isOk());
     const auto shader = shaderResult.unwrap();
 
     // pipeline
+    auto renderPipelineResult = device.createRenderPipeline({
+        .vertex = {
+            .module = shader,
+            .entryPoint = "vertMain"
+        },
+        .fragment = {
+            .module = shader,
+            .entryPoint = "fragMain",
+            .targets = {{formats[0]}}
+        },
+        .primitive = {
+            .topology = renderium::PrimitiveTopology::TriangleList,
+            .frontFace = renderium::FrontFace::CCW,
+            .cullMode = renderium::CullMode::None
+        }
+    });
+    assert(renderPipelineResult.isOk());
+    const auto renderPipeline = renderPipelineResult.unwrap();
 
-    //return 0;
+    std::cout << "pipeline created\n";
+    return 0;
 
     // main loop
     while (!window.shouldClose()) {

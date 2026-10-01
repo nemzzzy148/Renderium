@@ -5,6 +5,7 @@
 #pragma once
 #include <memory>
 
+#include "Adapter.h"
 #include "Backend.h"
 #include "Device.h"
 #include "Result.h"
@@ -19,7 +20,7 @@ namespace renderium {
 enum class Error;
 class Window;
 
-struct InstanceCreateInfo {
+struct InstanceDescriptor {
     Backend backend = Backend::Vulkan;
     bool debug = false;
 };
@@ -27,19 +28,19 @@ struct InstanceCreateInfo {
 class Instance {
 public:
     using InstanceResult = Result<Instance, Error>;
-    static InstanceResult create(const InstanceCreateInfo& createInfo);
+    static InstanceResult create(const InstanceDescriptor& descriptor);
 
     using SurfaceResult = Result<Surface, Error>;
     [[nodiscard]] SurfaceResult createSurface(const Window& window) const;
 
-    using DeviceResult = Result<Device, Error>;
-    [[nodiscard]] DeviceResult createDevice(const DeviceCreateInfo& createInfo) const;
+    using AdapterResult = Result<Adapter, Error>;
+    [[nodiscard]] AdapterResult requestAdapter(const RequestAdapterOptions& options) const;
 private:
     struct Impl {
         virtual ~Impl() = default;
 
         virtual Result<std::unique_ptr<Surface::Impl>, Error> createSurface(const Window& window) = 0;
-        virtual Result<std::unique_ptr<Device::Impl>, Error> createDevice(const DeviceCreateInfo& createInfo) = 0;
+        virtual Result<std::unique_ptr<Adapter::Impl>, Error> requestAdapter(const RequestAdapterOptions& options) = 0;
     };
 
     explicit Instance(std::unique_ptr<Impl> impl, const Backend backend)

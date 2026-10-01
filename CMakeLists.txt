@@ -44,6 +44,11 @@ add_library(Renderium SHARED
         src/ShaderCompiler.cpp
         src/implementation/vulkan/VulkanConversion.cpp
         src/implementation/vulkan/VulkanConversion.h
+        include/Adapter.h
+        src/implementation/AdapterImpl.h
+        src/implementation/vulkan/VulkanAdapter.cpp
+        src/implementation/vulkan/VulkanAdapter.h
+        src/Adapter.cpp
 )
 
 target_include_directories( Renderium PUBLIC

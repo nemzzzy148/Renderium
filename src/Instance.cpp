@@ -8,14 +8,15 @@
 
 #include "Error.h"
 #include "implementation/InstanceImpl.h"
+#include "implementation/vulkan/VulkanAdapter.h"
 #include "implementation/vulkan/VulkanInstance.h"
 
 namespace renderium {
 
-Instance::InstanceResult Instance::create(const InstanceCreateInfo &createInfo) {
-    switch (createInfo.backend) {
+Instance::InstanceResult Instance::create(const InstanceDescriptor& descriptor) {
+    switch (descriptor.backend) {
         case Backend::Vulkan: {
-            auto result = rhi::InstanceImpl<rhi::VulkanApi>::create(createInfo);
+            auto result = rhi::InstanceImpl<rhi::VulkanApi>::create(descriptor);
             if (!result.isOk()) {
                 return InstanceResult::err(Error::InstanceCreateError);
             }
@@ -33,28 +34,12 @@ Instance::SurfaceResult Instance::createSurface(const Window& window) const {
     return SurfaceResult::ok(Surface(result.unwrap()));
 }
 
-Instance::DeviceResult Instance::createDevice(const DeviceCreateInfo &createInfo) const {
-    auto deviceResult = impl->createDevice(createInfo);
-    if (!deviceResult.isOk()) {
-        return DeviceResult::err(deviceResult.unwrapError());
+Instance::AdapterResult Instance::requestAdapter(const RequestAdapterOptions &options) const {
+    auto result = impl->requestAdapter(options);
+    if (!result.isOk()) {
+        return AdapterResult::err(Error::RequestAdapterError);
     }
-    auto device = deviceResult.unwrap();
-
-    auto queueResult = device->createQueue();
-    if (!queueResult.isOk()) {
-        return DeviceResult::err(queueResult.unwrapError());
-    }
-
-    auto shaderCompilerResult = shader::ShaderCompiler::create(
-        shader::DefaultShadingLanguage, shader::apiToShadingLanguage(backend));
-    if (!shaderCompilerResult.isOk()) {
-        return DeviceResult::err(shaderCompilerResult.unwrapError());
-    }
-
-    return DeviceResult::ok(Device(
-        std::move(device),
-        std::move(queueResult.unwrap()),
-        std::make_unique<shader::ShaderCompiler>(std::move(shaderCompilerResult.unwrap()))));
+    return AdapterResult::ok(Adapter(std::move(result.unwrap()), backend));
 }
 
 }

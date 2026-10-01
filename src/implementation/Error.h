@@ -30,7 +30,7 @@ enum class VulkanError {
 namespace window::glfw {
 enum class GlfwError {
     UnhandledException,
-    CreateInfoOtherBackend,
+    WindowDescriptorBackendMismatch,
     FailedToInit,
     FailedToCreateWindow,
     FailedToCreateVulkanSurface

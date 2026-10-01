@@ -17,7 +17,8 @@ template<typename Api>
 class RenderPipelineImpl;
 template<typename Api>
 class ComputePipelineImpl;
-
+template<typename Api>
+class DeviceImpl;
 }
 
 namespace renderium {
@@ -25,7 +26,7 @@ enum class Error;
 
 // for descriptors, IMPLEMENT
 
-struct PipelineLayoutCreateInfo {
+struct PipelineLayoutDescriptor {
 
 };
 
@@ -33,27 +34,30 @@ class PipelineLayout {
 
 };
 
-struct RenderPipelineCreateInfo {
+struct RenderPipelineDescriptor {
     //PipelineLayout pipelineLayout;
-    VertexState vertexState;
-    FragmentState fragmentState;
-    PrimitiveState primitiveState;
+    VertexState vertex;
+    FragmentState fragment;
+    PrimitiveState primitive;
 
 };
 
 class RenderPipeline {
     struct Impl {
-
+        ~Impl() = default;
     };
 
     explicit RenderPipeline(std::unique_ptr<Impl> impl) : impl(std::move(impl)) {}
     std::unique_ptr<Impl> impl;
 
+    friend class Device;
     template<typename Api>
     friend class rhi::RenderPipelineImpl;
+    template<typename Api>
+    friend class rhi::DeviceImpl;
 };
 
-struct ComputePipelineCreateInfo {
+struct ComputePipelineDescriptor {
 
 };
 

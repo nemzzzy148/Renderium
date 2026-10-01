@@ -15,8 +15,8 @@ namespace rhi {
 namespace vulkan {
 class VulkanQueue;
 class VulkanSurface;
+class VulkanAdapter;
 class VulkanDevice;
-class VulkanDeviceSelector;
 class VulkanInstance;
 enum class VulkanError;
 class VulkanRenderPipeline;
@@ -25,7 +25,7 @@ class VulkanComputePipeline;
 
 struct VulkanApi {
     using Instance = vulkan::VulkanInstance;
-    using DeviceSelector = vulkan::VulkanDeviceSelector;
+    using Adapter = vulkan::VulkanAdapter;
     using Device = vulkan::VulkanDevice;
     using Queue = vulkan::VulkanQueue;
     using InternalSurface = VkSurfaceKHR;

@@ -33,6 +33,8 @@ private:
     Slang::ComPtr<::slang::IModule> loadModuleFromString(const std::string& shaderCode, Slang::ComPtr<::slang::IBlob>& diagnostics) const;
     static std::vector<::slang::IEntryPoint*> discoverAllEntryPoints(::slang::IModule* module);
     static std::optional<renderium::shader::ShaderEntryPointType> classifyStage(SlangStage stage);
+    static std::string compiledEntryPointName(renderium::shader::ShadingOutputLanguage shadingOutputLanguage,
+        const std::string& sourceName);
 public:
     using ShaderResult = renderium::Result<renderium::shader::CompiledShader, SlangError>;
     [[nodiscard]] ShaderResult compileShader(const std::string& shaderCode) const;

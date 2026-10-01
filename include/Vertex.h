@@ -8,7 +8,7 @@
 #include "Shader.h"
 
 namespace renderium {
-class Shader;
+class ShaderModule;
 
 enum class VertexFormat {
     Float32,
@@ -20,7 +20,7 @@ enum class VertexFormat {
 struct VertexAttribute {
     VertexFormat format;
     size_t offset;
-    uint32_t location;
+    uint32_t shaderLocation;
 };
 
 enum class VertexStepMode {
@@ -28,17 +28,16 @@ enum class VertexStepMode {
     Instance
 };
 
-struct VertexLayout {
-    uint32_t binding;
-    size_t vertexStride;
+struct VertexBufferLayout {
+    size_t arrayStride;
     VertexStepMode stepMode;
-    std::span<const VertexAttribute> attributes;
+    std::vector<VertexAttribute> attributes;
 };
 
 struct VertexState {
-    Shader& shader;
-    std::string functionEntryPointName;
-    std::span<const VertexLayout> layouts;
+    const ShaderModule& module;
+    std::string entryPoint;
+    std::vector<VertexBufferLayout> buffers;
 };
 
 }

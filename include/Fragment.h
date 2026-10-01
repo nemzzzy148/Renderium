@@ -8,16 +8,16 @@
 
 namespace renderium {
 enum class TextureFormat;
-class Shader;
+class ShaderModule;
 
-struct ColorAttachmentState {
+struct ColorTargetState {
     TextureFormat format;
 };
 
 struct FragmentState {
-    Shader& shader;
-    std::string functionEntryPointName;
-    std::span<const ColorAttachmentState> targets;
+    const ShaderModule& module;
+    std::string entryPoint;
+    std::vector<ColorTargetState> targets;
 };
 
 }

@@ -5,6 +5,7 @@
 #pragma once
 #include <memory>
 
+#include "Pipeline.h"
 #include "Queue.h"
 #include "Result.h"
 #include "Shader.h"
@@ -14,32 +15,31 @@ namespace rhi {
 template<typename Api>
 class DeviceImpl;
 template<typename Api>
-class InstanceImpl;
+class AdapterImpl;
 template<typename Api>
 class SurfaceImpl;
 }
 
 namespace renderium {
 
-struct PipelineLayoutCreateInfo;
+struct PipelineLayoutDescriptor;
 class PipelineLayout;
-class Shader;
-struct ComputePipelineCreateInfo;
+class ShaderModule;
+struct ComputePipelineDescriptor;
 class ComputePipeline;
-struct RenderPipelineCreateInfo;
+struct RenderPipelineDescriptor;
 class RenderPipeline;
 class Queue;
 class Surface;
 
-enum class PowerPreferences {
+enum class PowerPreference {
+    None,
     HighPerformance,
-    LowPower,
-    Auto
+    LowPower
 };
 
-struct DeviceCreateInfo {
-    const Surface* compatibleSurface = nullptr;
-    PowerPreferences powerPreferences = PowerPreferences::HighPerformance;
+struct DeviceDescriptor {
+
 };
 
 
@@ -47,17 +47,20 @@ class Device {
 public:
     Device() = delete;
 
-    using ShaderResult = Result<Shader, Error>;
-    ShaderResult createShader(const std::string& shaderCode) const;
+    using ShaderModuleResult = Result<ShaderModule, Error>;
+    [[nodiscard]] ShaderModuleResult createShaderModule(const ShaderModuleDescriptor& descriptor) const;
     using PipelineLayoutResult = Result<PipelineLayout, Error>;
-    PipelineLayoutResult createPipelineLayout(const PipelineLayoutCreateInfo& createInfo);
+    PipelineLayoutResult createPipelineLayout(const PipelineLayoutDescriptor& descriptor);
     using RenderPipelineResult = Result<RenderPipeline, Error>;
-    RenderPipelineCreateInfo createRenderPipeline(const RenderPipelineCreateInfo& createInfo);
+    [[nodiscard]] RenderPipelineResult createRenderPipeline(const RenderPipelineDescriptor& descriptor) const;
 
     [[nodiscard]] Queue getQueue() const;
 private:
     struct Impl {
         virtual ~Impl() = default;
+
+        virtual Result<std::unique_ptr<RenderPipeline::Impl>, Error>
+            createRenderPipeline(const RenderPipelineDescriptor& descriptor) = 0;
 
         virtual Result<std::unique_ptr<Queue::Impl>, Error> createQueue() = 0;
     };
@@ -73,11 +76,11 @@ private:
     template<typename Api>
     friend class rhi::DeviceImpl;
     template<typename Api>
-    friend class rhi::InstanceImpl;
-    template<typename Api>
     friend class rhi::SurfaceImpl;
-    friend class Instance;
+    template<typename Api>
+    friend class rhi::AdapterImpl;
     friend class Queue;
+    friend class Adapter;
 };
 
 }

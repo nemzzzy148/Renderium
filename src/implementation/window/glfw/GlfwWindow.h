@@ -8,7 +8,7 @@
 #include "GLFW/glfw3.h"
 
 namespace renderium {
-struct WindowCreateInfo;
+struct WindowDescriptor;
 }
 
 namespace rhi::window::glfw {
@@ -17,7 +17,7 @@ enum class GlfwError;
 class GlfwWindow {
 public:
     using WindowResult = renderium::Result<GlfwWindow, GlfwError>;
-    static WindowResult create(const renderium::WindowCreateInfo &createInfo);
+    static WindowResult create(const renderium::WindowDescriptor& descriptor);
 
     void waitEvents() const { glfwWaitEvents(); }
     void pollEvents() const { glfwPollEvents(); }

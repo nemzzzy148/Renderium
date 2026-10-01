@@ -26,7 +26,7 @@ enum class FrontFace {
 };
 
 struct PrimitiveState {
-    PrimitiveTopology primitiveTopology = PrimitiveTopology::TriangleList;
+    PrimitiveTopology topology = PrimitiveTopology::TriangleList;
     FrontFace frontFace = FrontFace::CCW;
     CullMode cullMode = CullMode::None;
 };

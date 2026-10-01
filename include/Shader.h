@@ -3,6 +3,8 @@
 //
 
 #pragma once
+#include <string>
+
 #include "ShaderCompiler.h"
 
 namespace rhi {
@@ -12,11 +14,15 @@ class PipelineImpl;
 
 namespace renderium {
 
-class Shader {
+struct ShaderModuleDescriptor {
+    std::string code;
+};
+
+class ShaderModule {
 public:
     const shader::CompiledShader& getCompiledShader() const { return compiledShader; }
 private:
-    explicit Shader(shader::CompiledShader compiledShader) : compiledShader(std::move(compiledShader)) {}
+    explicit ShaderModule(shader::CompiledShader compiledShader) : compiledShader(std::move(compiledShader)) {}
     shader::CompiledShader compiledShader;
 
     friend class Device;

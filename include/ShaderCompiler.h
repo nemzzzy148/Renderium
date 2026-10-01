@@ -51,7 +51,8 @@ enum class ShaderEntryPointType {
 
 struct ShaderEntryPoint {
     ShaderEntryPointType entryPointType;
-    std::string name;
+    std::string name; // name inside your code
+    std::string compiledName; // name inside the binary
     std::vector<uint8_t> code;
 };
 
