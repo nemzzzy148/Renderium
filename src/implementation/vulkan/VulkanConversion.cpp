@@ -9,6 +9,32 @@
 #include "Vertex.h"
 
 namespace rhi::vulkan {
+vk::SampleCountFlagBits VulkanConversion::mapSampleCount(const uint32_t sampleCount) {
+    switch (sampleCount) {
+        case 1: return vk::SampleCountFlagBits::e1;
+        case 2: return vk::SampleCountFlagBits::e2;
+        case 4: return vk::SampleCountFlagBits::e4;
+        case 8: return vk::SampleCountFlagBits::e8;
+        case 16: return vk::SampleCountFlagBits::e16;
+        case 32: return vk::SampleCountFlagBits::e32;
+        case 64: return vk::SampleCountFlagBits::e64;
+        default: return vk::SampleCountFlagBits::e1; // An uneven power of 2 is checked at texture creation
+    }
+}
+
+vk::ImageType VulkanConversion::mapTextureDimension(const renderium::TextureDimension dimension) {
+    switch (dimension) {
+        case renderium::TextureDimension::D1: return vk::ImageType::e1D;
+        case renderium::TextureDimension::D2: return vk::ImageType::e2D;
+        case renderium::TextureDimension::D3: return vk::ImageType::e3D;
+        default: return vk::ImageType::e2D; // auto compiler = Emotion::Happy;
+    }
+}
+
+vk::Extent3D VulkanConversion::mapExtent3D(const renderium::Extent3D extent3d) {
+    return {.width = extent3d.width, .height = extent3d.height, .depth = extent3d.depthOrArrayLaters};
+}
+
 vk::Format VulkanConversion::mapTextureFormat(const renderium::TextureFormat textureFormat) {
     switch (textureFormat) {
         case renderium::TextureFormat::R8Unorm: return vk::Format::eR8Unorm;

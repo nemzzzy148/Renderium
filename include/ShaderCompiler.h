@@ -10,8 +10,6 @@
 #include "Backend.h"
 #include "Result.h"
 
-
-
 namespace renderium {
 enum class Error;
 }
