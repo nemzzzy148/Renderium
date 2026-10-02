@@ -54,16 +54,17 @@ VulkanDevice::VulkanDeviceResult VulkanDevice::createDevice(const vk::raii::Phys
         {std::move(vk::raii::Device(physicalDevice, deviceCreateInfo)), queueFamilyIndex});
 }
 
-VulkanDevice::DeviceResult VulkanDevice::create(const VulkanInstance& instance,
-        const vk::raii::PhysicalDevice& physicalDevice, const renderium::DeviceDescriptor& descriptor,
+VulkanDevice::DeviceResult VulkanDevice::create(std::shared_ptr<VulkanInstance> instance,
+        std::shared_ptr<vk::raii::PhysicalDevice> physicalDevice,
+        const renderium::DeviceDescriptor& descriptor,
         const bool surfaceSupport) {
     // device
-    auto deviceResult = createDevice(physicalDevice, descriptor, surfaceSupport);
+    auto deviceResult = createDevice(*physicalDevice, descriptor, surfaceSupport);
     if (!deviceResult.isOk()) return DeviceResult::err(deviceResult.unwrapError());
     auto [device, queueFamilyIndex] = deviceResult.unwrap();
 
-    return DeviceResult::ok( VulkanDevice(
-        physicalDevice, std::move(device), queueFamilyIndex));
+    return DeviceResult::ok(VulkanDevice(
+        std::move(instance), std::move(physicalDevice), std::move(device), queueFamilyIndex));
 }
 
 }

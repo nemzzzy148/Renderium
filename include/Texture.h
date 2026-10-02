@@ -6,6 +6,7 @@
 #include "../src/utils/BitwiseOperations.h"
 
 namespace renderium {
+enum class Error;
 
 struct Extent3D {
     uint32_t width;

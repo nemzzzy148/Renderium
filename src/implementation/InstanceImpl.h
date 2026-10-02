@@ -30,7 +30,8 @@ public:
         if (!result.isOk()) {
             return InstanceResult::err(std::move(result.unwrapError()));
         }
-        return InstanceResult::ok(std::unique_ptr<InstanceImpl>(new InstanceImpl(std::move(result.unwrap()))));
+        return InstanceResult::ok(std::unique_ptr<InstanceImpl>(
+            new InstanceImpl(std::make_shared<Instance>(std::move(result.unwrap())))));
     }
 
     using AdapterResult = renderium::Result<std::unique_ptr<renderium::Adapter::Impl>, renderium::Error>;
@@ -50,7 +51,7 @@ public:
 
     using SurfaceResult = renderium::Result<std::unique_ptr<renderium::Surface::Impl>, renderium::Error>;
     SurfaceResult createSurface(const renderium::Window& window) override {
-        auto result = Api::Surface::create(instance, window);
+        auto result = Api::Surface::create(*instance, window);
         if (!result.isOk()) {
             return SurfaceResult::err(renderium::Error::SurfaceCreateError);
         }
@@ -58,8 +59,8 @@ public:
             std::unique_ptr<renderium::Surface::Impl>(new SurfaceImpl<Api>(std::move(result.unwrap()))));
     }
 private:
-    explicit InstanceImpl(Instance instance) : instance(std::move(instance)) {}
-    Instance instance;
+    explicit InstanceImpl(std::shared_ptr<Instance> instance) : instance(std::move(instance)) {}
+    std::shared_ptr<Instance> instance;
 };
 
 }

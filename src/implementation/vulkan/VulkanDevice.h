@@ -3,6 +3,8 @@
 //
 
 #pragma once
+#include <memory>
+#include <utility>
 #include <vulkan/vulkan_raii.hpp>
 
 #include "Result.h"
@@ -31,16 +33,21 @@ class VulkanDevice {
         const renderium::DeviceDescriptor& descriptor, bool surfaceSupport);
 public:
     using DeviceResult = renderium::Result<VulkanDevice, VulkanError>;
-    static DeviceResult create(const VulkanInstance& instance, const vk::raii::PhysicalDevice& physicalDevice,
+    static DeviceResult create(std::shared_ptr<VulkanInstance> instance,
+        std::shared_ptr<vk::raii::PhysicalDevice> physicalDevice,
         const renderium::DeviceDescriptor& descriptor, bool surfaceSupport);
-    [[nodiscard]] const vk::raii::PhysicalDevice& getPhysicalDevice() const { return physicalDevice; }
+    [[nodiscard]] const vk::raii::PhysicalDevice& getPhysicalDevice() const { return *physicalDevice; }
     [[nodiscard]] const vk::raii::Device& getDevice() const { return device; }
     [[nodiscard]] uint32_t getQueueFamilyIndex() const { return queueFamilyIndex; }
 private:
-    VulkanDevice(const vk::raii::PhysicalDevice& physicalDevice, vk::raii::Device device, const uint32_t familyQueueIndex)
-        : physicalDevice(physicalDevice), queueFamilyIndex(familyQueueIndex), device(std::move(device)) {}
+    VulkanDevice(std::shared_ptr<VulkanInstance> instance,
+        std::shared_ptr<vk::raii::PhysicalDevice> physicalDevice, vk::raii::Device device,
+        const uint32_t familyQueueIndex)
+        : instance(std::move(instance)), physicalDevice(std::move(physicalDevice)),
+          queueFamilyIndex(familyQueueIndex), device(std::move(device)) {}
 
-    const vk::raii::PhysicalDevice& physicalDevice;
+    std::shared_ptr<VulkanInstance> instance;
+    std::shared_ptr<vk::raii::PhysicalDevice> physicalDevice;
     uint32_t queueFamilyIndex;
     vk::raii::Device device;
     friend class VulkanQueue;

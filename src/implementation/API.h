@@ -21,6 +21,8 @@ class VulkanInstance;
 enum class VulkanError;
 class VulkanRenderPipeline;
 class VulkanComputePipeline;
+class VulkanTexture;
+class VulkanTextureView;
 }
 
 struct VulkanApi {
@@ -33,6 +35,8 @@ struct VulkanApi {
     using Error = vulkan::VulkanError;
     using RenderPipeline = vulkan::VulkanRenderPipeline;
     using ComputePipeline = vulkan::VulkanComputePipeline;
+    using Texture = vulkan::VulkanTexture;
+    using TextureView = vulkan::VulkanTextureView;
 };
 
 // --- Window API ---

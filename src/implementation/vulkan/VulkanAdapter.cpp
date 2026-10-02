@@ -80,11 +80,12 @@ VulkanAdapter::PhysicalDeviceResult VulkanAdapter::createPhysicalDevice(const Vu
     return PhysicalDeviceResult::ok(physicalDevices[theChosenIndex]);
 }
 
-VulkanAdapter::AdapterResult VulkanAdapter::create(const VulkanInstance& instance, const AdapterOptions& options) {
-    auto physicalDeviceResult = createPhysicalDevice(instance, options);
+VulkanAdapter::AdapterResult VulkanAdapter::create(std::shared_ptr<VulkanInstance> instance, const AdapterOptions& options) {
+    auto physicalDeviceResult = createPhysicalDevice(*instance, options);
     if (!physicalDeviceResult.isOk()) return AdapterResult::err(physicalDeviceResult.unwrapError());
-    return AdapterResult::ok(VulkanAdapter(
-        instance, std::move(physicalDeviceResult.unwrap()), options.surface));
+    return AdapterResult::ok(VulkanAdapter(std::move(instance),
+        std::make_shared<vk::raii::PhysicalDevice>(std::move(physicalDeviceResult.unwrap())),
+        options.surface));
 }
 
 VulkanAdapter::DeviceResult VulkanAdapter::requestDevice(const renderium::DeviceDescriptor& descriptor) const {

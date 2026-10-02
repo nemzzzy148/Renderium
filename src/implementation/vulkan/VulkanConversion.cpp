@@ -67,23 +67,23 @@ renderium::PresentMode VulkanConversion::toPresentMode(const vk::PresentModeKHR 
 
 vk::ImageUsageFlags VulkanConversion::mapTextureUsages(const renderium::TextureUsages textureUsages) {
     vk::ImageUsageFlags finalUsage = {};
-    if (utils::any(textureUsages & renderium::TextureUsages::RenderTarget)) finalUsage |= vk::ImageUsageFlagBits::eColorAttachment;
-    if (utils::any(textureUsages & renderium::TextureUsages::DepthStencil)) finalUsage |= vk::ImageUsageFlagBits::eDepthStencilAttachment;
-    if (utils::any(textureUsages & renderium::TextureUsages::Sampled)) finalUsage |= vk::ImageUsageFlagBits::eSampled;
-    if (utils::any(textureUsages & renderium::TextureUsages::Storage)) finalUsage |= vk::ImageUsageFlagBits::eStorage;
-    if (utils::any(textureUsages & renderium::TextureUsages::TransferDestination)) finalUsage |= vk::ImageUsageFlagBits::eTransferDst;
-    if (utils::any(textureUsages & renderium::TextureUsages::TransferSource)) finalUsage |= vk::ImageUsageFlagBits::eTransferSrc;
+    if (utils::any(textureUsages & renderium::TextureUsages::RenderAttachment)) finalUsage |= vk::ImageUsageFlagBits::eColorAttachment;
+    if (utils::any(textureUsages & renderium::TextureUsages::TransientAttachment)) finalUsage |= vk::ImageUsageFlagBits::eTransientAttachment;
+    if (utils::any(textureUsages & renderium::TextureUsages::TextureBinding)) finalUsage |= vk::ImageUsageFlagBits::eSampled;
+    if (utils::any(textureUsages & renderium::TextureUsages::StorageBinding)) finalUsage |= vk::ImageUsageFlagBits::eStorage;
+    if (utils::any(textureUsages & renderium::TextureUsages::CopyDst)) finalUsage |= vk::ImageUsageFlagBits::eTransferDst;
+    if (utils::any(textureUsages & renderium::TextureUsages::CopySrc)) finalUsage |= vk::ImageUsageFlagBits::eTransferSrc;
     return finalUsage;
 }
 
 renderium::TextureUsages VulkanConversion::toTextureUsages(const vk::ImageUsageFlags usages) {
     auto finalUsages = renderium::TextureUsages::None;
-    if (usages & vk::ImageUsageFlagBits::eColorAttachment) finalUsages |= renderium::TextureUsages::RenderTarget;
-    if (usages & vk::ImageUsageFlagBits::eDepthStencilAttachment) finalUsages |= renderium::TextureUsages::DepthStencil;
-    if (usages & vk::ImageUsageFlagBits::eSampled) finalUsages |= renderium::TextureUsages::Sampled;
-    if (usages & vk::ImageUsageFlagBits::eStorage) finalUsages |= renderium::TextureUsages::Storage;
-    if (usages & vk::ImageUsageFlagBits::eTransferDst) finalUsages |= renderium::TextureUsages::TransferDestination;
-    if (usages & vk::ImageUsageFlagBits::eTransferSrc) finalUsages |= renderium::TextureUsages::TransferSource;
+    if (usages & vk::ImageUsageFlagBits::eColorAttachment) finalUsages |= renderium::TextureUsages::RenderAttachment;
+    if (usages & vk::ImageUsageFlagBits::eSampled) finalUsages |= renderium::TextureUsages::TextureBinding;
+    if (usages & vk::ImageUsageFlagBits::eStorage) finalUsages |= renderium::TextureUsages::StorageBinding;
+    if (usages & vk::ImageUsageFlagBits::eTransferDst) finalUsages |= renderium::TextureUsages::CopyDst;
+    if (usages & vk::ImageUsageFlagBits::eTransferSrc) finalUsages |= renderium::TextureUsages::CopySrc;
+    if (usages & vk::ImageUsageFlagBits::eTransientAttachment) finalUsages |= renderium::TextureUsages::TransientAttachment;
     return finalUsages;
 }
 
@@ -119,8 +119,7 @@ vk::PrimitiveTopology VulkanConversion::mapPrimitiveTopology(const renderium::Pr
 vk::FrontFace VulkanConversion::mapFrontFace(const renderium::FrontFace frontFace) {
     switch (frontFace) {
         case renderium::FrontFace::CW: return vk::FrontFace::eClockwise;
-        case renderium::FrontFace::CCW: return vk::FrontFace::eCounterClockwise;
-        default: return vk::FrontFace::eCounterClockwise; // will never happen but makes compiler happy
+        default: return vk::FrontFace::eCounterClockwise;
     }
 }
 
