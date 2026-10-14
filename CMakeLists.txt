@@ -52,6 +52,8 @@ add_library(Renderium SHARED
         src/implementation/TextureImpl.h
         src/implementation/vulkan/VulkanTexture.cpp
         src/implementation/vulkan/VulkanTexture.h
+        src/memory/TLSF.cpp
+        src/memory/TLSF.h
 )
 
 target_include_directories( Renderium PUBLIC

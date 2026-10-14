@@ -67,4 +67,10 @@ VulkanDevice::DeviceResult VulkanDevice::create(std::shared_ptr<VulkanInstance> 
         std::move(instance), std::move(physicalDevice), std::move(device), queueFamilyIndex));
 }
 
+VulkanDevice::MemoryManager::MemoryManager() {
+    tlsf.createPool({
+        .size = DEFAULT_SIZE,
+        .defaultAlignment = DEFAULT_ALIGNMENT
+    });
+}
 }

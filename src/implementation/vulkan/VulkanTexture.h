@@ -3,9 +3,11 @@
 //
 
 #pragma once
+#include <functional>
 #include <vulkan/vulkan_raii.hpp>
 
 namespace renderium {
+struct TextureDescriptor;
 struct TextureViewDescriptor;
 }
 
@@ -22,9 +24,14 @@ private:
 
 class VulkanTexture {
 public:
-    static 
-    VulkanTextureView createView(const renderium::TextureViewDescriptor& descriptor);
+    explicit VulkanTexture(const renderium::TextureDescriptor& descriptor);
+    VulkanTextureView createView(const renderium::TextureViewDescriptor& descriptor) const;
+
+    ~VulkanTexture();
 private:
+    uint32_t memoryPoolIndex;
+    uint32_t memoryIndex;
+    std::function<void(uint32_t, uint32_t)> destructCallback;
     vk::raii::Image image = nullptr;
 };
 

@@ -87,7 +87,7 @@ private:
 
 struct TextureDescriptor {
     Extent3D size;
-    uint32_t mipLeverCount = 1;
+    uint32_t mipLevelCount = 1;
     uint32_t sampleCount = 1;
     TextureDimension dimension = TextureDimension::D2;
     TextureFormat format;

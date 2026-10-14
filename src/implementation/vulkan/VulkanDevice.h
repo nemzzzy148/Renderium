@@ -10,6 +10,7 @@
 #include "Result.h"
 #include "../DeviceImpl.h"
 #include "../API.h"
+#include "../../memory/TLSF.h"
 
 namespace rhi {
 struct VulkanApi;
@@ -45,6 +46,19 @@ private:
         const uint32_t familyQueueIndex)
         : instance(std::move(instance)), physicalDevice(std::move(physicalDevice)),
           queueFamilyIndex(familyQueueIndex), device(std::move(device)) {}
+
+    class MemoryManager {
+    public:
+        explicit MemoryManager();
+
+        void freeTexture(uint32_t index);
+        void freeBuffer(uint32_t index);
+
+        static constexpr uint64_t DEFAULT_SIZE = 1<<24;
+        static constexpr uint32_t DEFAULT_ALIGNMENT = 1<<8;
+    private:
+        TLSF tlsf;
+    };
 
     std::shared_ptr<VulkanInstance> instance;
     std::shared_ptr<vk::raii::PhysicalDevice> physicalDevice;
