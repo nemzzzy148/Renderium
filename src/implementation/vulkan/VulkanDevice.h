@@ -57,7 +57,11 @@ private:
         static constexpr uint64_t DEFAULT_SIZE = 1<<24;
         static constexpr uint32_t DEFAULT_ALIGNMENT = 1<<8;
     private:
-        TLSF tlsf;
+        std::vector<vk::raii::DeviceMemory> bufferMemory;
+        TLSF bufferTlsf;
+
+        std::vector<vk::raii::DeviceMemory> textureMemory;
+        TLSF textureTlsf;
     };
 
     std::shared_ptr<VulkanInstance> instance;

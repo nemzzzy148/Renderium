@@ -68,9 +68,11 @@ VulkanDevice::DeviceResult VulkanDevice::create(std::shared_ptr<VulkanInstance> 
 }
 
 VulkanDevice::MemoryManager::MemoryManager() {
-    tlsf.createPool({
-        .size = DEFAULT_SIZE,
-        .defaultAlignment = DEFAULT_ALIGNMENT
+    tlsf.createPool({ // for buffers
+
+    });
+    tlsf.createPool({ // for textures
+        .size = DEFAULT_SIZE
     });
 }
 }
