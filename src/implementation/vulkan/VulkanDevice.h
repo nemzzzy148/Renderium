@@ -25,6 +25,11 @@ class VulkanAdapter;
 class VulkanInstance;
 enum class VulkanError;
 
+struct MemoryAllocation {
+    uint32_t pool;
+    uint32_t node;
+};
+
 class VulkanDevice {
     // --- device ---
     using QueueIndexResult = renderium::Result<uint32_t, VulkanError>;
@@ -47,19 +52,27 @@ private:
         : instance(std::move(instance)), physicalDevice(std::move(physicalDevice)),
           queueFamilyIndex(familyQueueIndex), device(std::move(device)) {}
 
+    struct MemoryManagerDescriptor {
+        uint32_t bufferAlignment = 1 << 8;
+        uint32_t textureAlignment = 1 << 8; // this is most of the time bigger
+    };
     class MemoryManager {
     public:
-        explicit MemoryManager();
+        explicit MemoryManager(MemoryManagerDescriptor descriptor);
+
+        MemoryAllocation bufferAllocation(uint64_t size);
+        MemoryAllocation textureAllocation(uint64_t size);
 
         void freeTexture(uint32_t index);
         void freeBuffer(uint32_t index);
 
         static constexpr uint64_t DEFAULT_SIZE = 1<<24;
-        static constexpr uint32_t DEFAULT_ALIGNMENT = 1<<8;
     private:
+        const uint32_t bufferAlignment;
         std::vector<vk::raii::DeviceMemory> bufferMemory;
         TLSF bufferTlsf;
 
+        const uint32_t textureAlignment;
         std::vector<vk::raii::DeviceMemory> textureMemory;
         TLSF textureTlsf;
     };

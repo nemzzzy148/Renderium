@@ -67,12 +67,26 @@ VulkanDevice::DeviceResult VulkanDevice::create(std::shared_ptr<VulkanInstance> 
         std::move(instance), std::move(physicalDevice), std::move(device), queueFamilyIndex));
 }
 
-VulkanDevice::MemoryManager::MemoryManager() {
-    tlsf.createPool({ // for buffers
+VulkanDevice::MemoryManager::MemoryManager(const MemoryManagerDescriptor descriptor)
+    : bufferAlignment(descriptor.bufferAlignment), bufferTlsf(descriptor.bufferAlignment),
+        textureAlignment(descriptor.textureAlignment), textureTlsf(descriptor.textureAlignment) {}
 
-    });
-    tlsf.createPool({ // for textures
-        .size = DEFAULT_SIZE
-    });
+MemoryAllocation VulkanDevice::MemoryManager::bufferAllocation(const uint64_t size) {
+    auto allocation = bufferTlsf.malloc(size);
+    if (!allocation.valid) {
+        const uint64_t need = std::max(size, DEFAULT_SIZE);
+        bufferTlsf.createPool({need});
+
+    }
 }
+
+MemoryAllocation VulkanDevice::MemoryManager::textureAllocation(const uint64_t size) {
+}
+
+void VulkanDevice::MemoryManager::freeTexture(uint32_t index) {
+}
+
+void VulkanDevice::MemoryManager::freeBuffer(uint32_t index) {
+}
+
 }
