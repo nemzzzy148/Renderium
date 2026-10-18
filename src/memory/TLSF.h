@@ -24,12 +24,13 @@ struct TLSFAllocation {
 class TLSF {
 public:
     explicit TLSF(uint32_t defaultAlignment);
+    explicit TLSF();
 
     uint32_t createPool(const TLSFPoolDescriptor& descriptor);
 
-    TLSFAllocation malloc(uint32_t pool, uint32_t alignment, uint64_t size);
-    TLSFAllocation malloc(uint32_t pool, uint64_t size);
-    TLSFAllocation malloc(uint64_t size);
+    TLSFAllocation allocate(uint32_t pool, uint32_t alignment, uint64_t size);
+    TLSFAllocation allocate(uint64_t size);
+    TLSFAllocation allocate(uint32_t alignment, uint64_t size);
     void free(uint32_t pool, uint32_t node);
 
     static constexpr uint16_t MIN_BLOCK = 255;

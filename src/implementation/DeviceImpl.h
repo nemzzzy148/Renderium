@@ -38,19 +38,20 @@ public:
             new QueueImpl<Api>(std::move(result.unwrap()))));
     }
 
-    using PipelineResult = renderium::Result<std::unique_ptr<renderium::RenderPipeline::Impl>, renderium::Error>;
-    renderium::Result<std::unique_ptr<renderium::RenderPipeline::Impl>, renderium::Error> createRenderPipeline(
+    std::unique_ptr<renderium::RenderPipeline::Impl> createRenderPipeline(
         const renderium::RenderPipelineDescriptor& descriptor) override {
         auto result = Api::RenderPipeline::create(device, descriptor);
         if (!result.isOk()) {
-            return PipelineResult::err(renderium::Error::RenderPipelineCreateError);
+            return std::unique_ptr<renderium::RenderPipeline::Impl>(
+                new RenderPipelineImpl<Api>(std::move(result.unwrap())));
+            // !!! add validation support !!!
         }
-        return PipelineResult::ok(std::unique_ptr<renderium::RenderPipeline::Impl>(
-            new RenderPipelineImpl<Api>(std::move(result.unwrap()))));
+        return std::unique_ptr<renderium::RenderPipeline::Impl>(
+            new RenderPipelineImpl<Api>(std::move(result.unwrap())));
     }
 private:
     explicit DeviceImpl(Device device) : device(std::move(device)) {}
-    Device device;
+    std::shared_ptr<Device> device;
 
     friend class SurfaceImpl<Api>;
     friend class AdapterImpl<Api>;

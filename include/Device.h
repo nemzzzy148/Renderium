@@ -47,19 +47,16 @@ class Device {
 public:
     Device() = delete;
 
-    using ShaderModuleResult = Result<ShaderModule, Error>;
-    [[nodiscard]] ShaderModuleResult createShaderModule(const ShaderModuleDescriptor& descriptor) const;
-    using PipelineLayoutResult = Result<PipelineLayout, Error>;
-    PipelineLayoutResult createPipelineLayout(const PipelineLayoutDescriptor& descriptor);
-    using RenderPipelineResult = Result<RenderPipeline, Error>;
-    [[nodiscard]] RenderPipelineResult createRenderPipeline(const RenderPipelineDescriptor& descriptor) const;
+    [[nodiscard]] ShaderModule createShaderModule(const ShaderModuleDescriptor& descriptor) const;
+    PipelineLayout createPipelineLayout(const PipelineLayoutDescriptor& descriptor);
+    [[nodiscard]] RenderPipeline createRenderPipeline(const RenderPipelineDescriptor& descriptor) const;
 
     [[nodiscard]] Queue getQueue() const;
 private:
     struct Impl {
         virtual ~Impl() = default;
 
-        virtual Result<std::unique_ptr<RenderPipeline::Impl>, Error>
+        virtual std::unique_ptr<RenderPipeline::Impl>
             createRenderPipeline(const RenderPipelineDescriptor& descriptor) = 0;
 
         virtual Result<std::unique_ptr<Queue::Impl>, Error> createQueue() = 0;

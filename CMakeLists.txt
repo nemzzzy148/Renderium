@@ -54,6 +54,10 @@ add_library(Renderium SHARED
         src/implementation/vulkan/VulkanTexture.h
         src/memory/TLSF.cpp
         src/memory/TLSF.h
+        src/implementation/BufferImpl.h
+        src/implementation/vulkan/VulkanBuffer.cpp
+        src/implementation/vulkan/VulkanBuffer.h
+        src/utils/Hashes.h
 )
 
 target_include_directories( Renderium PUBLIC

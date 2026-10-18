@@ -14,6 +14,10 @@ TLSF::TLSF(const uint32_t defaultAlignment) : defaultAlignment(defaultAlignment)
     poolHeads.assign(64, 0);
 }
 
+TLSF::TLSF() : defaultAlignment(0) {
+    TLSF(0);
+}
+
 uint32_t TLSF::createPool(const TLSFPoolDescriptor& descriptor) {
     if (descriptor.size == 0) {
         return 0;
@@ -57,7 +61,7 @@ uint32_t TLSF::createPool(const TLSFPoolDescriptor& descriptor) {
     return poolIndex;
 }
 
-TLSFAllocation TLSF::malloc(const uint32_t pool, const uint32_t alignment, const uint64_t size) {
+TLSFAllocation TLSF::allocate(const uint32_t pool, const uint32_t alignment, const uint64_t size) {
     if (size == 0 || pool >= pools.size() || alignment == 0 || !std::has_single_bit(alignment)) {
         return {};
     }
@@ -100,30 +104,27 @@ TLSFAllocation TLSF::malloc(const uint32_t pool, const uint32_t alignment, const
     if (bitmapSizeClass(p.flBitmap) != flBefore) updateFreePoolList(pool);
 
     return { aligned, allocSize, idx, pool, true };
-
 }
 
-TLSFAllocation TLSF::malloc(const uint32_t pool, const uint64_t size) {
-    if (size == 0) {
-        return {};
-    }
-
-    return malloc(pool, defaultAlignment, size);
-}
-
-TLSFAllocation TLSF::malloc(const uint64_t size) {
+TLSFAllocation TLSF::allocate(const uint64_t size) {
     if (size == 0) return {};
 
-    const uint32_t sizeClass = computeSizeClass(defaultAlignment - 1);
+    return allocate(defaultAlignment, size);
+}
+
+TLSFAllocation TLSF::allocate(const uint32_t alignment, const uint64_t size) {
+    if (size == 0) return {};
+
+    const uint32_t sizeClass = computeSizeClass(alignment - 1);
 
     for (uint32_t i = poolHeads[sizeClass]; i != 0; i = pools[i].nextFree)
-        if (auto a = malloc(i, defaultAlignment, size); a.valid) return a; // try pools
+        if (auto a = allocate(i, alignment, size); a.valid) return a; // try pools
 
     const uint64_t mask = freePools & (~0ull << (sizeClass + 1));
     if (mask == 0) return {};
     const uint32_t i = poolHeads[std::countr_zero(mask)];
 
-    return malloc(i, defaultAlignment, size);
+    return allocate(i, alignment, size);
 }
 
 void TLSF::free(const uint32_t pool, const uint32_t node) {
@@ -446,4 +447,5 @@ uint32_t TLSF::coalesce(Pool &pool, uint32_t idx) {
     listAdd(pool, idx);
     return idx;
 }
+
 }

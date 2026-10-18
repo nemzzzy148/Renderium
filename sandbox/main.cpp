@@ -102,18 +102,16 @@ int main() {
     });
 
     // shader
-    auto shaderResult = device.createShaderModule({.code = slangShaderCode});
-    assert(shaderResult.isOk());
-    const auto shader = shaderResult.unwrap();
+    auto shaderModule = device.createShaderModule({.code = slangShaderCode}); // can be dead
 
     // pipeline
-    auto renderPipelineResult = device.createRenderPipeline({
+    auto renderPipeline = device.createRenderPipeline({ // can be dead
         .vertex = {
-            .module = shader,
+            .module = shaderModule,
             .entryPoint = "vertMain"
         },
         .fragment = {
-            .module = shader,
+            .module = shaderModule,
             .entryPoint = "fragMain",
             .targets = {{formats[0]}}
         },
@@ -123,8 +121,17 @@ int main() {
             .cullMode = renderium::CullMode::None
         }
     });
-    assert(renderPipelineResult.isOk());
-    const auto renderPipeline = renderPipelineResult.unwrap();
+
+    // command encoder
+
+    // render pass
+
+    // set texture as surface
+
+    // pass set pipeline
+    // pass draw 3
+    // pass end
+    // queue submit
 
     std::cout << "pipeline created\n";
     return 0;

@@ -64,8 +64,7 @@ public:
     using ShaderCompilerResult = Result<ShaderCompiler, Error>;
     static ShaderCompilerResult create(ShadingLanguage language, ShadingOutputLanguage outputLanguage);
 
-    using ShaderResult = Result<CompiledShader, Error>;
-    [[nodiscard]] ShaderResult compileShader(const std::string& shaderCode) const;
+    [[nodiscard]] CompiledShader compileShader(const std::string& shaderCode) const;
 
     // for custom compilers
     struct Impl {

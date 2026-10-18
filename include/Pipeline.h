@@ -45,6 +45,8 @@ struct RenderPipelineDescriptor {
 class RenderPipeline {
     struct Impl {
         ~Impl() = default;
+
+        bool valid = true;
     };
 
     explicit RenderPipeline(std::unique_ptr<Impl> impl) : impl(std::move(impl)) {}

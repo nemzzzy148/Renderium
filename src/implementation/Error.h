@@ -19,6 +19,9 @@ enum class VulkanError {
     NoPhysicalDevicesFound,
     NoPhysicalDevicesSuitable,
     NoQueueFamilySuitable,
+    NoCompatibleMemoryTypeFound,
+    RanOutOfDeviceMemory,
+    RanOutOfHostMemory,
     VertexEntryPointNotFound,
     FragmentEntryPointNotFound
 };

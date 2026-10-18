@@ -25,8 +25,12 @@ ShaderCompiler::ShaderCompilerResult ShaderCompiler::create(const ShadingLanguag
     return ShaderCompilerResult::err(Error::UnknownShadingLanguage);
 }
 
-ShaderCompiler::ShaderResult ShaderCompiler::compileShader(const std::string &shaderCode) const {
-    return impl->compileShader(shaderCode);
+CompiledShader ShaderCompiler::compileShader(const std::string &shaderCode) const {
+    auto result = impl->compileShader(shaderCode);
+    if (!result.isOk()) {
+        return result.unwrap(); // !!! add validation logic !!!
+    }
+    return result.unwrap();
 }
 
 Result<CompiledShader, Error> ShaderCompiler::Impl::compileShader(const std::string &) {

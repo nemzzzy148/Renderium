@@ -10,20 +10,13 @@
 
 namespace renderium {
 
-Device::ShaderModuleResult Device::createShaderModule(const ShaderModuleDescriptor& descriptor) const {
-    auto compiledShaderResult = shaderCompiler->compileShader(descriptor.code);
-    if (!compiledShaderResult.isOk()) {
-        return ShaderModuleResult::err(compiledShaderResult.unwrapError());
-    }
-    return ShaderModuleResult::ok(ShaderModule(std::move(compiledShaderResult.unwrap())));
+ShaderModule Device::createShaderModule(const ShaderModuleDescriptor& descriptor) const {
+    return ShaderModule(shaderCompiler->compileShader(descriptor.code));
 }
 
-Device::RenderPipelineResult Device::createRenderPipeline(const RenderPipelineDescriptor& descriptor) const {
-    auto result = impl->createRenderPipeline(descriptor);
-    if (!result.isOk()) {
-        return RenderPipelineResult::err(result.unwrapError());
-    }
-    return RenderPipelineResult::ok(RenderPipeline(std::move(result.unwrap())));
+RenderPipeline Device::createRenderPipeline(const RenderPipelineDescriptor& descriptor) const {
+    // error handling happens on the 2nd layer(implementation layer)
+    return RenderPipeline(impl->createRenderPipeline(descriptor));
 }
 
 Queue Device::getQueue() const {

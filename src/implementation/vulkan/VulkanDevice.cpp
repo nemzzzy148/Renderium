@@ -67,26 +67,108 @@ VulkanDevice::DeviceResult VulkanDevice::create(std::shared_ptr<VulkanInstance> 
         std::move(instance), std::move(physicalDevice), std::move(device), queueFamilyIndex));
 }
 
-VulkanDevice::MemoryManager::MemoryManager(const MemoryManagerDescriptor descriptor)
-    : bufferAlignment(descriptor.bufferAlignment), bufferTlsf(descriptor.bufferAlignment),
-        textureAlignment(descriptor.textureAlignment), textureTlsf(descriptor.textureAlignment) {}
+VulkanDevice::MemoryManager::MemoryManager(const vk::raii::PhysicalDevice& physicalDevice, const vk::raii::Device& device)
+    : physicalDevice(physicalDevice), device(device) {}
 
-MemoryAllocation VulkanDevice::MemoryManager::bufferAllocation(const uint64_t size) {
-    auto allocation = bufferTlsf.malloc(size);
-    if (!allocation.valid) {
-        const uint64_t need = std::max(size, DEFAULT_SIZE);
-        bufferTlsf.createPool({need});
+MemoryAllocation VulkanDevice::MemoryManager::bufferAllocation(const uint32_t alignment, const uint64_t size,
+    const uint32_t typeFilter, const vk::MemoryPropertyFlags memoryProperties) {
+    if (size == 0) return {};
 
+    const auto memoryType = findMemoryType(typeFilter, memoryProperties);
+    if (!memoryType) return{}; // no available memory type found
+
+    return allocate(bufferHeaps[*memoryType], alignment, size, *memoryType);
+}
+
+MemoryAllocation VulkanDevice::MemoryManager::textureAllocation(const uint32_t alignment, const uint64_t size,
+    const uint32_t typeFilter, const vk::MemoryPropertyFlags memoryProperties) {
+    if (size == 0) return {};
+
+    const auto memoryType = findMemoryType(typeFilter, memoryProperties);
+    if (!memoryType) return{}; // no available memory type found
+
+    return allocate(textureHeaps[*memoryType], alignment, size, *memoryType);
+}
+
+void VulkanDevice::MemoryManager::freeBuffer(const int32_t poolIndex, const uint32_t nodeIndex,
+        const uint32_t memoryType) {
+    if (!bufferHeaps.contains(memoryType)) return; // no allocation made with that memory type
+
+    // free the allocation in the system so another allocation can be made on the same memory
+    bufferHeaps[memoryType].tlsf.free(poolIndex, nodeIndex);
+}
+
+void VulkanDevice::MemoryManager::freeTexture(const uint32_t poolIndex, const uint32_t nodeIndex,
+        const uint32_t memoryType) {
+    if (!textureHeaps.contains(memoryType)) return; // no allocation made with that memory type
+
+    // free the allocation in the system so another allocation can be made on the same memory
+    textureHeaps[memoryType].tlsf.free(poolIndex, nodeIndex);
+}
+
+std::optional<uint32_t> VulkanDevice::MemoryManager::findMemoryType(const uint32_t typeFilter,
+    const vk::MemoryPropertyFlags properties) const {
+    const vk::PhysicalDeviceMemoryProperties memoryProperties = physicalDevice.getMemoryProperties();
+
+    for (uint32_t i = 0; i < memoryProperties.memoryTypeCount; i++) {
+        if ((typeFilter & (1 << i) && (memoryProperties.memoryTypes[i].propertyFlags & properties) == properties)) {
+            return i;
+        }
     }
+
+    return std::nullopt; // no compatible memory types found
 }
 
-MemoryAllocation VulkanDevice::MemoryManager::textureAllocation(const uint64_t size) {
+VulkanDevice::MemoryManager::DeviceMemoryResult VulkanDevice::MemoryManager::allocateDeviceMemory(const uint64_t size,
+        const uint32_t memoryType) const {
+    const vk::MemoryAllocateInfo allocInfo {
+        .allocationSize = size,
+        .memoryTypeIndex = memoryType
+    };
+
+    vk::DeviceMemory memory{};
+    const auto result = (*device).allocateMemory(&allocInfo, nullptr, &memory);
+
+    if (result == vk::Result::eErrorOutOfDeviceMemory) {
+        return DeviceMemoryResult::err(VulkanError::RanOutOfDeviceMemory);
+    }
+    if (result == vk::Result::eErrorOutOfHostMemory) {
+        return DeviceMemoryResult::err(VulkanError::RanOutOfHostMemory);
+    }
+
+    return DeviceMemoryResult::ok(vk::raii::DeviceMemory(device, memory));
 }
 
-void VulkanDevice::MemoryManager::freeTexture(uint32_t index) {
-}
+MemoryAllocation VulkanDevice::MemoryManager::allocate(Heap &heap, const uint32_t alignment, uint64_t size,
+    const uint32_t memoryType) const {
+    if (size == 0) return {};
 
-void VulkanDevice::MemoryManager::freeBuffer(uint32_t index) {
+    auto&[memory, tlsf] = heap;
+
+    // the object could be just instantiated
+    const TLSFAllocation allocation = tlsf.allocate(alignment, size);
+
+    if (!allocation.valid) {
+        size = std::max(size, DEFAULT_SIZE);
+
+        // device memory allocation
+        auto allocationResult = allocateDeviceMemory(size, memoryType);
+
+        if (!allocationResult.isOk()) {
+            return {}; // allocation failed (no vram left, ...)
+        }
+
+        const uint32_t poolIdx = tlsf.createPool({size});
+        const TLSFAllocation fitAllocation = tlsf.allocate(poolIdx, alignment, size);
+        if (!fitAllocation.valid) return {}; // this would normally not happen
+
+        memory.insert_or_assign(
+            {poolIdx, fitAllocation.nodeIndex}, std::move(allocationResult.unwrap()));
+
+        return {poolIdx, fitAllocation.nodeIndex, true};
+    }
+
+    return {allocation.poolIndex, allocation.nodeIndex, true};
 }
 
 }

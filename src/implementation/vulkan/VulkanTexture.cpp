@@ -9,12 +9,17 @@
 
 namespace rhi::vulkan {
 
+// --- texture view ---
+
 VulkanTextureView VulkanTextureView::create(const vk::raii::Image &image,
     const renderium::TextureViewDescriptor &descriptor) {
 
 }
 
-VulkanTexture::VulkanTexture(const renderium::TextureDescriptor &descriptor) {
+// --- texture ---
+
+VulkanTexture::TextureResult VulkanTexture::create(std::shared_ptr<VulkanDevice> device,
+    const renderium::TextureDescriptor &descriptor) {
     const vk::ImageCreateInfo imageInfo {
         .imageType = VulkanConversion::mapTextureDimension(descriptor.dimension),
         .format = VulkanConversion::mapTextureFormat(descriptor.format),
@@ -26,6 +31,12 @@ VulkanTexture::VulkanTexture(const renderium::TextureDescriptor &descriptor) {
         .usage = VulkanConversion::mapTextureUsages(descriptor.usages),
         .sharingMode = vk::SharingMode::eExclusive
     };
+    auto image = vk::raii::Image(device->getDevice(), imageInfo);
+
+    vk::MemoryRequirements memoryRequirements = image.getMemoryRequirements();
+
+
+    // device memory for the image
 }
 
 VulkanTextureView VulkanTexture::createView(const renderium::TextureViewDescriptor &descriptor) const {
@@ -33,7 +44,7 @@ VulkanTextureView VulkanTexture::createView(const renderium::TextureViewDescript
 }
 
 VulkanTexture::~VulkanTexture() {
-    destructCallback(memoryPoolIndex, memoryIndex);
+    destructCallback(allocation.pool, allocation.node);
 }
 
 }
