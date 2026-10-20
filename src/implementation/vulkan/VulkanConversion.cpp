@@ -190,4 +190,5 @@ vk::BufferUsageFlags VulkanConversion::mapBufferUsages(const renderium::BufferUs
 
     return finalUsage;
 }
+
 }

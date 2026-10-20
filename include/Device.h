@@ -5,11 +5,13 @@
 #pragma once
 #include <memory>
 
+#include "Buffer.h"
 #include "Pipeline.h"
 #include "Queue.h"
 #include "Result.h"
 #include "Shader.h"
 #include "ShaderCompiler.h"
+#include "Texture.h"
 
 namespace rhi {
 template<typename Api>
@@ -51,6 +53,9 @@ public:
     PipelineLayout createPipelineLayout(const PipelineLayoutDescriptor& descriptor);
     [[nodiscard]] RenderPipeline createRenderPipeline(const RenderPipelineDescriptor& descriptor) const;
 
+    [[nodiscard]] Buffer createBuffer(const BufferDescriptor& descriptor) const;
+    [[nodiscard]] Texture createTexture(const TextureDescriptor& descriptor) const;
+
     [[nodiscard]] Queue getQueue() const;
 private:
     struct Impl {
@@ -58,6 +63,9 @@ private:
 
         virtual std::unique_ptr<RenderPipeline::Impl>
             createRenderPipeline(const RenderPipelineDescriptor& descriptor) = 0;
+
+        virtual std::unique_ptr<Buffer::Impl> createBuffer(const BufferDescriptor& descriptor) = 0;
+        virtual std::unique_ptr<Texture::Impl> createTexture(const TextureDescriptor& descriptor) = 0;
 
         virtual Result<std::unique_ptr<Queue::Impl>, Error> createQueue() = 0;
     };

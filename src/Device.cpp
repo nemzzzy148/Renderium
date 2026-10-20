@@ -19,6 +19,14 @@ RenderPipeline Device::createRenderPipeline(const RenderPipelineDescriptor& desc
     return RenderPipeline(impl->createRenderPipeline(descriptor));
 }
 
+Buffer Device::createBuffer(const BufferDescriptor &descriptor) const {
+    return Buffer(impl->createBuffer(descriptor));
+}
+
+Texture Device::createTexture(const TextureDescriptor &descriptor) const {
+    return Texture(impl->createTexture(descriptor), descriptor);
+}
+
 Queue Device::getQueue() const {
     if (!queueImpl) // normally this error is impossible
         throw std::runtime_error("Renderium fatal error: failed to get queue on device!");

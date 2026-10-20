@@ -4,7 +4,15 @@
 
 #pragma once
 #include <cstddef>
+
 #include "../src/utils/BitwiseOperations.h"
+
+namespace rhi {
+template<typename Api>
+class BufferImpl;
+template<typename Api>
+class DeviceImpl;
+}
 
 namespace renderium {
 
@@ -22,6 +30,12 @@ enum class BufferUsages : uint16_t {
     QueryResolve = 1 << 10
 };
 
+enum class BufferMapState {
+    Unmapped,
+    Pending,
+    Mapped
+};
+
 struct BufferDescriptor {
     uint64_t size;
     BufferUsages usages;
@@ -30,11 +44,29 @@ struct BufferDescriptor {
 
 class Buffer {
 public:
-    virtual ~Buffer() = default;
+    [[nodiscard]] uint64_t size() const { return impl->size; }
+    [[nodiscard]] BufferUsages usage() const { return impl->usage; }
+    [[nodiscard]] BufferMapState mapState() const { return impl->mapState; }
+private:
+    struct Impl {
+        ~Impl() = default;
+        Impl(const uint64_t size, const BufferUsages usage, const BufferMapState mapState)
+            : size(size), usage(usage), mapState(mapState) {}
 
-    virtual void destroy() = 0;
-    [[nodiscard]] virtual size_t getSize() const = 0;
-    virtual void write(const void* data, size_t size, size_t offset) = 0;
+        const uint64_t size;
+        const BufferUsages usage;
+        BufferMapState mapState;
+    };
+
+    std::unique_ptr<Impl> impl;
+    explicit Buffer(std::unique_ptr<Impl> impl) : impl(std::move(impl)) {}
+
+    friend class Device;
+
+    template<typename Api>
+    friend class rhi::BufferImpl;
+    template<typename Api>
+    friend class rhi::DeviceImpl;
 };
 
 }

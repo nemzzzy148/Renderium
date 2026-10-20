@@ -49,8 +49,31 @@ public:
         return std::unique_ptr<renderium::RenderPipeline::Impl>(
             new RenderPipelineImpl<Api>(std::move(result.unwrap())));
     }
+
+    std::unique_ptr<renderium::Buffer::Impl> createBuffer(const renderium::BufferDescriptor &descriptor) override {
+        auto result = device->createBuffer(descriptor);
+        if (!result.isOk()) {
+            return std::unique_ptr<renderium::Buffer::Impl>(
+                new BufferImpl<Api>(std::move(result.unwrap())));
+            // !!! add validation support !!!
+        }
+        return std::unique_ptr<renderium::Buffer::Impl>(new BufferImpl<Api>(std::move(result.unwrap())));
+    }
+
+    std::unique_ptr<renderium::Texture::Impl> createTexture(const renderium::TextureDescriptor &descriptor) override {
+        auto result = device->createTexture(descriptor);
+        if (!result.isOk()) {
+            return std::unique_ptr<renderium::Texture::Impl>(
+                new TextureImpl<Api>(std::move(result.unwrap())));
+            // !!! add validation support !!!
+        }
+        return std::unique_ptr<renderium::Texture::Impl>(
+            new TextureImpl<Api>(std::move(result.unwrap())));
+    }
+
 private:
     explicit DeviceImpl(Device device) : device(std::make_shared<Device>(std::move(device))) {}
+
     std::shared_ptr<Device> device;
 
     friend class SurfaceImpl<Api>;

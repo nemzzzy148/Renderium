@@ -5,6 +5,13 @@
 #pragma once
 #include "../src/utils/BitwiseOperations.h"
 
+namespace rhi {
+template<typename Api>
+class TextureImpl;
+template<typename Api>
+class DeviceImpl;
+}
+
 namespace renderium {
 enum class Error;
 
@@ -91,7 +98,7 @@ struct TextureDescriptor {
     uint32_t sampleCount = 1;
     TextureDimension dimension = TextureDimension::D2;
     TextureFormat format;
-    TextureUsages usages;
+    TextureUsages usage;
     std::vector<TextureFormat> viewFormats;
 };
 
@@ -101,20 +108,40 @@ public:
     using TextureViewResult = Result<TextureView, Error>;
     [[nodiscard]] TextureViewResult createView(const TextureViewDescriptor& descriptor);
 
-    const uint32_t width;
-    const uint32_t height;
-    const uint32_t depthOrArrayLayers;
-    const uint32_t mipLevelCount;
-    const uint32_t sampleCount;
-    const TextureDimension dimension;
-    const TextureFormat format;
-    const TextureUsages usages;
+    [[nodiscard]] uint32_t width() const { return impl->width; }
+    [[nodiscard]] uint32_t height() const { return impl->height; }
+    [[nodiscard]] uint32_t depthOrArrayLayers() const { return impl->depthOrArrayLayers; }
+    [[nodiscard]] uint32_t mipLevelCount() const { return impl->mipLevelCount; }
+    [[nodiscard]] uint32_t sampleCount() const { return impl->sampleCount; }
+    [[nodiscard]] TextureDimension dimension() const { return impl->dimension; }
+    [[nodiscard]] TextureFormat format() const { return impl->format; }
+    [[nodiscard]] TextureUsages usage() const { return impl->usage; }
 private:
     struct Impl {
         ~Impl() = default;
+
+        explicit Impl(const TextureDescriptor& descriptor): width(descriptor.size.width), height(descriptor.size.height),
+            depthOrArrayLayers(descriptor.size.depthOrArrayLaters), mipLevelCount(descriptor.mipLevelCount),
+            sampleCount(descriptor.sampleCount), dimension(descriptor.dimension), format(descriptor.format),
+            usage(descriptor.usage) {}
+
+        const uint32_t width;
+        const uint32_t height;
+        const uint32_t depthOrArrayLayers;
+        const uint32_t mipLevelCount;
+        const uint32_t sampleCount;
+        const TextureDimension dimension;
+        const TextureFormat format;
+        const TextureUsages usage;
     };
     std::unique_ptr<Impl> impl;
     explicit Texture(std::unique_ptr<Impl> impl, const TextureDescriptor& descriptor);
+
+    friend class Device;
+    template<typename Api>
+    friend class rhi::TextureImpl;
+    template<typename Api>
+    friend class rhi::DeviceImpl;
 };
 
 }

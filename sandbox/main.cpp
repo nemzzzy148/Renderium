@@ -86,6 +86,9 @@ int main() {
     assert(deviceResult.isOk());
     const auto device = deviceResult.unwrap();
 
+    // example texture and buffer
+    auto buffer = device.
+
     // queue
     const auto queue = device.getQueue();
 

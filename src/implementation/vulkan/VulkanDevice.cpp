@@ -88,7 +88,12 @@ VulkanDevice::BufferResult VulkanDevice::createBuffer(const renderium::BufferDes
 
     auto [size, alignment, memoryTypeBits] = buffer.getMemoryRequirements();
 
-    const vk::MemoryPropertyFlags memoryProperties;
+    // a better optimization would be map write (visible and coherent) and map read(visible and cached)
+    const vk::MemoryPropertyFlags memoryProperties =
+        (utils::any(descriptor.usages & (renderium::BufferUsages::MapRead | renderium::BufferUsages::MapWrite))) ?
+        vk::MemoryPropertyFlagBits::eHostVisible & vk::MemoryPropertyFlagBits::eHostCoherent // true
+        : vk::MemoryPropertyFlagBits::eDeviceLocal; // false
+
 
     // device memory for the image
     const auto allocation = memoryManager.bufferAllocation(alignment, size, memoryTypeBits, memoryProperties);
@@ -114,7 +119,7 @@ VulkanDevice::TextureResult VulkanDevice::createTexture(const renderium::Texture
         .arrayLayers = 1,
         .samples = VulkanConversion::mapSampleCount(descriptor.sampleCount),
         .tiling = vk::ImageTiling::eOptimal,
-        .usage = VulkanConversion::mapTextureUsages(descriptor.usages),
+        .usage = VulkanConversion::mapTextureUsages(descriptor.usage),
         .sharingMode = vk::SharingMode::eExclusive
     };
     auto image = vk::raii::Image(*device, imageInfo);
