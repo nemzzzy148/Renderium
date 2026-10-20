@@ -3,6 +3,8 @@
 //
 
 #pragma once
+#include <functional>
+
 #include "Result.h"
 #include "VulkanDevice.h"
 #include "../Error.h"
@@ -15,13 +17,19 @@ namespace rhi::vulkan {
 
 class VulkanBuffer {
 public:
-    using BufferResult = renderium::Result<VulkanBuffer, VulkanError>;
-    static BufferResult create(const renderium::BufferDescriptor& descriptor);
+    ~VulkanBuffer();
 private:
-    explicit VulkanBuffer(MemoryAllocation allocation);
+    explicit VulkanBuffer(std::shared_ptr<VulkanDevice> device,
+        std::function<void(uint32_t, uint32_t, uint32_t)> destructCallback, const MemoryAllocation& allocation)
+        : destructCallback(std::move(destructCallback)), device(std::move(device)),
+        poolIdx(allocation.poolIndex), nodeIdx(allocation.nodeIndex), memoryType(allocation.memoryType) {}
 
-    MemoryAllocation allocation;
+    std::function<void(uint32_t, uint32_t, uint32_t)> destructCallback;
     std::shared_ptr<VulkanDevice> device;
+
+    const uint32_t poolIdx, nodeIdx, memoryType;
+
+    friend class VulkanDevice;
 };
 
 }

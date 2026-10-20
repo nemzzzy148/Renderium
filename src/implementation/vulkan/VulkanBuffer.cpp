@@ -3,3 +3,11 @@
 //
 
 #include "VulkanBuffer.h"
+
+namespace rhi::vulkan {
+
+VulkanBuffer::~VulkanBuffer() {
+    destructCallback(poolIdx, nodeIdx, memoryType);
+}
+
+}

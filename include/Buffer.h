@@ -4,6 +4,7 @@
 
 #pragma once
 #include <cstddef>
+#include "../src/utils/BitwiseOperations.h"
 
 namespace renderium {
 
@@ -37,3 +38,5 @@ public:
 };
 
 }
+
+template<> struct utils::enumBitwiseOperations<renderium::BufferUsages> : std::true_type {};

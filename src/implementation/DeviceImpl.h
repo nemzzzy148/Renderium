@@ -50,7 +50,7 @@ public:
             new RenderPipelineImpl<Api>(std::move(result.unwrap())));
     }
 private:
-    explicit DeviceImpl(Device device) : device(std::move(device)) {}
+    explicit DeviceImpl(Device device) : device(std::make_shared<Device>(std::move(device))) {}
     std::shared_ptr<Device> device;
 
     friend class SurfaceImpl<Api>;

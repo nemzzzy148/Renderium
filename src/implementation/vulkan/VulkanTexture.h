@@ -27,24 +27,35 @@ private:
 
 class VulkanTexture {
 public:
-    using TextureResult = renderium::Result<VulkanTexture, VulkanError>;
+    VulkanTexture(const VulkanTexture&) = delete;
+    VulkanTexture& operator=(const VulkanTexture&) = delete;
 
-    static TextureResult create(std::shared_ptr<VulkanDevice> device, const renderium::TextureDescriptor& descriptor);
-    VulkanTextureView createView(const renderium::TextureViewDescriptor& descriptor) const;
+    VulkanTexture(VulkanTexture&& other) noexcept
+        : destructCallback(std::move(other.destructCallback)), image(std::move(other.image)),
+          device(std::move(other.device)), poolIdx(other.poolIdx), nodeIdx(other.nodeIdx),
+          memoryType(other.memoryType) {
+        other.destructCallback = {};
+    }
+    VulkanTexture& operator=(VulkanTexture&&) = delete;
+
+    [[nodiscard]] VulkanTextureView createView(const renderium::TextureViewDescriptor& descriptor) const;
 
     ~VulkanTexture();
 
     static constexpr vk::MemoryPropertyFlags memoryProperties = vk::MemoryPropertyFlagBits::eDeviceLocal;
 private:
     explicit VulkanTexture(std::shared_ptr<VulkanDevice> device,
-        std::function<void(uint32_t, uint32_t)> destructCallback, const MemoryAllocation allocation)
-        : destructCallback(std::move(destructCallback)), device(std::move(device)), allocation(allocation) {}
+        std::function<void(uint32_t, uint32_t, uint32_t)> destructCallback, const MemoryAllocation& allocation)
+        : destructCallback(std::move(destructCallback)), device(std::move(device)),
+        poolIdx(allocation.poolIndex), nodeIdx(allocation.nodeIndex), memoryType(allocation.memoryType) {}
 
-    std::function<void(uint32_t, uint32_t)> destructCallback;
+    std::function<void(uint32_t, uint32_t, uint32_t)> destructCallback;
     vk::raii::Image image = nullptr;
     std::shared_ptr<VulkanDevice> device;
 
-    MemoryAllocation allocation;
+    const uint32_t poolIdx, nodeIdx, memoryType;
+
+    friend class VulkanDevice;
 };
 
 }

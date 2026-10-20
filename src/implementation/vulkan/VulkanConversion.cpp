@@ -4,9 +4,11 @@
 
 #include "VulkanConversion.h"
 
+#include "Buffer.h"
 #include "Primitive.h"
 #include "Texture.h"
 #include "Vertex.h"
+#include "Surface.h"
 
 namespace rhi::vulkan {
 vk::SampleCountFlagBits VulkanConversion::mapSampleCount(const uint32_t sampleCount) {
@@ -93,12 +95,20 @@ renderium::PresentMode VulkanConversion::toPresentMode(const vk::PresentModeKHR 
 
 vk::ImageUsageFlags VulkanConversion::mapTextureUsages(const renderium::TextureUsages textureUsages) {
     vk::ImageUsageFlags finalUsage = {};
-    if (utils::any(textureUsages & renderium::TextureUsages::RenderAttachment)) finalUsage |= vk::ImageUsageFlagBits::eColorAttachment;
-    if (utils::any(textureUsages & renderium::TextureUsages::TransientAttachment)) finalUsage |= vk::ImageUsageFlagBits::eTransientAttachment;
-    if (utils::any(textureUsages & renderium::TextureUsages::TextureBinding)) finalUsage |= vk::ImageUsageFlagBits::eSampled;
-    if (utils::any(textureUsages & renderium::TextureUsages::StorageBinding)) finalUsage |= vk::ImageUsageFlagBits::eStorage;
-    if (utils::any(textureUsages & renderium::TextureUsages::CopyDst)) finalUsage |= vk::ImageUsageFlagBits::eTransferDst;
-    if (utils::any(textureUsages & renderium::TextureUsages::CopySrc)) finalUsage |= vk::ImageUsageFlagBits::eTransferSrc;
+
+    if (utils::any(textureUsages & renderium::TextureUsages::RenderAttachment))
+        finalUsage |= vk::ImageUsageFlagBits::eColorAttachment;
+    if (utils::any(textureUsages & renderium::TextureUsages::TransientAttachment))
+        finalUsage |= vk::ImageUsageFlagBits::eTransientAttachment;
+    if (utils::any(textureUsages & renderium::TextureUsages::TextureBinding))
+        finalUsage |= vk::ImageUsageFlagBits::eSampled;
+    if (utils::any(textureUsages & renderium::TextureUsages::StorageBinding))
+        finalUsage |= vk::ImageUsageFlagBits::eStorage;
+    if (utils::any(textureUsages & renderium::TextureUsages::CopyDst))
+        finalUsage |= vk::ImageUsageFlagBits::eTransferDst;
+    if (utils::any(textureUsages & renderium::TextureUsages::CopySrc))
+        finalUsage |= vk::ImageUsageFlagBits::eTransferSrc;
+
     return finalUsage;
 }
 
@@ -158,4 +168,26 @@ vk::CullModeFlagBits VulkanConversion::mapCullMode(const renderium::CullMode cul
     }
 }
 
+vk::BufferUsageFlags VulkanConversion::mapBufferUsages(const renderium::BufferUsages bufferUsages) {
+    vk::BufferUsageFlags finalUsage;
+
+    if (utils::any(bufferUsages & renderium::BufferUsages::CopySrc))
+        finalUsage |= vk::BufferUsageFlagBits::eTransferSrc;
+    if (utils::any(bufferUsages & renderium::BufferUsages::CopyDst))
+        finalUsage |= vk::BufferUsageFlagBits::eTransferDst;
+    if (utils::any(bufferUsages & renderium::BufferUsages::Index))
+        finalUsage |= vk::BufferUsageFlagBits::eIndexBuffer;
+    if (utils::any(bufferUsages & renderium::BufferUsages::Vertex))
+        finalUsage |= vk::BufferUsageFlagBits::eVertexBuffer;
+    if (utils::any(bufferUsages & renderium::BufferUsages::Uniform))
+        finalUsage |= vk::BufferUsageFlagBits::eUniformBuffer;
+    if (utils::any(bufferUsages & renderium::BufferUsages::Storage))
+        finalUsage |= vk::BufferUsageFlagBits::eStorageBuffer;
+    if (utils::any(bufferUsages & renderium::BufferUsages::Indirect))
+        finalUsage |= vk::BufferUsageFlagBits::eIndirectBuffer;
+
+    // The other buffer usages (map read, map write and query resolve) are handled differently.
+
+    return finalUsage;
+}
 }

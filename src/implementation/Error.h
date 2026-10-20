@@ -22,6 +22,8 @@ enum class VulkanError {
     NoCompatibleMemoryTypeFound,
     RanOutOfDeviceMemory,
     RanOutOfHostMemory,
+    InvalidBufferSize,
+    InvalidImageDimensions,
     VertexEntryPointNotFound,
     FragmentEntryPointNotFound
 };

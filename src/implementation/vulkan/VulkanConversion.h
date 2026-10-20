@@ -5,9 +5,8 @@
 #pragma once
 #include <vulkan/vulkan.hpp>
 
-#include "../window/glfw/GlfwWindow.h"
-
 namespace renderium {
+enum class BufferUsages : uint16_t;
 enum class TextureDimension;
 struct Extent3D;
 enum class CullMode;
@@ -15,6 +14,9 @@ enum class FrontFace;
 enum class PrimitiveTopology;
 enum class VertexFormat;
 enum class VertexStepMode;
+enum class TextureFormat;
+enum class PresentMode;
+enum class TextureUsages : uint8_t;
 }
 
 namespace rhi::vulkan {
@@ -35,6 +37,7 @@ public:
     static vk::PrimitiveTopology mapPrimitiveTopology(renderium::PrimitiveTopology primitiveTopology);
     static vk::FrontFace mapFrontFace(renderium::FrontFace frontFace);
     static vk::CullModeFlagBits mapCullMode(renderium::CullMode cullMode);
+    static vk::BufferUsageFlags mapBufferUsages(renderium::BufferUsages bufferUsages);
 };
 
 }

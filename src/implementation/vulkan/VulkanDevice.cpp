@@ -6,8 +6,13 @@
 #include <ranges>
 
 #include "Device.h"
+#include "Texture.h"
+#include "Buffer.h"
 #include "VulkanAdapter.h"
+#include "VulkanConversion.h"
 #include "VulkanInstance.h"
+#include "VulkanTexture.h"
+#include "VulkanBuffer.h"
 #include "../Error.h"
 
 namespace rhi::vulkan {
@@ -64,7 +69,69 @@ VulkanDevice::DeviceResult VulkanDevice::create(std::shared_ptr<VulkanInstance> 
     auto [device, queueFamilyIndex] = deviceResult.unwrap();
 
     return DeviceResult::ok(VulkanDevice(
-        std::move(instance), std::move(physicalDevice), std::move(device), queueFamilyIndex));
+        std::move(instance), std::move(physicalDevice),
+        std::make_unique<vk::raii::Device>(std::move(device)), queueFamilyIndex));
+}
+
+// --- texture and buffer creation ---
+
+VulkanDevice::BufferResult VulkanDevice::createBuffer(const renderium::BufferDescriptor &descriptor) {
+    if (descriptor.size == 0) return BufferResult::err(VulkanError::InvalidBufferSize);
+
+    const vk::BufferUsageFlags usage = VulkanConversion::mapBufferUsages(descriptor.usages);
+    const vk::BufferCreateInfo bufferInfo {
+        .size = descriptor.size,
+        .usage = usage,
+        .sharingMode = vk::SharingMode::eExclusive
+    };
+    auto buffer = vk::raii::Buffer(*device, bufferInfo);
+
+    auto [size, alignment, memoryTypeBits] = buffer.getMemoryRequirements();
+
+    const vk::MemoryPropertyFlags memoryProperties;
+
+    // device memory for the image
+    const auto allocation = memoryManager.bufferAllocation(alignment, size, memoryTypeBits, memoryProperties);
+    if (!allocation.valid) {
+        BufferResult::err(allocation.error);
+    }
+
+    return BufferResult::ok(VulkanBuffer(shared_from_this(),
+        [this](const uint32_t poolIdx, const uint32_t nodeIdx, const uint32_t memoryType) {
+        memoryManager.freeBuffer(poolIdx, nodeIdx, memoryType);
+    }, allocation));
+}
+
+VulkanDevice::TextureResult VulkanDevice::createTexture(const renderium::TextureDescriptor &descriptor) {
+    if (descriptor.size.height == 0 || descriptor.size.width == 0)
+        return TextureResult::err(VulkanError::InvalidImageDimensions);
+
+    const vk::ImageCreateInfo imageInfo {
+        .imageType = VulkanConversion::mapTextureDimension(descriptor.dimension),
+        .format = VulkanConversion::mapTextureFormat(descriptor.format),
+        .extent = VulkanConversion::mapExtent3D(descriptor.size),
+        .mipLevels = descriptor.mipLevelCount,
+        .arrayLayers = 1,
+        .samples = VulkanConversion::mapSampleCount(descriptor.sampleCount),
+        .tiling = vk::ImageTiling::eOptimal,
+        .usage = VulkanConversion::mapTextureUsages(descriptor.usages),
+        .sharingMode = vk::SharingMode::eExclusive
+    };
+    auto image = vk::raii::Image(*device, imageInfo);
+
+    auto [size, alignment, memoryTypeBits] = image.getMemoryRequirements();
+
+    // device memory for the image
+    const auto allocation = memoryManager.textureAllocation(alignment, size,
+        memoryTypeBits, VulkanTexture::memoryProperties);
+    if (!allocation.valid) {
+        TextureResult::err(allocation.error);
+    }
+
+    return TextureResult::ok(VulkanTexture(shared_from_this(),
+    [this](const uint32_t poolIdx, const uint32_t nodeIdx, const uint32_t memoryType) {
+        memoryManager.freeTexture(poolIdx, nodeIdx, memoryType); // destructor callback
+    }, allocation));
 }
 
 VulkanDevice::MemoryManager::MemoryManager(const vk::raii::PhysicalDevice& physicalDevice, const vk::raii::Device& device)
@@ -90,7 +157,7 @@ MemoryAllocation VulkanDevice::MemoryManager::textureAllocation(const uint32_t a
     return allocate(textureHeaps[*memoryType], alignment, size, *memoryType);
 }
 
-void VulkanDevice::MemoryManager::freeBuffer(const int32_t poolIndex, const uint32_t nodeIndex,
+void VulkanDevice::MemoryManager::freeBuffer(const uint32_t poolIndex, const uint32_t nodeIndex,
         const uint32_t memoryType) {
     if (!bufferHeaps.contains(memoryType)) return; // no allocation made with that memory type
 
@@ -155,7 +222,7 @@ MemoryAllocation VulkanDevice::MemoryManager::allocate(Heap &heap, const uint32_
         auto allocationResult = allocateDeviceMemory(size, memoryType);
 
         if (!allocationResult.isOk()) {
-            return {}; // allocation failed (no vram left, ...)
+            return MemoryAllocation(allocationResult.unwrapError());
         }
 
         const uint32_t poolIdx = tlsf.createPool({size});
@@ -165,10 +232,10 @@ MemoryAllocation VulkanDevice::MemoryManager::allocate(Heap &heap, const uint32_
         memory.insert_or_assign(
             {poolIdx, fitAllocation.nodeIndex}, std::move(allocationResult.unwrap()));
 
-        return {poolIdx, fitAllocation.nodeIndex, true};
+        return {poolIdx, fitAllocation.nodeIndex, memoryType, true};
     }
 
-    return {allocation.poolIndex, allocation.nodeIndex, true};
+    return {allocation.poolIndex, allocation.nodeIndex, memoryType, true};
 }
 
 }
