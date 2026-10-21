@@ -6,8 +6,11 @@
 #include <algorithm>
 
 #include "Texture.h"
+#include "DeviceErrorState.h"
 
 namespace rhi {
+
+bool validateTextureDescriptor(const DeviceErrorState& errorState, const renderium::TextureDescriptor& descriptor);
 
 template<typename Api>
 class TextureImpl : public renderium::Texture::Impl {

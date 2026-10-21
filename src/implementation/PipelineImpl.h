@@ -6,16 +6,17 @@
 #include <algorithm>
 #include <Error.h>
 
-namespace rhi {
+#include "Pipeline.h"
+#include "ShaderCompiler.h"
 
-inline const renderium::shader::ShaderEntryPoint* findEntryPoint(const std::vector<renderium::shader::ShaderEntryPoint>& entryPoints,
-                                                                 const std::string& functionName) {
-    const auto it = std::ranges::find_if(entryPoints, [functionName](const renderium::shader::ShaderEntryPoint& eP) {
-        return eP.name == functionName;
-    });
-    if (it == entryPoints.end()) return nullptr;
-    return &*it;
-}
+namespace rhi {
+class DeviceErrorState;
+
+const renderium::shader::ShaderEntryPoint* findEntryPoint(
+    const std::vector<renderium::shader::ShaderEntryPoint>& entryPoints, const std::string& functionName);
+
+bool validateRenderPipelineDescriptor(DeviceErrorState& devicErrorState,
+    const renderium::RenderPipelineDescriptor& descriptor);
 
 // render pipeline
 

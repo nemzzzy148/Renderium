@@ -4,10 +4,14 @@
 
 #pragma once
 #include <algorithm>
+#include <optional>
 
 #include "Buffer.h"
 
 namespace rhi {
+class DeviceErrorState;
+
+bool validateBufferDescriptor(DeviceErrorState& errorState, const renderium::BufferDescriptor& descriptor);
 
 template<typename Api>
 class BufferImpl : public renderium::Buffer::Impl {
