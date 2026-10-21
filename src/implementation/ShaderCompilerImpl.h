@@ -20,22 +20,22 @@ class ShaderCompilerImpl : public renderium::shader::ShaderCompiler::Impl {
 public:
     using ShaderCompiler = Api::ShaderCompiler;
 
-    using ShaderCompilerResult = renderium::Result<std::unique_ptr<ShaderCompilerImpl>, renderium::Error>;
+    using ShaderCompilerResult = renderium::Result<std::unique_ptr<ShaderCompilerImpl>, renderium::RequestError>;
     static ShaderCompilerResult create(const renderium::shader::ShadingOutputLanguage outputLanguage) {
         auto result = ShaderCompiler::create(outputLanguage);
         if (!result.isOk()) {
-            return ShaderCompilerResult::err(renderium::Error::FailedToCreateShaderCompiler);
+            return ShaderCompilerResult::err(renderium::RequestError::FailedToCreateShaderCompiler);
         }
         return ShaderCompilerResult::ok(
             std::unique_ptr<ShaderCompilerImpl>(new ShaderCompilerImpl(std::move(result.unwrap()))));
     }
     explicit ShaderCompilerImpl(ShaderCompiler shaderCompiler) : shaderCompiler(std::move(shaderCompiler)) {}
 
-    using ShaderResult = renderium::Result<renderium::shader::CompiledShader, renderium::Error>;
+    using ShaderResult = renderium::Result<renderium::shader::CompiledShader, renderium::RequestError>;
     ShaderResult compileShader(const std::string &shaderCode) override {
         auto result = shaderCompiler.compileShader(shaderCode);
         if (!result.isOk()) {
-            return ShaderResult::err(renderium::Error::ShaderCompilationError);
+            return ShaderResult::err(renderium::RequestError::ShaderCompilationError);
         }
         return ShaderResult::ok(std::move(result.unwrap()));
     }

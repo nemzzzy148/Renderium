@@ -9,6 +9,6 @@
 namespace rhi::vulkan {
 
 VulkanQueue::VulkanQueue(const VulkanDevice& device)
-    : queue(vk::raii::Queue(device.device, device.getQueueFamilyIndex(), 0)) {}
+    : queue(vk::raii::Queue(device.getDevice(), device.getQueueFamilyIndex(), 0)) {}
 
 }

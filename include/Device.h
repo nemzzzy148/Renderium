@@ -67,7 +67,7 @@ private:
         virtual std::unique_ptr<Buffer::Impl> createBuffer(const BufferDescriptor& descriptor) = 0;
         virtual std::unique_ptr<Texture::Impl> createTexture(const TextureDescriptor& descriptor) = 0;
 
-        virtual Result<std::unique_ptr<Queue::Impl>, Error> createQueue() = 0;
+        virtual Result<std::unique_ptr<Queue::Impl>, RequestError> createQueue() = 0;
     };
     explicit Device(std::unique_ptr<Impl> impl, std::unique_ptr<Queue::Impl> queueImpl,
         std::unique_ptr<shader::ShaderCompiler> shaderCompiler) : impl(std::move(impl)),

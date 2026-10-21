@@ -17,7 +17,7 @@ class InstanceImpl;
 }
 
 namespace renderium {
-enum class Error;
+enum class RequestError;
 class Window;
 
 struct InstanceDescriptor {
@@ -27,20 +27,20 @@ struct InstanceDescriptor {
 
 class Instance {
 public:
-    using InstanceResult = Result<Instance, Error>;
+    using InstanceResult = Result<Instance, RequestError>;
     static InstanceResult create(const InstanceDescriptor& descriptor);
 
-    using SurfaceResult = Result<Surface, Error>;
+    using SurfaceResult = Result<Surface, RequestError>;
     [[nodiscard]] SurfaceResult createSurface(const Window& window) const;
 
-    using AdapterResult = Result<Adapter, Error>;
+    using AdapterResult = Result<Adapter, RequestError>;
     [[nodiscard]] AdapterResult requestAdapter(const RequestAdapterOptions& options) const;
 private:
     struct Impl {
         virtual ~Impl() = default;
 
-        virtual Result<std::unique_ptr<Surface::Impl>, Error> createSurface(const Window& window) = 0;
-        virtual Result<std::unique_ptr<Adapter::Impl>, Error> requestAdapter(const RequestAdapterOptions& options) = 0;
+        virtual Result<std::unique_ptr<Surface::Impl>, RequestError> createSurface(const Window& window) = 0;
+        virtual Result<std::unique_ptr<Adapter::Impl>, RequestError> requestAdapter(const RequestAdapterOptions& options) = 0;
     };
 
     explicit Instance(std::unique_ptr<Impl> impl, const Backend backend)

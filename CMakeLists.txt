@@ -58,6 +58,7 @@ add_library(Renderium SHARED
         src/implementation/vulkan/VulkanBuffer.cpp
         src/implementation/vulkan/VulkanBuffer.h
         src/utils/Hashes.h
+        src/implementation/DeviceImpl.cpp
 )
 
 target_include_directories( Renderium PUBLIC

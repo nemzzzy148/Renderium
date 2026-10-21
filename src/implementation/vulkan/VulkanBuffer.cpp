@@ -7,7 +7,9 @@
 namespace rhi::vulkan {
 
 VulkanBuffer::~VulkanBuffer() {
-    destructCallback(poolIdx, nodeIdx, memoryType);
+    if (destructCallback) {
+        destructCallback(poolIdx, nodeIdx, memoryType);
+    }
 }
 
 }

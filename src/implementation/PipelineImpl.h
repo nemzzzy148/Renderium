@@ -21,9 +21,14 @@ inline const renderium::shader::ShaderEntryPoint* findEntryPoint(const std::vect
 
 template<typename Api>
 class RenderPipelineImpl : renderium::RenderPipeline::Impl {
+public:
     using Pipeline = Api::RenderPipeline;
+
+    [[nodiscard]] bool isValid() const { return pipeline.has_value(); }
+private:
+    explicit RenderPipelineImpl() : pipeline(std::nullopt) {}
     explicit RenderPipelineImpl(Pipeline pipeline) : pipeline(std::move(pipeline)) {}
-    Pipeline pipeline;
+    std::optional<Pipeline> pipeline;
 
     friend class DeviceImpl<Api>;
 };

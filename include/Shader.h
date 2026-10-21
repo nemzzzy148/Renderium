@@ -3,6 +3,7 @@
 //
 
 #pragma once
+#include <optional>
 #include <string>
 
 #include "ShaderCompiler.h"
@@ -20,10 +21,12 @@ struct ShaderModuleDescriptor {
 
 class ShaderModule {
 public:
-    const shader::CompiledShader& getCompiledShader() const { return compiledShader; }
+    [[nodiscard]] const shader::CompiledShader& getCompiledShader() const { return *compiledShader; }
+
+    [[nodiscard]] bool isValid() const { return compiledShader.has_value(); }
 private:
     explicit ShaderModule(shader::CompiledShader compiledShader) : compiledShader(std::move(compiledShader)) {}
-    shader::CompiledShader compiledShader;
+    std::optional<shader::CompiledShader> compiledShader;
 
     friend class Device;
     template<typename Api>

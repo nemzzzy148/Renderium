@@ -9,7 +9,7 @@
 namespace renderium {
 enum class PresentMode;
 enum class TextureFormat;
-enum class Error;
+enum class RequestError;
 }
 
 namespace rhi {

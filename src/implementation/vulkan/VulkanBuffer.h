@@ -4,6 +4,7 @@
 
 #pragma once
 #include <functional>
+#include <utility>
 
 #include "Result.h"
 #include "VulkanDevice.h"
@@ -17,6 +18,14 @@ namespace rhi::vulkan {
 
 class VulkanBuffer {
 public:
+    VulkanBuffer(const VulkanBuffer&) = delete;
+    VulkanBuffer& operator=(const VulkanBuffer&) = delete;
+
+    VulkanBuffer(VulkanBuffer&& other) noexcept
+        : destructCallback(std::move(other.destructCallback)), device(std::move(other.device)),
+          poolIdx(other.poolIdx), nodeIdx(other.nodeIdx), memoryType(other.memoryType) {}
+    VulkanBuffer& operator=(VulkanBuffer&&) = delete;
+
     ~VulkanBuffer();
 private:
     explicit VulkanBuffer(std::shared_ptr<VulkanDevice> device,

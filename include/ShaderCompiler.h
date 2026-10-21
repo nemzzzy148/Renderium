@@ -11,7 +11,7 @@
 #include "Result.h"
 
 namespace renderium {
-enum class Error;
+enum class RequestError;
 }
 
 namespace rhi {
@@ -61,7 +61,7 @@ struct CompiledShader {
 
 class ShaderCompiler {
 public:
-    using ShaderCompilerResult = Result<ShaderCompiler, Error>;
+    using ShaderCompilerResult = Result<ShaderCompiler, RequestError>;
     static ShaderCompilerResult create(ShadingLanguage language, ShadingOutputLanguage outputLanguage);
 
     [[nodiscard]] CompiledShader compileShader(const std::string& shaderCode) const;
@@ -70,7 +70,7 @@ public:
     struct Impl {
         virtual ~Impl() = default;
 
-        virtual Result<CompiledShader, Error> compileShader(const std::string& shaderCode);
+        virtual Result<CompiledShader, RequestError> compileShader(const std::string& shaderCode);
     };
     explicit ShaderCompiler(std::unique_ptr<Impl> shaderCompiler) : impl(std::move(shaderCompiler)) {}
 private:

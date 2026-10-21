@@ -17,12 +17,12 @@ ShaderCompiler::ShaderCompilerResult ShaderCompiler::create(const ShadingLanguag
         case ShadingLanguage::SLANG: {
             auto result = rhi::ShaderCompilerImpl<rhi::shader::SlangApi>::create(outputLanguage);
             if (!result.isOk()) {
-                return ShaderCompilerResult::err(Error::FailedToCreateShaderCompiler);
+                return ShaderCompilerResult::err(RequestError::FailedToCreateShaderCompiler);
             }
             return ShaderCompilerResult::ok(ShaderCompiler(std::move(result.unwrap())));
         }
     }
-    return ShaderCompilerResult::err(Error::UnknownShadingLanguage);
+    return ShaderCompilerResult::err(RequestError::UnknownShadingLanguage);
 }
 
 CompiledShader ShaderCompiler::compileShader(const std::string &shaderCode) const {
@@ -33,8 +33,8 @@ CompiledShader ShaderCompiler::compileShader(const std::string &shaderCode) cons
     return result.unwrap();
 }
 
-Result<CompiledShader, Error> ShaderCompiler::Impl::compileShader(const std::string &) {
-    return Result<CompiledShader, Error>::err(Error::ShaderCompilationError);
+Result<CompiledShader, RequestError> ShaderCompiler::Impl::compileShader(const std::string &) {
+    return Result<CompiledShader, RequestError>::err(RequestError::ShaderCompilationError);
 }
 
 }

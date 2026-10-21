@@ -15,7 +15,7 @@ class DeviceImpl;
 
 namespace renderium {
 class Device;
-enum class Error;
+enum class RequestError;
 class CommandBuffer;
 
 class Queue {

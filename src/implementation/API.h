@@ -6,6 +6,7 @@
 #include "Window.h"
 #include "ShaderCompiler.h"
 #include "vulkan/vulkan.h"
+#include "vulkan/VulkanConversion.h"
 
 namespace rhi {
 
@@ -21,6 +22,7 @@ class VulkanInstance;
 enum class VulkanError;
 class VulkanRenderPipeline;
 class VulkanComputePipeline;
+class VulkanBuffer;
 class VulkanTexture;
 class VulkanTextureView;
 }
@@ -35,8 +37,12 @@ struct VulkanApi {
     using Error = vulkan::VulkanError;
     using RenderPipeline = vulkan::VulkanRenderPipeline;
     using ComputePipeline = vulkan::VulkanComputePipeline;
+    using Buffer = vulkan::VulkanBuffer;
     using Texture = vulkan::VulkanTexture;
     using TextureView = vulkan::VulkanTextureView;
+
+    decltype(&vulkan::VulkanConversion::toError) toError = &vulkan::VulkanConversion::toError;
+    decltype(&vulkan::VulkanConversion::toRequestError) toRequestError = &vulkan::VulkanConversion::toRequestError;
 };
 
 // --- Window API ---

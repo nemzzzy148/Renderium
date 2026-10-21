@@ -19,11 +19,11 @@ class AdapterImpl : public renderium::Adapter::Impl {
 public:
     using Adapter = Api::Adapter;
 
-    using DeviceResult = renderium::Result<std::unique_ptr<renderium::Device::Impl>, renderium::Error>;
+    using DeviceResult = renderium::Result<std::unique_ptr<renderium::Device::Impl>, renderium::RequestError>;
     DeviceResult requestDevice(const renderium::DeviceDescriptor &descriptor) override {
         auto result = adapter.requestDevice(descriptor);
         if (!result.isOk()) {
-            return DeviceResult::err(renderium::Error::RequestDeviceError);
+            return DeviceResult::err(renderium::RequestError::RequestDeviceError);
         }
         return DeviceResult::ok(
             std::unique_ptr<renderium::Device::Impl>(new DeviceImpl<Api>(std::move(result.unwrap()))));

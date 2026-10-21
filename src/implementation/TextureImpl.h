@@ -14,9 +14,11 @@ class TextureImpl : public renderium::Texture::Impl {
 public:
     using Texture = Api::Texture;
 private:
-    explicit TextureImpl(Texture texture) : texture(std::move(texture)) {}
-
+    explicit TextureImpl(Texture texture, const renderium::TextureDescriptor& descriptor)
+        : Impl(descriptor), texture(std::move(texture)) {}
     Texture texture;
+
+    friend class DeviceImpl<Api>;
 };
 
 }

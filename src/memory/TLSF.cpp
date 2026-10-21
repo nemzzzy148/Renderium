@@ -14,9 +14,7 @@ TLSF::TLSF(const uint32_t defaultAlignment) : defaultAlignment(defaultAlignment)
     poolHeads.assign(64, 0);
 }
 
-TLSF::TLSF() : defaultAlignment(0) {
-    TLSF(0);
-}
+TLSF::TLSF() : TLSF(1) {}
 
 uint32_t TLSF::createPool(const TLSFPoolDescriptor& descriptor) {
     if (descriptor.size == 0) {

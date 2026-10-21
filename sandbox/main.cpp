@@ -87,7 +87,11 @@ int main() {
     const auto device = deviceResult.unwrap();
 
     // example texture and buffer
-    auto buffer = device.
+    auto buffer = device.createBuffer({2048, renderium::BufferUsages::Vertex, false});
+
+    auto texture = device.createTexture({{512, 512, 1}, 1, 1,
+        renderium::TextureDimension::D2, renderium::TextureFormat::RGBA8Unorm,
+        renderium::TextureUsages::StorageBinding, {renderium::TextureFormat::RGBA8Unorm}});
 
     // queue
     const auto queue = device.getQueue();
@@ -107,23 +111,23 @@ int main() {
     // shader
     auto shaderModule = device.createShaderModule({.code = slangShaderCode}); // can be dead
 
-    // pipeline
-    auto renderPipeline = device.createRenderPipeline({ // can be dead
-        .vertex = {
-            .module = shaderModule,
-            .entryPoint = "vertMain"
-        },
-        .fragment = {
-            .module = shaderModule,
-            .entryPoint = "fragMain",
-            .targets = {{formats[0]}}
-        },
-        .primitive = {
-            .topology = renderium::PrimitiveTopology::TriangleList,
-            .frontFace = renderium::FrontFace::CCW,
-            .cullMode = renderium::CullMode::None
-        }
-    });
+    // pipeline // seg fault with pipeline, shader is invalid
+    // auto renderPipeline = device.createRenderPipeline({ // can be dead
+    //     .vertex = {
+    //         .module = shaderModule,
+    //         .entryPoint = "vertMain"
+    //     },
+    //     .fragment = {
+    //         .module = shaderModule,
+    //         .entryPoint = "fragMain",s
+    //         .targets = {{formats[0]}}
+    //     },
+    //     .primitive = {
+    //         .topology = renderium::PrimitiveTopology::TriangleList,
+    //         .frontFace = renderium::FrontFace::CCW,
+    //         .cullMode = renderium::CullMode::None
+    //     }
+    // });
 
     // command encoder
 

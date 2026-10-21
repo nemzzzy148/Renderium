@@ -6,6 +6,7 @@
 #include <vulkan/vulkan.hpp>
 
 namespace renderium {
+enum class RequestError;
 enum class BufferUsages : uint16_t;
 enum class TextureDimension;
 struct Extent3D;
@@ -20,6 +21,7 @@ enum class TextureUsages : uint8_t;
 }
 
 namespace rhi::vulkan {
+enum class VulkanError;
 
 class VulkanConversion {
 public:
@@ -38,6 +40,10 @@ public:
     static vk::FrontFace mapFrontFace(renderium::FrontFace frontFace);
     static vk::CullModeFlagBits mapCullMode(renderium::CullMode cullMode);
     static vk::BufferUsageFlags mapBufferUsages(renderium::BufferUsages bufferUsages);
+
+    // error
+    static renderium::Error toError(VulkanError errorCode);
+    static renderium::RequestError toRequestError(VulkanError errorCode);
 };
 
 }

@@ -6,7 +6,18 @@
 
 namespace renderium {
 
-enum class Error {
+enum class ErrorFilter{
+    Validation,
+    OutOfMemory,
+    Internal
+};
+
+struct Error {
+    ErrorFilter type;
+    std::string message;
+};
+
+enum class RequestError {
     UnhandledException,
     InstanceCreateError,
     RequestAdapterError,

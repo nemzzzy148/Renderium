@@ -28,13 +28,13 @@ struct RequestAdapterOptions {
 
 class Adapter {
 public:
-    using DeviceResult = Result<Device, Error>;
+    using DeviceResult = Result<Device, RequestError>;
     [[nodiscard]] DeviceResult requestDevice(const DeviceDescriptor& descriptor) const;
 private:
     struct Impl {
         virtual ~Impl() = default;
 
-        virtual Result<std::unique_ptr<Device::Impl>, Error> requestDevice(const DeviceDescriptor& descriptor) = 0;
+        virtual Result<std::unique_ptr<Device::Impl>, RequestError> requestDevice(const DeviceDescriptor& descriptor) = 0;
     };
     std::unique_ptr<Impl> impl;
     Backend backend;

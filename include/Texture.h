@@ -3,6 +3,10 @@
 //
 
 #pragma once
+#include <memory>
+#include <utility>
+
+#include "Result.h"
 #include "../src/utils/BitwiseOperations.h"
 
 namespace rhi {
@@ -13,7 +17,7 @@ class DeviceImpl;
 }
 
 namespace renderium {
-enum class Error;
+enum class RequestError;
 
 struct Extent3D {
     uint32_t width;
@@ -105,7 +109,7 @@ struct TextureDescriptor {
 
 class Texture {
 public:
-    using TextureViewResult = Result<TextureView, Error>;
+    using TextureViewResult = Result<TextureView, RequestError>;
     [[nodiscard]] TextureViewResult createView(const TextureViewDescriptor& descriptor);
 
     [[nodiscard]] uint32_t width() const { return impl->width; }
@@ -135,7 +139,8 @@ private:
         const TextureUsages usage;
     };
     std::unique_ptr<Impl> impl;
-    explicit Texture(std::unique_ptr<Impl> impl, const TextureDescriptor& descriptor);
+    explicit Texture(std::unique_ptr<Impl> impl, const TextureDescriptor&)
+        : impl(std::move(impl)) {}
 
     friend class Device;
     template<typename Api>

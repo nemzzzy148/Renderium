@@ -9,8 +9,8 @@
 #include <vulkan/vulkan_raii.hpp>
 
 #include "Result.h"
-#include "../DeviceImpl.h"
 #include "../API.h"
+#include "../Error.h"
 #include "../../memory/TLSF.h"
 #include "../../utils/Hashes.h"
 
@@ -54,6 +54,9 @@ class VulkanDevice : public std::enable_shared_from_this<VulkanDevice> {
 public:
 
     using DeviceResult = renderium::Result<VulkanDevice, VulkanError>;
+    VulkanDevice(VulkanDevice&& other);
+    VulkanDevice& operator=(VulkanDevice&&) = delete;
+
     static DeviceResult create(std::shared_ptr<VulkanInstance> instance,
         std::shared_ptr<vk::raii::PhysicalDevice> physicalDevice,
         const renderium::DeviceDescriptor& descriptor, bool surfaceSupport);
@@ -82,6 +85,11 @@ private:
     class MemoryManager {
     public:
         explicit MemoryManager(const vk::raii::PhysicalDevice& physicalDevice, const vk::raii::Device& device);
+        MemoryManager(MemoryManager&& other, const vk::raii::PhysicalDevice& physicalDevice,
+            const vk::raii::Device& device);
+        MemoryManager(const MemoryManager&) = delete;
+        MemoryManager& operator=(const MemoryManager&) = delete;
+        MemoryManager& operator=(MemoryManager&&) = delete;
 
         MemoryAllocation bufferAllocation(uint32_t alignment, uint64_t size,
             uint32_t typeFilter, vk::MemoryPropertyFlags memoryProperties);

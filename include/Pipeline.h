@@ -22,7 +22,7 @@ class DeviceImpl;
 }
 
 namespace renderium {
-enum class Error;
+enum class RequestError;
 
 // for descriptors, IMPLEMENT
 

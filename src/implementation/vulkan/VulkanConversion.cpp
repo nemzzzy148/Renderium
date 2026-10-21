@@ -9,6 +9,7 @@
 #include "Texture.h"
 #include "Vertex.h"
 #include "Surface.h"
+#include "Error.h"
 
 namespace rhi::vulkan {
 vk::SampleCountFlagBits VulkanConversion::mapSampleCount(const uint32_t sampleCount) {
@@ -189,6 +190,14 @@ vk::BufferUsageFlags VulkanConversion::mapBufferUsages(const renderium::BufferUs
     // The other buffer usages (map read, map write and query resolve) are handled differently.
 
     return finalUsage;
+}
+
+renderium::Error VulkanConversion::toError(VulkanError errorCode) {
+
+}
+
+renderium::RequestError VulkanConversion::toRequestError(VulkanError errorCode) {
+
 }
 
 }

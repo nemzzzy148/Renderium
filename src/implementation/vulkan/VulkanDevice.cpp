@@ -59,6 +59,12 @@ VulkanDevice::VulkanDeviceResult VulkanDevice::createDevice(const vk::raii::Phys
         {std::move(vk::raii::Device(physicalDevice, deviceCreateInfo)), queueFamilyIndex});
 }
 
+VulkanDevice::VulkanDevice(VulkanDevice&& other)
+    : std::enable_shared_from_this<VulkanDevice>(), instance(std::move(other.instance)),
+      physicalDevice(std::move(other.physicalDevice)), queueFamilyIndex(other.queueFamilyIndex),
+      device(std::move(other.device)), memoryManager(std::move(other.memoryManager),
+          *physicalDevice, *device) {}
+
 VulkanDevice::DeviceResult VulkanDevice::create(std::shared_ptr<VulkanInstance> instance,
         std::shared_ptr<vk::raii::PhysicalDevice> physicalDevice,
         const renderium::DeviceDescriptor& descriptor,
@@ -142,6 +148,11 @@ VulkanDevice::TextureResult VulkanDevice::createTexture(const renderium::Texture
 VulkanDevice::MemoryManager::MemoryManager(const vk::raii::PhysicalDevice& physicalDevice, const vk::raii::Device& device)
     : physicalDevice(physicalDevice), device(device) {}
 
+VulkanDevice::MemoryManager::MemoryManager(MemoryManager&& other,
+    const vk::raii::PhysicalDevice& physicalDevice, const vk::raii::Device& device)
+    : physicalDevice(physicalDevice), device(device), bufferHeaps(std::move(other.bufferHeaps)),
+      textureHeaps(std::move(other.textureHeaps)) {}
+
 MemoryAllocation VulkanDevice::MemoryManager::bufferAllocation(const uint32_t alignment, const uint64_t size,
     const uint32_t typeFilter, const vk::MemoryPropertyFlags memoryProperties) {
     if (size == 0) return {};
@@ -202,10 +213,10 @@ VulkanDevice::MemoryManager::DeviceMemoryResult VulkanDevice::MemoryManager::all
     const auto result = (*device).allocateMemory(&allocInfo, nullptr, &memory);
 
     if (result == vk::Result::eErrorOutOfDeviceMemory) {
-        return DeviceMemoryResult::err(VulkanError::RanOutOfDeviceMemory);
+        return DeviceMemoryResult::err(VulkanError::OutOfDeviceMemory);
     }
     if (result == vk::Result::eErrorOutOfHostMemory) {
-        return DeviceMemoryResult::err(VulkanError::RanOutOfHostMemory);
+        return DeviceMemoryResult::err(VulkanError::OutOfHostMemory);
     }
 
     return DeviceMemoryResult::ok(vk::raii::DeviceMemory(device, memory));

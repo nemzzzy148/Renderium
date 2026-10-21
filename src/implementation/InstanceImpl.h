@@ -34,7 +34,7 @@ public:
             new InstanceImpl(std::make_shared<Instance>(std::move(result.unwrap())))));
     }
 
-    using AdapterResult = renderium::Result<std::unique_ptr<renderium::Adapter::Impl>, renderium::Error>;
+    using AdapterResult = renderium::Result<std::unique_ptr<renderium::Adapter::Impl>, renderium::RequestError>;
     AdapterResult requestAdapter(const renderium::RequestAdapterOptions& options) override {
         AdapterImplOptions<Api> adapterOptions {
             .surface = options.compatibleSurface ?
@@ -43,17 +43,17 @@ public:
         };
         auto result = Api::Adapter::create(instance, adapterOptions);
         if (!result.isOk()) {
-            return AdapterResult::err(renderium::Error::RequestAdapterError);
+            return AdapterResult::err(renderium::RequestError::RequestAdapterError);
         }
         return AdapterResult::ok(
             std::unique_ptr<renderium::Adapter::Impl>(new AdapterImpl<Api>(std::move(result.unwrap()))));
     }
 
-    using SurfaceResult = renderium::Result<std::unique_ptr<renderium::Surface::Impl>, renderium::Error>;
+    using SurfaceResult = renderium::Result<std::unique_ptr<renderium::Surface::Impl>, renderium::RequestError>;
     SurfaceResult createSurface(const renderium::Window& window) override {
         auto result = Api::Surface::create(*instance, window);
         if (!result.isOk()) {
-            return SurfaceResult::err(renderium::Error::SurfaceCreateError);
+            return SurfaceResult::err(renderium::RequestError::SurfaceCreateError);
         }
         return SurfaceResult::ok(
             std::unique_ptr<renderium::Surface::Impl>(new SurfaceImpl<Api>(std::move(result.unwrap()))));

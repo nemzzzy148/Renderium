@@ -11,19 +11,12 @@ namespace rhi::vulkan {
 
 // --- texture view ---
 
-VulkanTextureView VulkanTextureView::create(const vk::raii::Image &image,
-    const renderium::TextureViewDescriptor &descriptor) {
-
-}
-
 // --- texture ---
 
-VulkanTextureView VulkanTexture::createView(const renderium::TextureViewDescriptor &descriptor) const {
-    return VulkanTextureView::create(image, descriptor);
-}
-
 VulkanTexture::~VulkanTexture() {
-    destructCallback(poolIdx, nodeIdx, memoryType); // calls the origin device's freeTexture() func
+    if (destructCallback) {
+        destructCallback(poolIdx, nodeIdx, memoryType); // calls the origin device's freeTexture() func
+    }
 }
 
 }
