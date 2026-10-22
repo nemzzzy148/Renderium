@@ -8,11 +8,8 @@
 #include "BufferImpl.h"
 #include "DeviceErrorState.h"
 #include "PipelineImpl.h"
+#include "ShaderCompilerImpl.h"
 #include "TextureImpl.h"
-
-namespace shader {
-struct IShaderCompiler;
-}
 
 namespace renderium {
 struct DeviceDescriptor;
@@ -33,14 +30,17 @@ public:
     using QueueResult = renderium::Result<std::unique_ptr<renderium::Queue::Impl>, renderium::RequestError>;
     QueueResult createQueue() override;
 
+    renderium::shader::CompiledShader compileShader(const std::string &code) override;
     std::unique_ptr<renderium::RenderPipeline::Impl> createRenderPipeline(
         const renderium::RenderPipelineDescriptor& descriptor) override;
     std::unique_ptr<renderium::Buffer::Impl> createBuffer(const renderium::BufferDescriptor &descriptor) override;
     std::unique_ptr<renderium::Texture::Impl> createTexture(const renderium::TextureDescriptor &descriptor) override;
 
 private:
-    explicit DeviceImpl(Device device) : device(std::make_shared<Device>(std::move(device))) {}
+    explicit DeviceImpl(Device device, std::unique_ptr<IShaderCompiler> shaderCompiler)
+        : shaderCompiler(std::move(shaderCompiler)), device(std::make_shared<Device>(std::move(device))) {}
 
+    std::unique_ptr<IShaderCompiler> shaderCompiler;
     std::shared_ptr<Device> device;
     DeviceErrorState errorState;
 

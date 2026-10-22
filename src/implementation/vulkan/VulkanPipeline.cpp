@@ -5,7 +5,7 @@
 #include "VulkanPipeline.h"
 
 #include "Pipeline.h"
-#include "ShaderCompiler.h"
+#include "Shader.h"
 #include "VulkanConversion.h"
 #include "VulkanDevice.h"
 #include "../PipelineImpl.h"

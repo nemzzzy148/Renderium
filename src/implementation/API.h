@@ -3,8 +3,8 @@
 //
 
 #pragma once
+#include "Shader.h"
 #include "Window.h"
-#include "ShaderCompiler.h"
 #include "vulkan/vulkan.h"
 #include "vulkan/VulkanConversion.h"
 
@@ -40,9 +40,11 @@ struct VulkanApi {
     using Buffer = vulkan::VulkanBuffer;
     using Texture = vulkan::VulkanTexture;
     using TextureView = vulkan::VulkanTextureView;
+    static constexpr renderium::shader::ShadingOutputLanguage shaderOutputLanguage =
+        renderium::shader::ShadingOutputLanguage::SPIRV;
 
-    decltype(&vulkan::VulkanConversion::toError) toError = &vulkan::VulkanConversion::toError;
-    decltype(&vulkan::VulkanConversion::toRequestError) toRequestError = &vulkan::VulkanConversion::toRequestError;
+    static constexpr auto toError = &vulkan::VulkanConversion::toError;
+    static constexpr auto toRequestError = &vulkan::VulkanConversion::toRequestError;
 };
 
 // --- Window API ---
@@ -72,8 +74,6 @@ using WindowBackendType = windowBackendStruct<backend>::type;
 
 // --- Shader API ---
 
-// slang
-
 namespace shader {
 
 namespace slang {
@@ -84,12 +84,12 @@ struct SlangApi {
     using ShaderCompiler = slang::SlangCompiler;
 };
 
-template<renderium::shader::ShadingLanguage>
+template<renderium::ShadingLanguage>
 struct ShaderCompilerTypeWrapper;
 
-template<> struct ShaderCompilerTypeWrapper<renderium::shader::ShadingLanguage::SLANG> { using Type = SlangApi; };
+template<> struct ShaderCompilerTypeWrapper<renderium::ShadingLanguage::SLANG> { using Type = SlangApi; };
 
-template<renderium::shader::ShadingLanguage ShadingLanguage>
+template<renderium::ShadingLanguage ShadingLanguage>
 
 using ShaderCompilerType = ShaderCompilerTypeWrapper<ShadingLanguage>::Type;
 

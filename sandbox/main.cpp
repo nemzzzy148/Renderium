@@ -112,22 +112,22 @@ int main() {
     auto shaderModule = device.createShaderModule({.code = slangShaderCode}); // can be dead
 
     // pipeline // seg fault with pipeline, shader is invalid
-    // auto renderPipeline = device.createRenderPipeline({ // can be dead
-    //     .vertex = {
-    //         .module = shaderModule,
-    //         .entryPoint = "vertMain"
-    //     },
-    //     .fragment = {
-    //         .module = shaderModule,
-    //         .entryPoint = "fragMain",s
-    //         .targets = {{formats[0]}}
-    //     },
-    //     .primitive = {
-    //         .topology = renderium::PrimitiveTopology::TriangleList,
-    //         .frontFace = renderium::FrontFace::CCW,
-    //         .cullMode = renderium::CullMode::None
-    //     }
-    // });
+    auto renderPipeline = device.createRenderPipeline({ // can be dead
+        .vertex = {
+            .module = shaderModule,
+            .entryPoint = "vertMain"
+        },
+        .fragment = {
+            .module = shaderModule,
+            .entryPoint = "fragMain",
+            .targets = {{formats[0]}}
+        },
+        .primitive = {
+            .topology = renderium::PrimitiveTopology::TriangleList,
+            .frontFace = renderium::FrontFace::CCW,
+            .cullMode = renderium::CullMode::None
+        }
+    });
 
     // command encoder
 

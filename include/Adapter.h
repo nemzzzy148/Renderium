@@ -21,9 +21,15 @@ class AdapterImpl;
 namespace renderium {
 class Surface;
 
+enum class PowerPreference {
+    None,
+    HighPerformance,
+    LowPower
+};
+
 struct RequestAdapterOptions {
     const Surface* compatibleSurface = nullptr;
-    PowerPreference powerPreference;
+    PowerPreference powerPreference = PowerPreference::None;
 };
 
 class Adapter {
@@ -37,9 +43,7 @@ private:
         virtual Result<std::unique_ptr<Device::Impl>, RequestError> requestDevice(const DeviceDescriptor& descriptor) = 0;
     };
     std::unique_ptr<Impl> impl;
-    Backend backend;
-    explicit Adapter(std::unique_ptr<Impl> impl, const Backend backend)
-        : impl(std::move(impl)), backend(backend) {}
+    explicit Adapter(std::unique_ptr<Impl> impl) : impl(std::move(impl)) {}
 
     friend class Instance;
     template<typename Api>

@@ -9,6 +9,10 @@
 #include "../Error.h"
 
 namespace renderium {
+namespace shader {
+struct ShaderEntryPoint;
+}
+
 struct PrimitiveState;
 enum class CullMode;
 enum class FrontFace;
@@ -17,10 +21,6 @@ enum class VertexFormat;
 enum class VertexStepMode;
 struct FragmentState;
 struct VertexState;
-
-namespace shader {
-struct ShaderEntryPoint;
-}
 
 struct RenderPipelineDescriptor;
 }

@@ -6,6 +6,7 @@
 #include <vulkan/vulkan.hpp>
 
 namespace renderium {
+struct Error;
 enum class RequestError;
 enum class BufferUsages : uint16_t;
 enum class TextureDimension;
@@ -42,8 +43,8 @@ public:
     static vk::BufferUsageFlags mapBufferUsages(renderium::BufferUsages bufferUsages);
 
     // error
-    static renderium::Error toError(VulkanError errorCode);
-    static renderium::RequestError toRequestError(VulkanError errorCode);
+    static renderium::Error toError(VulkanError error);
+    static renderium::RequestError toRequestError(VulkanError error);
 };
 
 }

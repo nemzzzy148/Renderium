@@ -11,7 +11,7 @@
 namespace renderium {
 
 ShaderModule Device::createShaderModule(const ShaderModuleDescriptor& descriptor) const {
-    return ShaderModule(shaderCompiler->compileShader(descriptor.code));
+    return ShaderModule(impl->compileShader(descriptor.code));
 }
 
 RenderPipeline Device::createRenderPipeline(const RenderPipelineDescriptor& descriptor) const {

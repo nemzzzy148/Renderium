@@ -1,10 +1,10 @@
-#include <utility>
-
 //
 // Created by Nemesis Verstraete on 17/08/2026.
 //
 
 #pragma once
+
+#include <string>
 
 namespace renderium {
 
@@ -26,10 +26,9 @@ enum class RequestError {
     RequestDeviceError,
     QueueCreateError,
     SurfaceCreateError,
-    ShaderCompilationError,
     FailedToCreateShaderCompiler,
     UnknownShadingLanguage,
-    RenderPipelineCreateError
+    ShaderCompilationError
 };
 
 }

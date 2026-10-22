@@ -14,7 +14,6 @@ enum class VulkanError {
     UnhandledException,
     RequiredExtensionMissing,
     RequiredLayerMissing,
-    WindowBackendNotRecognized,
     WindowBackendFailedToCreateSurface,
     NoPhysicalDevicesFound,
     NoPhysicalDevicesSuitable,

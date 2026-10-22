@@ -4,15 +4,13 @@
 
 #include "SlangCompiler.h"
 
-#include <filesystem>
-#include <source_location>
 #include <string>
 
-#include "../../Error.h"
-#include "ShaderCompiler.h"
+#include "../../implementation/Error.h"
 
 namespace rhi::shader::slang {
-SlangCompiler::ShaderCompilerResult SlangCompiler::create(const renderium::shader::ShadingOutputLanguage outputLanguage) {
+SlangCompiler::ShaderCompilerResult SlangCompiler::create(
+    const renderium::shader::ShadingOutputLanguage outputLanguage) {
     Slang::ComPtr<::slang::IGlobalSession> globalSession;
     if (SLANG_FAILED(::slang::createGlobalSession(globalSession.writeRef())))
         return ShaderCompilerResult::err(SlangError::FailedToCreateGlobalSession);
@@ -74,8 +72,8 @@ std::vector<::slang::IEntryPoint*> SlangCompiler::discoverAllEntryPoints(::slang
     return entryPoints;
 }
 
-std::optional<renderium::shader::ShaderEntryPointType> SlangCompiler::classifyStage(const SlangStage stage) {
-    using T = renderium::shader::ShaderEntryPointType;
+std::optional<renderium::shader::ShaderStage> SlangCompiler::classifyStage(const SlangStage stage) {
+    using T = renderium::shader::ShaderStage;
     switch (stage) {
         case SLANG_STAGE_VERTEX: return T::Vertex;
         case SLANG_STAGE_FRAGMENT: return T::Fragment;
@@ -84,7 +82,8 @@ std::optional<renderium::shader::ShaderEntryPointType> SlangCompiler::classifySt
     }
 }
 
-std::string SlangCompiler::compiledEntryPointName(const renderium::shader::ShadingOutputLanguage shadingOutputLanguage,
+std::string SlangCompiler::compiledEntryPointName(
+    const renderium::shader::ShadingOutputLanguage shadingOutputLanguage,
     const std::string &sourceName) {
     switch (shadingOutputLanguage) {
         case renderium::shader::ShadingOutputLanguage::SPIRV:
@@ -153,7 +152,7 @@ SlangCompiler::ShaderResult SlangCompiler::compileShader(const std::string& shad
         });
     }
 
-    return ShaderResult::ok({compileLanguage, std::move(shaderEntryPoints)});
+    return ShaderResult::ok({true, compileLanguage, std::move(shaderEntryPoints)});
 }
 
 }

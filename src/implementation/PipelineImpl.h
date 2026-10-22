@@ -4,10 +4,11 @@
 
 #pragma once
 #include <algorithm>
+#include <optional>
 #include <Error.h>
 
 #include "Pipeline.h"
-#include "ShaderCompiler.h"
+#include "Shader.h"
 
 namespace rhi {
 class DeviceErrorState;
@@ -21,7 +22,7 @@ bool validateRenderPipelineDescriptor(DeviceErrorState& devicErrorState,
 // render pipeline
 
 template<typename Api>
-class RenderPipelineImpl : renderium::RenderPipeline::Impl {
+class RenderPipelineImpl : public renderium::RenderPipeline::Impl {
 public:
     using Pipeline = Api::RenderPipeline;
 

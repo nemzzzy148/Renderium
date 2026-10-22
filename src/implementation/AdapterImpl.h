@@ -4,7 +4,7 @@
 
 #pragma once
 #include "Adapter.h"
-#include "Device.h"
+#include "DeviceImpl.h"
 
 namespace rhi {
 
@@ -21,12 +21,20 @@ public:
 
     using DeviceResult = renderium::Result<std::unique_ptr<renderium::Device::Impl>, renderium::RequestError>;
     DeviceResult requestDevice(const renderium::DeviceDescriptor &descriptor) override {
-        auto result = adapter.requestDevice(descriptor);
-        if (!result.isOk()) {
+        auto deviceResult = adapter.requestDevice(descriptor);
+        if (!deviceResult.isOk()) {
             return DeviceResult::err(renderium::RequestError::RequestDeviceError);
         }
+
+        auto shaderCompilerResult = IShaderCompiler::create(
+            descriptor.shadingLanguage, Api::shaderOutputLanguage);
+        if (!shaderCompilerResult.isOk()) {
+            return DeviceResult::err(shaderCompilerResult.unwrapError());
+        }
+
         return DeviceResult::ok(
-            std::unique_ptr<renderium::Device::Impl>(new DeviceImpl<Api>(std::move(result.unwrap()))));
+            std::unique_ptr<renderium::Device::Impl>(new DeviceImpl<Api>(
+                std::move(deviceResult.unwrap()), std::move(shaderCompilerResult.unwrap()))));
     }
 private:
     explicit AdapterImpl(Adapter adapter) : adapter(std::move(adapter)) {}

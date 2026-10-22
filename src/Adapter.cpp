@@ -18,16 +18,9 @@ Adapter::DeviceResult Adapter::requestDevice(const DeviceDescriptor &descriptor)
         return DeviceResult::err(queueResult.unwrapError());
     }
 
-    auto shaderCompilerResult = shader::ShaderCompiler::create(
-        shader::DefaultShadingLanguage, shader::apiToShadingLanguage(backend));
-    if (!shaderCompilerResult.isOk()) {
-        return DeviceResult::err(shaderCompilerResult.unwrapError());
-    }
-
     return DeviceResult::ok(Device(
         std::move(device),
-        std::move(queueResult.unwrap()),
-        std::make_unique<shader::ShaderCompiler>(std::move(shaderCompilerResult.unwrap()))));
+        std::move(queueResult.unwrap())));
 }
 
 }

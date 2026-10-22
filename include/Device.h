@@ -10,7 +10,6 @@
 #include "Queue.h"
 #include "Result.h"
 #include "Shader.h"
-#include "ShaderCompiler.h"
 #include "Texture.h"
 
 namespace rhi {
@@ -34,23 +33,16 @@ class RenderPipeline;
 class Queue;
 class Surface;
 
-enum class PowerPreference {
-    None,
-    HighPerformance,
-    LowPower
-};
-
 struct DeviceDescriptor {
-
+    ShadingLanguage shadingLanguage = ShadingLanguage::SLANG;
 };
-
 
 class Device {
 public:
     Device() = delete;
 
     [[nodiscard]] ShaderModule createShaderModule(const ShaderModuleDescriptor& descriptor) const;
-    PipelineLayout createPipelineLayout(const PipelineLayoutDescriptor& descriptor);
+    // PipelineLayout createPipelineLayout(const PipelineLayoutDescriptor& descriptor);
     [[nodiscard]] RenderPipeline createRenderPipeline(const RenderPipelineDescriptor& descriptor) const;
 
     [[nodiscard]] Buffer createBuffer(const BufferDescriptor& descriptor) const;
@@ -61,6 +53,7 @@ private:
     struct Impl {
         virtual ~Impl() = default;
 
+        virtual shader::CompiledShader compileShader(const std::string& code) = 0;
         virtual std::unique_ptr<RenderPipeline::Impl>
             createRenderPipeline(const RenderPipelineDescriptor& descriptor) = 0;
 
@@ -69,14 +62,11 @@ private:
 
         virtual Result<std::unique_ptr<Queue::Impl>, RequestError> createQueue() = 0;
     };
-    explicit Device(std::unique_ptr<Impl> impl, std::unique_ptr<Queue::Impl> queueImpl,
-        std::unique_ptr<shader::ShaderCompiler> shaderCompiler) : impl(std::move(impl)),
-                                                                  queueImpl(std::move(queueImpl)),
-                                                                  shaderCompiler(std::move(shaderCompiler)) {}
+    explicit Device(std::unique_ptr<Impl> impl, std::unique_ptr<Queue::Impl> queueImpl) :
+        impl(std::move(impl)), queueImpl(std::move(queueImpl)) {}
 
     std::unique_ptr<Impl> impl;
     std::unique_ptr<Queue::Impl> queueImpl;
-    std::unique_ptr<shader::ShaderCompiler> shaderCompiler;
 
     template<typename Api>
     friend class rhi::DeviceImpl;

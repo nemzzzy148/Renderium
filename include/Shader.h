@@ -3,17 +3,51 @@
 //
 
 #pragma once
-#include <optional>
+#include <cstdint>
 #include <string>
-
-#include "ShaderCompiler.h"
+#include <utility>
+#include <vector>
 
 namespace rhi {
 template<typename Api>
-class PipelineImpl;
+class RenderPipelineImpl;
 }
 
 namespace renderium {
+
+enum class ShadingLanguage {
+    SLANG
+};
+
+namespace shader {
+
+enum class ShadingOutputLanguage {
+    SPIRV,
+    HLSL,
+    GLSL,
+    MSL
+};
+
+enum class ShaderStage {
+    Fragment,
+    Vertex,
+    Compute
+};
+
+struct ShaderEntryPoint {
+    ShaderStage stage;
+    std::string name;
+    std::string compiledName;
+    std::vector<uint8_t> code;
+};
+
+struct CompiledShader {
+    bool valid = false;
+    ShadingOutputLanguage language = ShadingOutputLanguage::SPIRV;
+    std::vector<ShaderEntryPoint> entryPoints;
+};
+
+}
 
 struct ShaderModuleDescriptor {
     std::string code;
@@ -21,16 +55,16 @@ struct ShaderModuleDescriptor {
 
 class ShaderModule {
 public:
-    [[nodiscard]] const shader::CompiledShader& getCompiledShader() const { return *compiledShader; }
+    [[nodiscard]] const shader::CompiledShader& getCompiledShader() const { return compiledShader; }
 
-    [[nodiscard]] bool isValid() const { return compiledShader.has_value(); }
+    [[nodiscard]] bool isValid() const { return compiledShader.valid; }
 private:
     explicit ShaderModule(shader::CompiledShader compiledShader) : compiledShader(std::move(compiledShader)) {}
-    std::optional<shader::CompiledShader> compiledShader;
+    shader::CompiledShader compiledShader;
 
     friend class Device;
     template<typename Api>
-    friend class rhi::PipelineImpl;
+    friend class rhi::RenderPipelineImpl;
 };
 
 }

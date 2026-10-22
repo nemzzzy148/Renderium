@@ -3,16 +3,14 @@
 //
 
 #pragma once
-#include "Device.h"
+#include <cstdint>
+
+#include "DeviceImpl.h"
 #include "Surface.h"
 
-namespace renderium {
-enum class PresentMode;
-enum class TextureFormat;
-enum class RequestError;
-}
-
 namespace rhi {
+template<typename Api>
+class InstanceImpl;
 
 template<typename Api>
 struct SurfaceImplConfiguration {
@@ -31,9 +29,8 @@ template<typename Api>
 class SurfaceImpl : public renderium::Surface::Impl {
 public:
     using Surface = Api::Surface;
-    using Error = Api::Error;
 
-    renderium::SurfaceCapabilities getCapabilities(const renderium::Device& device) override  {
+    renderium::SurfaceCapabilities getCapabilities(const renderium::Device& device) override {
         const auto& deviceImpl = static_cast<const DeviceImpl<Api>&>(*device.impl);
         return surface.getCapabilities(deviceImpl.getBackendDevice());
     }

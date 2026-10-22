@@ -38,10 +38,8 @@ add_library(Renderium SHARED
         include/ComputeRenderium.h
         src/implementation/PipelineImpl.h
         src/implementation/ShaderCompilerImpl.h
-        src/implementation/shader/slang/SlangCompiler.cpp
-        src/implementation/shader/slang/SlangCompiler.h
-        include/ShaderCompiler.h
-        src/ShaderCompiler.cpp
+        src/shader/slang/SlangCompiler.cpp
+        src/shader/slang/SlangCompiler.h
         src/implementation/vulkan/VulkanConversion.cpp
         src/implementation/vulkan/VulkanConversion.h
         include/Adapter.h
@@ -64,6 +62,7 @@ add_library(Renderium SHARED
         src/implementation/PipelineImpl.cpp
         src/implementation/BufferImpl.cpp
         src/implementation/TextureImpl.cpp
+        src/implementation/ShaderCompilerImpl.cpp
 )
 
 target_include_directories( Renderium PUBLIC

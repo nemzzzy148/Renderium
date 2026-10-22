@@ -10,6 +10,7 @@
 #include "Vertex.h"
 #include "Surface.h"
 #include "Error.h"
+#include "../Error.h"
 
 namespace rhi::vulkan {
 vk::SampleCountFlagBits VulkanConversion::mapSampleCount(const uint32_t sampleCount) {
@@ -192,12 +193,53 @@ vk::BufferUsageFlags VulkanConversion::mapBufferUsages(const renderium::BufferUs
     return finalUsage;
 }
 
-renderium::Error VulkanConversion::toError(VulkanError errorCode) {
-
+renderium::Error VulkanConversion::toError(const VulkanError error) {
+    switch (error) {
+        case VulkanError::InvalidBufferSize: return {
+            renderium::ErrorFilter::Validation,
+            "Buffer size must be greater than zero."
+        };
+        case VulkanError::NoCompatibleMemoryTypeFound: return {
+            renderium::ErrorFilter::Internal,
+            "The device could not find a compatible memory type for this resource."
+        };
+        case VulkanError::OutOfDeviceMemory: return {
+            renderium::ErrorFilter::OutOfMemory,
+            "The system ran out of gpu memory."
+        };
+        case VulkanError::OutOfHostMemory: return {
+            renderium::ErrorFilter::OutOfMemory,
+            "The system ran out of host memory."
+        };
+        case VulkanError::InvalidImageDimensions: return {
+            renderium::ErrorFilter::Validation,
+            "Texture dimensions must be greater than zero."
+        };
+        case VulkanError::VertexEntryPointNotFound: return {
+            renderium::ErrorFilter::Validation,
+            "The shader module does not contain a vertex entry point."
+        };
+        case VulkanError::FragmentEntryPointNotFound: return {
+            renderium::ErrorFilter::Validation,
+            "The shader module does not contain a fragment entry point."
+        };
+        default: return {
+            renderium::ErrorFilter::Internal,
+            "An unexpected exception occurred in the vulkan backend."
+        };
+    }
 }
 
-renderium::RequestError VulkanConversion::toRequestError(VulkanError errorCode) {
-
+renderium::RequestError VulkanConversion::toRequestError(const VulkanError error) {
+    switch (error) {
+        case VulkanError::RequiredExtensionMissing:
+        case VulkanError::RequiredLayerMissing: return renderium::RequestError::InstanceCreateError;
+        case VulkanError::WindowBackendFailedToCreateSurface: return renderium::RequestError::SurfaceCreateError;
+        case VulkanError::NoPhysicalDevicesFound:
+        case VulkanError::NoPhysicalDevicesSuitable: return renderium::RequestError::RequestAdapterError;
+        case VulkanError::NoQueueFamilySuitable: return renderium::RequestError::RequestDeviceError;
+        default: return renderium::RequestError::UnhandledException;
+    }
 }
 
 }

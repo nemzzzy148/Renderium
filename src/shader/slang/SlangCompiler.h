@@ -4,23 +4,13 @@
 
 #pragma once
 #include <optional>
-#include <string_view>
+#include <string>
 #include <slang/slang-com-ptr.h>
 #include <slang/slang.h>
 #include <vector>
-#include <__filesystem/filesystem_error.h>
 
 #include "Result.h"
-
-namespace renderium {
-namespace shader {
-enum class ShadingOutputLanguage;
-enum class ShaderEntryPointType;
-struct CompiledShader;
-}
-
-enum class Backend;
-}
+#include "Shader.h"
 
 namespace rhi::shader::slang {
 enum class SlangError;
@@ -32,7 +22,7 @@ public:
 private:
     Slang::ComPtr<::slang::IModule> loadModuleFromString(const std::string& shaderCode, Slang::ComPtr<::slang::IBlob>& diagnostics) const;
     static std::vector<::slang::IEntryPoint*> discoverAllEntryPoints(::slang::IModule* module);
-    static std::optional<renderium::shader::ShaderEntryPointType> classifyStage(SlangStage stage);
+    static std::optional<renderium::shader::ShaderStage> classifyStage(SlangStage stage);
     static std::string compiledEntryPointName(renderium::shader::ShadingOutputLanguage shadingOutputLanguage,
         const std::string& sourceName);
 public:

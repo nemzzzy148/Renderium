@@ -3,8 +3,10 @@
 //
 
 #pragma once
+#include <cstdint>
 #include <memory>
 #include <utility>
+#include <vector>
 
 #include "Result.h"
 #include "../src/utils/BitwiseOperations.h"

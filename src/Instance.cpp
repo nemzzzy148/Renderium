@@ -41,7 +41,7 @@ Instance::AdapterResult Instance::requestAdapter(const RequestAdapterOptions &op
     if (!result.isOk()) {
         return AdapterResult::err(RequestError::RequestAdapterError);
     }
-    return AdapterResult::ok(Adapter(std::move(result.unwrap()), backend));
+    return AdapterResult::ok(Adapter(std::move(result.unwrap())));
 }
 
 }
