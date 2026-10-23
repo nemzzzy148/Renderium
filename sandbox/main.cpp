@@ -94,7 +94,7 @@ int main() {
         renderium::TextureUsages::StorageBinding, {renderium::TextureFormat::RGBA8Unorm}});
 
     // queue
-    const auto queue = device.getQueue();
+    const auto queue = device.queue();
 
     // surface configurations
     auto [usages, formats, presentModes] =

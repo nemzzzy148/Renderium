@@ -27,7 +27,7 @@ Texture Device::createTexture(const TextureDescriptor &descriptor) const {
     return Texture(impl->createTexture(descriptor), descriptor);
 }
 
-Queue Device::getQueue() const {
+Queue Device::queue() const {
     if (!queueImpl) // normally this error is impossible
         throw std::runtime_error("Renderium fatal error: failed to get queue on device!");
     return Queue(*queueImpl);
