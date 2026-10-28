@@ -18,16 +18,10 @@ Adapter::DeviceResult Adapter::requestDevice(const DeviceDescriptor &descriptor)
         return DeviceResult::err(queueResult.unwrapError());
     }
 
-    const auto features = device->requestFeatures();
-    const auto limits = device->requestLimits();
-    auto adapterInfo = device->requestAdapterInfo();
-
     return DeviceResult::ok(Device(
         std::move(device),
         std::move(queueResult.unwrap()),
-        features,
-        limits,
-        std::move(adapterInfo)
+        features, limits, info
     ));
 }
 

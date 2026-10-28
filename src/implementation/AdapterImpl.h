@@ -36,6 +36,10 @@ public:
             std::unique_ptr<renderium::Device::Impl>(new DeviceImpl<Api>(
                 std::move(deviceResult.unwrap()), std::move(shaderCompilerResult.unwrap()))));
     }
+
+    renderium::SupportedFeatures requestFeatures() override { return adapter->requestFeatures(); }
+    renderium::SupportedLimits requestLimits() override { return adapter->requestLimits(); }
+    renderium::AdapterInfo requestAdapterInfo() override { return adapter->requestAdapterInfo(); }
 private:
     explicit AdapterImpl(Adapter adapter) : adapter(std::move(adapter)) {}
     Adapter adapter;

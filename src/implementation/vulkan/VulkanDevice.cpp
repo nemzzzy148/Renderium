@@ -28,10 +28,7 @@ VulkanDevice::QueueIndexResult VulkanDevice::getQueueIndex(const vk::QueueFlagBi
 }
 
 VulkanDevice::VulkanDeviceResult VulkanDevice::createDevice(const vk::raii::PhysicalDevice &physicalDevice,
-    const renderium::DeviceDescriptor& descriptor, const bool surfaceSupport) {
-    auto queueIndexResult = getQueueIndex(vk::QueueFlagBits::eGraphics, physicalDevice);
-    if (!queueIndexResult.isOk()) return VulkanDeviceResult::err(queueIndexResult.unwrapError());
-    uint32_t queueFamilyIndex = queueIndexResult.unwrap();
+    const bool surfaceSupport, uint32_t queueFamilyIndex) {
 
     vk::StructureChain<vk::PhysicalDeviceFeatures2 ,vk::PhysicalDeviceVulkan11Features, vk::PhysicalDeviceVulkan13Features,
         vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT> featureChain{
@@ -56,10 +53,10 @@ VulkanDevice::VulkanDeviceResult VulkanDevice::createDevice(const vk::raii::Phys
         .ppEnabledExtensionNames = &VulkanAdapter::surfaceExtension
     };
     return VulkanDeviceResult::ok(
-        {std::move(vk::raii::Device(physicalDevice, deviceCreateInfo)), queueFamilyIndex});
+        {std::move(vk::raii::Device(physicalDevice, deviceCreateInfo))});
 }
 
-VulkanDevice::VulkanDevice(VulkanDevice&& other)
+VulkanDevice::VulkanDevice(VulkanDevice&& other) noexcept
     : std::enable_shared_from_this<VulkanDevice>(), instance(std::move(other.instance)),
       physicalDevice(std::move(other.physicalDevice)), queueFamilyIndex(other.queueFamilyIndex),
       device(std::move(other.device)), memoryManager(std::move(other.memoryManager),
@@ -68,17 +65,16 @@ VulkanDevice::VulkanDevice(VulkanDevice&& other)
 VulkanDevice::DeviceResult VulkanDevice::create(std::shared_ptr<VulkanInstance> instance,
         std::shared_ptr<vk::raii::PhysicalDevice> physicalDevice,
         const renderium::DeviceDescriptor& descriptor,
-        const bool surfaceSupport) {
+        const bool surfaceSupport, const uint32_t queueFamilyIndex) {
     // device
-    auto deviceResult = createDevice(*physicalDevice, descriptor, surfaceSupport);
+    auto deviceResult = createDevice(*physicalDevice, surfaceSupport, queueFamilyIndex);
     if (!deviceResult.isOk()) return DeviceResult::err(deviceResult.unwrapError());
-    auto [device, queueFamilyIndex] = deviceResult.unwrap();
+    auto device = deviceResult.unwrap();
 
     return DeviceResult::ok(VulkanDevice(
         std::move(instance), std::move(physicalDevice),
         std::make_unique<vk::raii::Device>(std::move(device)), queueFamilyIndex));
 }
-
 // --- texture and buffer creation ---
 
 VulkanDevice::BufferResult VulkanDevice::createBuffer(const renderium::BufferDescriptor &descriptor) {

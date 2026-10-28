@@ -7,6 +7,7 @@
 #include <memory>
 #include <optional>
 
+#include "AdapterInfo.h"
 #include "Device.h"
 #include "Error.h"
 #include "Result.h"
@@ -34,16 +35,25 @@ struct RequestAdapterOptions {
 
 class Adapter {
 public:
+    const SupportedFeatures features;
+    const SupportedLimits limits;
+    const AdapterInfo info;
+
     using DeviceResult = Result<Device, RequestError>;
     [[nodiscard]] DeviceResult requestDevice(const DeviceDescriptor& descriptor) const;
 private:
     struct Impl {
         virtual ~Impl() = default;
 
+        virtual SupportedFeatures requestFeatures() = 0;
+        virtual SupportedLimits requestLimits() = 0;
+        virtual AdapterInfo requestAdapterInfo() = 0;
+
         virtual Result<std::unique_ptr<Device::Impl>, RequestError> requestDevice(const DeviceDescriptor& descriptor) = 0;
     };
     std::unique_ptr<Impl> impl;
-    explicit Adapter(std::unique_ptr<Impl> impl) : impl(std::move(impl)) {}
+    explicit Adapter(std::unique_ptr<Impl> impl, const SupportedFeatures features, const SupportedLimits &limits,
+        AdapterInfo info) : features(features), limits(limits), info(std::move(info)), impl(std::move(impl)) {}
 
     friend class Instance;
     template<typename Api>

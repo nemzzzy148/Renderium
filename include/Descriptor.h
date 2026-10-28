@@ -9,7 +9,6 @@ namespace renderium {
 
 struct DescriptorEntry {
     uint32_t binding;
-
 };
 
 }

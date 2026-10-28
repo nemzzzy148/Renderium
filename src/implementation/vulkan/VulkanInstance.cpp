@@ -79,7 +79,7 @@ VulkanInstance::InstanceResult VulkanInstance::create(const renderium::InstanceD
     auto instance = vk::raii::Instance(context, instanceInfo);
 
     return InstanceResult::ok(VulkanInstance( std::move(context),
-        std::move(instance)));
+        std::move(instance), VK_VERSION_1_3));
 }
 
 std::vector<char const *> VulkanInstance::getRequiredSurfaceExtensions() {

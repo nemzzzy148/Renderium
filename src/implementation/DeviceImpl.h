@@ -39,7 +39,7 @@ public:
 private:
     explicit DeviceImpl(Device device, std::unique_ptr<IShaderCompiler> shaderCompiler)
         : shaderCompiler(std::move(shaderCompiler)), device(std::make_shared<Device>(std::move(device))) {}
-
+private:
     std::unique_ptr<IShaderCompiler> shaderCompiler;
     std::shared_ptr<Device> device;
     DeviceErrorState errorState;

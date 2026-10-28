@@ -19,6 +19,9 @@ struct VulkanApi;
 }
 
 namespace renderium {
+struct AdapterInfo;
+struct SupportedLimits;
+enum class SupportedFeatures : uint32_t;
 struct BufferDescriptor;
 struct TextureDescriptor;
 struct DeviceDescriptor;
@@ -48,18 +51,18 @@ class VulkanDevice : public std::enable_shared_from_this<VulkanDevice> {
     // --- device ---
     using QueueIndexResult = renderium::Result<uint32_t, VulkanError>;
     static QueueIndexResult getQueueIndex(vk::QueueFlagBits flags, const vk::raii::PhysicalDevice& physicalDevice);
-    using VulkanDeviceResult = renderium::Result<std::pair<vk::raii::Device, uint32_t>, VulkanError>;
+    using VulkanDeviceResult = renderium::Result<vk::raii::Device, VulkanError>;
     static VulkanDeviceResult createDevice(const vk::raii::PhysicalDevice& physicalDevice,
-        const renderium::DeviceDescriptor& descriptor, bool surfaceSupport);
+        bool surfaceSupport, uint32_t queueFamilyIndex);
 public:
 
     using DeviceResult = renderium::Result<VulkanDevice, VulkanError>;
-    VulkanDevice(VulkanDevice&& other);
+    VulkanDevice(VulkanDevice&& other) noexcept;
     VulkanDevice& operator=(VulkanDevice&&) = delete;
 
     static DeviceResult create(std::shared_ptr<VulkanInstance> instance,
         std::shared_ptr<vk::raii::PhysicalDevice> physicalDevice,
-        const renderium::DeviceDescriptor& descriptor, bool surfaceSupport);
+        const renderium::DeviceDescriptor& descriptor, bool surfaceSupport, uint32_t queueFamilyIndex);
 
     [[nodiscard]] const vk::raii::PhysicalDevice& getPhysicalDevice() const { return *physicalDevice; }
     [[nodiscard]] const vk::raii::Device& getDevice() const { return *device; }

@@ -24,10 +24,12 @@ public:
     using InstanceResult = renderium::Result<VulkanInstance, VulkanError>;
     static InstanceResult create(const renderium::InstanceDescriptor& descriptor);
 
+    [[nodiscard]] uint32_t getVulkanVersion() const { return vulkanVersion; }
+
     [[nodiscard]] const vk::raii::Instance& getHandle() const { return instance; }
 private:
-    VulkanInstance(vk::raii::Context context, vk::raii::Instance instance)
-        : context(std::move(context)), instance(std::move(instance)) {}
+    VulkanInstance(vk::raii::Context context, vk::raii::Instance instance, const uint32_t vulkanVersion)
+        : context(std::move(context)), instance(std::move(instance)), vulkanVersion(vulkanVersion) {}
 
     static std::vector<const char*> getRequiredSurfaceExtensions();
     static std::vector<char const*> validationLayers;
@@ -36,6 +38,8 @@ private:
 
     vk::raii::Context context;
     vk::raii::Instance instance = nullptr;
+
+    uint32_t vulkanVersion;
 
     friend class VulkanAdapter;
     friend class VulkanSurface;
