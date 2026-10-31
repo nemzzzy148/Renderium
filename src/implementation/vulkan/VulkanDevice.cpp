@@ -52,8 +52,12 @@ VulkanDevice::VulkanDeviceResult VulkanDevice::createDevice(const vk::raii::Phys
         .enabledExtensionCount = static_cast<uint32_t>(surfaceSupport ? 1 : 0),
         .ppEnabledExtensionNames = &vk::KHRSwapchainExtensionName
     };
-    return VulkanDeviceResult::ok(
-        {std::move(vk::raii::Device(physicalDevice, deviceCreateInfo))});
+
+    auto [result, device] = physicalDevice.createDevice(deviceCreateInfo);
+    if (result != vk::Result::eSuccess) {
+        return VulkanDeviceResult::err(VulkanError::DeviceCreationFailed);
+    }
+    return VulkanDeviceResult::ok(std::move(device));
 }
 
 VulkanDevice::VulkanDevice(VulkanDevice&& other) noexcept
@@ -86,11 +90,15 @@ VulkanDevice::BufferResult VulkanDevice::createBuffer(const renderium::BufferDes
         .usage = usage,
         .sharingMode = vk::SharingMode::eExclusive
     };
-    auto buffer = vk::raii::Buffer(*device, bufferInfo);
+
+    auto [result, buffer] = device->createBuffer(bufferInfo);
+    if (result != vk::Result::eSuccess) {
+        return BufferResult::err(VulkanError::BufferCreationFailed);
+    }
 
     auto [size, alignment, memoryTypeBits] = buffer.getMemoryRequirements();
 
-    // a better optimization would be map write (visible and coherent) and map read(visible and cached)
+    // a better optimization would be mapped write(visible and coherent) and map read(visible and cached)
     const vk::MemoryPropertyFlags memoryProperties =
         (utils::any(descriptor.usages & (renderium::BufferUsages::MapRead | renderium::BufferUsages::MapWrite))) ?
         vk::MemoryPropertyFlagBits::eHostVisible & vk::MemoryPropertyFlagBits::eHostCoherent // true
@@ -124,7 +132,11 @@ VulkanDevice::TextureResult VulkanDevice::createTexture(const renderium::Texture
         .usage = VulkanConversion::mapTextureUsages(descriptor.usage),
         .sharingMode = vk::SharingMode::eExclusive
     };
-    auto image = vk::raii::Image(*device, imageInfo);
+
+    auto [result, image] = device->createImage(imageInfo);
+    if (result != vk::Result::eSuccess) {
+        return TextureResult::err(VulkanError::ImageCreationFailed);
+    }
 
     auto [size, alignment, memoryTypeBits] = image.getMemoryRequirements();
 

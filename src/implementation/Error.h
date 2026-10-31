@@ -12,7 +12,8 @@ namespace rhi {
 namespace vulkan {
 enum class VulkanError {
     UnhandledException,
-    FailedToCreateVulkanInstance,
+    InstanceCreationFailed,
+    DeviceCreationFailed,
     UnableToListLayers,
     UnableToListExtensions,
     RequiredExtensionMissing,
@@ -30,7 +31,9 @@ enum class VulkanError {
     OutOfDeviceMemory,
     OutOfHostMemory,
     InvalidBufferSize,
+    BufferCreationFailed,
     InvalidImageDimensions,
+    ImageCreationFailed,
     VertexEntryPointNotFound,
     FragmentEntryPointNotFound,
     ShaderModuleCreationError,

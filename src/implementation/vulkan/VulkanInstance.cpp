@@ -80,7 +80,7 @@ VulkanInstance::InstanceResult VulkanInstance::create(const renderium::InstanceD
     };
 
     auto [result, instance] = context.createInstance(instanceInfo);
-    if (result != vk::Result::eSuccess) return InstanceResult::err(VulkanError::FailedToCreateVulkanInstance);
+    if (result != vk::Result::eSuccess) return InstanceResult::err(VulkanError::InstanceCreationFailed);
 
     return InstanceResult::ok(VulkanInstance( std::move(context),
         std::move(instance), VK_VERSION_1_3));
