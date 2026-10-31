@@ -36,9 +36,9 @@ public:
     [[nodiscard]] renderium::SurfaceCapabilities getCapabilities(const VulkanDevice& device) const;
 private:
     void destroySwapChain(const VulkanDevice& device);
-    void createSwapChain(const SurfaceImplConfiguration<VulkanApi>& configuration);
+    std::optional<VulkanError> createSwapChain(const SurfaceImplConfiguration<VulkanApi>& configuration);
 public:
-    void configure(const SurfaceImplConfiguration<VulkanApi>& configuration);
+    std::optional<VulkanError> configure(const SurfaceImplConfiguration<VulkanApi>& configuration);
 private:
     explicit VulkanSurface(vk::raii::SurfaceKHR surface) : surface(std::move(surface)) {}
     vk::raii::SurfaceKHR surface;

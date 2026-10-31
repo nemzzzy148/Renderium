@@ -7,6 +7,7 @@
 
 #include "DeviceImpl.h"
 #include "Surface.h"
+#include "DeviceErrorState.h"
 
 namespace rhi {
 template<typename Api>
@@ -36,8 +37,10 @@ public:
     }
 
     void configure(const renderium::SurfaceConfiguration& configuration) override {
+        auto& device = static_cast<DeviceImpl<Api>&>(*configuration.device.impl);
+
         SurfaceImplConfiguration<Api> implConfiguration{
-            .device = static_cast<const DeviceImpl<Api>&>(*configuration.device.impl).getBackendDevice(),
+            .device = device.getBackendDevice(),
             .width = configuration.width,
             .height = configuration.height,
             .usage = configuration.usage,
@@ -45,7 +48,10 @@ public:
             .presentMode = configuration.presentMode,
             .maxFramesInFlight = configuration.maxFramesInFlight
         };
-        surface.configure(implConfiguration);
+        auto optional = surface.configure(implConfiguration);
+        if (optional.has_value()) {
+            device.getDeviceErrorState().report();
+        }
     }
 private:
     explicit SurfaceImpl(Surface surface) : surface(std::move(surface)) {}

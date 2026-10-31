@@ -18,6 +18,10 @@ vk::raii::ShaderModule VulkanRenderPipeline::createShaderModule(const vk::raii::
         .codeSize = entryPoint.code.size() * sizeof(uint8_t),
         .pCode = reinterpret_cast<uint32_t const *>(entryPoint.code.data())
     };
+    auto [result, shaderModule] = device.createShaderModule(createInfo);
+    if (result != vk::Result::eSuccess) {
+        return
+    }
     return {device, createInfo};
 }
 
@@ -179,7 +183,11 @@ VulkanRenderPipeline::create(const VulkanDevice& device, const renderium::Render
 
     // layout
     vk::PipelineLayoutCreateInfo layoutInfo;
-    auto layout = vk::raii::PipelineLayout(device.getDevice(), layoutInfo);
+
+    auto [layoutResult, layout] = device.getDevice().createPipelineLayout(layoutInfo);
+    if (layoutResult != vk::Result::eSuccess) {
+        return PipelineResult::err(VulkanError::PipelineLayoutCreationError);
+    }
 
     std::vector<vk::Format> attachmentFormats;
     vk::StructureChain<vk::GraphicsPipelineCreateInfo, vk::PipelineRenderingCreateInfo> pipelineCreateInfo {
@@ -198,8 +206,13 @@ VulkanRenderPipeline::create(const VulkanDevice& device, const renderium::Render
         }, createPipelineRenderingInfo(descriptor.fragment, attachmentFormats)
     };
 
-    return PipelineResult::ok(VulkanRenderPipeline(vk::raii::Pipeline(device.getDevice(), nullptr,
-        pipelineCreateInfo.get<vk::GraphicsPipelineCreateInfo>())));
+    auto [result, pipeline] = device.getDevice().createGraphicsPipeline(nullptr,
+        pipelineCreateInfo.get<vk::GraphicsPipelineCreateInfo>());
+    if (result != vk::Result::eSuccess) {
+        PipelineResult::err(VulkanError::PipelineCreationError);
+    }
+
+    return PipelineResult::ok(VulkanRenderPipeline(std::move(pipeline)));
 }
 
 }

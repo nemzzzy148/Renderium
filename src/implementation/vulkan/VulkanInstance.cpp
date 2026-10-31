@@ -42,8 +42,10 @@ VulkanInstance::InstanceResult VulkanInstance::create(const renderium::InstanceD
         requiredLayers.assign(validationLayers.begin(), validationLayers.end());
     }
 
-    if (auto availableLayerProperties = context.enumerateInstanceLayerProperties();
-        std::ranges::any_of(requiredLayers, [&availableLayerProperties](const auto& layer) {
+    auto [layerResult, availableLayerProperties] = context.enumerateInstanceLayerProperties();
+    if (layerResult != vk::Result::eSuccess) return InstanceResult::err(VulkanError::UnableToListLayers);
+
+    if (std::ranges::any_of(requiredLayers, [&availableLayerProperties](const auto& layer) {
             return std::ranges::none_of(availableLayerProperties, [layer](const auto& prop) {
                 return strcmp(layer, prop.layerName) == 0;
             });
@@ -56,7 +58,8 @@ VulkanInstance::InstanceResult VulkanInstance::create(const renderium::InstanceD
     if (descriptor.debug) {
         requiredExtensions.push_back(vk::EXTDebugUtilsExtensionName);
     }
-    auto extensionProps = context.enumerateInstanceExtensionProperties();
+    auto [extensionsResult, extensionProps] = context.enumerateInstanceExtensionProperties();
+    if (extensionsResult != vk::Result::eSuccess) return InstanceResult::err(VulkanError::UnableToListExtensions);
 
     const auto it = std::ranges::find_if(requiredExtensions,
         [&extensionProps](const auto& ext) {
@@ -76,7 +79,8 @@ VulkanInstance::InstanceResult VulkanInstance::create(const renderium::InstanceD
         .ppEnabledExtensionNames = requiredExtensions.data()
     };
 
-    auto instance = vk::raii::Instance(context, instanceInfo);
+    auto [result, instance] = context.createInstance(instanceInfo);
+    if (result != vk::Result::eSuccess) return InstanceResult::err(VulkanError::FailedToCreateVulkanInstance);
 
     return InstanceResult::ok(VulkanInstance( std::move(context),
         std::move(instance), VK_VERSION_1_3));

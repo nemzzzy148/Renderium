@@ -14,11 +14,11 @@ void DeviceErrorState::pushErrorScope(const renderium::ErrorFilter type) {
     errorStack.emplace_back(renderium::Error{type,"Something went wrong" });
 }
 
-void DeviceErrorState::report(const renderium::Error error) {
+void DeviceErrorState::report(const renderium::Error& error) {
     std::lock_guard lockGuard(lock);
     for (auto&[type, message] : errorStack) {
         if (type == error.type) {
-            message = std::move(error.message);
+            message = error.message;
         }
     } // Goes through each element checking the same type, if found set the error message in the error stack.
 }

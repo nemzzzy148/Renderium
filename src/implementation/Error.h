@@ -12,9 +12,17 @@ namespace rhi {
 namespace vulkan {
 enum class VulkanError {
     UnhandledException,
+    FailedToCreateVulkanInstance,
+    UnableToListLayers,
+    UnableToListExtensions,
     RequiredExtensionMissing,
     RequiredLayerMissing,
     WindowBackendFailedToCreateSurface,
+    SwapChainCreationFailed,
+    SwapChainOutOfDate,
+    UnableToGetSwapChainImages,
+    FailedToCreateSwapChainSemaphores,
+    FailedToCreateSwapChainImageViews,
     NoPhysicalDevicesFound,
     NoPhysicalDevicesSuitable,
     NoQueueFamilySuitable,
@@ -24,7 +32,10 @@ enum class VulkanError {
     InvalidBufferSize,
     InvalidImageDimensions,
     VertexEntryPointNotFound,
-    FragmentEntryPointNotFound
+    FragmentEntryPointNotFound,
+    ShaderModuleCreationError,
+    PipelineLayoutCreationError,
+    PipelineCreationError,
 };
 }
 

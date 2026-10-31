@@ -16,7 +16,7 @@ namespace rhi {
 class DeviceErrorState {
 public:
     void pushErrorScope(renderium::ErrorFilter type);
-    void report(renderium::Error error);
+    void report(const renderium::Error& error);
     renderium::Error popErrorScope();
 private:
     std::vector<renderium::Error> errorStack;

@@ -26,6 +26,7 @@ public:
     using Device = Api::Device;
 
     [[nodiscard]] const Device& getBackendDevice() const { return *device; }
+    [[nodiscard]] const DeviceErrorState& getDeviceErrorState() const { return errorState; }
 
     using QueueResult = renderium::Result<std::unique_ptr<renderium::Queue::Impl>, renderium::RequestError>;
     QueueResult createQueue() override;

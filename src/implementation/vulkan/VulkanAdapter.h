@@ -31,7 +31,6 @@ public:
     using AdapterOptions = AdapterImplOptions<VulkanApi>;
 
     // --- physical device ---
-    static constexpr const char* surfaceExtension = vk::KHRSwapchainExtensionName;
     static vk::DeviceSize getDeviceLocalMemory(const vk::raii::PhysicalDevice& physicalDevice);
     static float powerPreferenceFactor(renderium::PowerPreference powerPreference, bool gpu);
     static float getPhysicalDeviceScore(const vk::raii::PhysicalDevice& physicalDevice, const AdapterOptions& options);
@@ -46,11 +45,18 @@ public:
     static AdapterResult create(std::shared_ptr<VulkanInstance> instance, const AdapterOptions& options);
 
 private:
+    struct FormatRequirement {
+        vk::Format format;
+        vk::FormatFeatureFlags features;
+    };
+
     [[nodiscard]] uint32_t getVulkanVersion() const;
     [[nodiscard]] bool hasExtension(const char* extensionName) const;
     [[nodiscard]] bool hasFormatFeature(vk::Format format, vk::FormatFeatureFlags neededFlags) const;
+    [[nodiscard]] bool hasFormatFeature(FormatRequirement requirement) const;
     bool hasAllFormats(const std::vector<vk::Format>& formats, vk::FormatFeatureFlags neededFlags) const;
     bool image3DSupported(vk::Format format) const;
+    bool hasAllFormatRequirements(const std::vector<FormatRequirement>& requirements);
 public:
 
     [[nodiscard]] renderium::SupportedFeatures requestFeatures() const;

@@ -4,6 +4,8 @@
 
 #include "VulkanSurface.h"
 
+#include <complex>
+
 #include "Texture.h"
 #include "VulkanConversion.h"
 #include "VulkanInstance.h"
@@ -27,24 +29,31 @@ renderium::SurfaceCapabilities VulkanSurface::getCapabilities(const VulkanDevice
     const auto& physicalDevice = device.getPhysicalDevice();
 
     // formats
-    const std::vector<vk::SurfaceFormatKHR> vulkanFormats = physicalDevice.getSurfaceFormatsKHR(surface);
+    auto [formatResult, vulkanFormats] = physicalDevice.getSurfaceFormatsKHR(surface);
     std::vector<renderium::TextureFormat> formats;
-    formats.reserve(vulkanFormats.size());
-    for (const auto&[format, colorSpace] : vulkanFormats) {
-        formats.push_back(VulkanConversion::toTextureFormat(format));
+    if (formatResult == vk::Result::eSuccess) {
+        formats.reserve(vulkanFormats.size());
+        for (const auto&[format, colorSpace] : vulkanFormats) {
+            formats.push_back(VulkanConversion::toTextureFormat(format));
+        }
     }
 
     // present modes
-    const std::vector<vk::PresentModeKHR> vulkanPresentModes = physicalDevice.getSurfacePresentModesKHR(surface);
+    auto [presentResult, vulkanPresentModes] = physicalDevice.getSurfacePresentModesKHR(surface);
     std::vector<renderium::PresentMode> presentModes;
-    presentModes.reserve(vulkanPresentModes.size());
-    for (const auto vulkanPresentMode : vulkanPresentModes) {
-        presentModes.push_back(VulkanConversion::toPresentMode(vulkanPresentMode));
+    if (presentResult == vk::Result::eSuccess) {
+        presentModes.reserve(vulkanPresentModes.size());
+        for (const auto vulkanPresentMode : vulkanPresentModes) {
+            presentModes.push_back(VulkanConversion::toPresentMode(vulkanPresentMode));
+        }
     }
 
     // usages
-    const vk::SurfaceCapabilitiesKHR vulkanCapabilities = physicalDevice.getSurfaceCapabilitiesKHR(surface);
-    const auto usages = VulkanConversion::toTextureUsages(vulkanCapabilities.supportedUsageFlags);
+    auto [capabilitiesResult, vulkanCapabilities] = physicalDevice.getSurfaceCapabilitiesKHR(surface);
+    auto usages = renderium::TextureUsages::None;
+    if (capabilitiesResult == vk::Result::eSuccess) {
+        usages = VulkanConversion::toTextureUsages(vulkanCapabilities.supportedUsageFlags);
+    }
 
     return {usages, std::move(formats), std::move(presentModes)};
 }
@@ -55,13 +64,15 @@ void VulkanSurface::destroySwapChain(const VulkanDevice& device) {
     imageViews.clear();
 }
 
-void VulkanSurface::createSwapChain(const SurfaceImplConfiguration<VulkanApi> &configuration) {
+std::optional<VulkanError> VulkanSurface::createSwapChain(const SurfaceImplConfiguration<VulkanApi> &configuration) {
     const vk::Format format = VulkanConversion::mapTextureFormat(configuration.format);
     const vk::ImageUsageFlags usage = VulkanConversion::mapTextureUsages(configuration.usage);
     const vk::PresentModeKHR presentMode = VulkanConversion::mapPresentMode(configuration.presentMode);
 
     auto& device = configuration.device;
-    const auto capabilities = device.getPhysicalDevice().getSurfaceCapabilitiesKHR(surface);
+
+    auto [capabilitiesResult, capabilities]
+        = device.getPhysicalDevice().getSurfaceCapabilitiesKHR(surface);
 
     const vk::SwapchainCreateInfoKHR swapChainInfo{
         .surface = surface,
@@ -79,8 +90,18 @@ void VulkanSurface::createSwapChain(const SurfaceImplConfiguration<VulkanApi> &c
         .oldSwapchain = nullptr
     };
 
-    swapChain = vk::raii::SwapchainKHR(device.getDevice(), swapChainInfo);
-    images = swapChain.getImages();
+    auto [result, swpChn] = device.getDevice().createSwapchainKHR(swapChainInfo);
+    if (result != vk::Result::eSuccess) { // PANIC
+        return VulkanError::SwapChainCreationFailed;
+    }
+    swapChain = std::move(swapChain);
+
+    auto [imagesResult, img] = swapChain.getImages();
+    if (imagesResult != vk::Result::eSuccess) { // PANIC
+        return VulkanError::UnableToGetSwapChainImages;
+    }
+    images = std::move(img);
+
     vk::ImageViewCreateInfo imageViewInfo{
         .viewType = vk::ImageViewType::e2D,
         .format = format,
@@ -88,16 +109,25 @@ void VulkanSurface::createSwapChain(const SurfaceImplConfiguration<VulkanApi> &c
     };
     for (const auto& image : images) {
         imageViewInfo.image = image;
-        imageViews.emplace_back(device.getDevice(), imageViewInfo);
+        auto [imgViewResult, imageView] = device.getDevice().createImageView(imageViewInfo);
+        if (imgViewResult != vk::Result::eSuccess) { // PANIC
+            return VulkanError::FailedToCreateSwapChainImageViews;
+        }
+        imageViews.emplace_back(std::move(imageView));
     }
 
-    if (!presentCompleteSemaphores.empty()) return;
+    if (!presentCompleteSemaphores.empty()) return std::nullopt;
     for (uint32_t i = 0; i < images.size(); i++) {
-        presentCompleteSemaphores.emplace_back(device.getDevice(), vk::SemaphoreCreateInfo());
+        auto [semaphoreResult, semaphore] = device.getDevice().createSemaphore(vk::SemaphoreCreateInfo());
+        if (semaphoreResult != vk::Result::eSuccess) { // PANIC
+            return VulkanError::FailedToCreateSwapChainSemaphores;
+        }
+        presentCompleteSemaphores.emplace_back(std::move(semaphore));
     }
+    return std::nullopt;
 }
 
-void VulkanSurface::configure(const SurfaceImplConfiguration<VulkanApi> &configuration) {
+std::optional<VulkanError> VulkanSurface::configure(const SurfaceImplConfiguration<VulkanApi> &configuration) {
     destroySwapChain(configuration.device);
     createSwapChain(configuration);
 }

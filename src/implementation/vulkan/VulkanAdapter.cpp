@@ -38,35 +38,35 @@ float VulkanAdapter::getPhysicalDeviceScore(const vk::raii::PhysicalDevice& phys
         return 0;
                 }
     if (options.surface != nullptr) {
-        if (std::ranges::none_of(physicalDevice.enumerateDeviceExtensionProperties(), [](const auto& ext) {
-            return strcmp(ext.extensionName, surfaceExtension) == 0;
+        if (std::ranges::none_of(physicalDevice.enumerateDeviceExtensionProperties().value, [](const vk::ExtensionProperties& ext) {
+            return strcmp(ext.extensionName.data(), vk::KHRSwapchainExtensionName) == 0;
         })) return 0;
     }
 
     // --- score ---
-    float score = 1000;
+    float score = 0;
 
     // - device type -
     const float gpuFactor = powerPreferenceFactor(options.powerPreference, true);
     const float cpuFactor = powerPreferenceFactor(options.powerPreference, false);
     switch (const vk::PhysicalDeviceProperties physicalDeviceProperties = physicalDevice.getProperties();
             physicalDeviceProperties.deviceType) {
-                case vk::PhysicalDeviceType::eIntegratedGpu: score *= cpuFactor; break;
-                case vk::PhysicalDeviceType::eDiscreteGpu: score *= gpuFactor; break;
-                case vk::PhysicalDeviceType::eCpu: score *= cpuFactor; break;
+                case vk::PhysicalDeviceType::eDiscreteGpu: score = 1000.f * gpuFactor; break;
+                case vk::PhysicalDeviceType::eIntegratedGpu: score = 500.f * cpuFactor; break;
+                case vk::PhysicalDeviceType::eCpu: score = 100.f * cpuFactor; break;
                 default: return 0;
             }
 
     // - video ram -
     const float vRam = static_cast<float>(getDeviceLocalMemory(physicalDevice)) / (1024.f * 1024.f * 1024.f);
-    score+=std::log2f(vRam);
+    score+=std::log2f(std::max(vRam, 1.0f));
 
     return score;
 }
 
 VulkanAdapter::PhysicalDeviceResult VulkanAdapter::createPhysicalDevice(const VulkanInstance& instance,
                                                                         const AdapterOptions& options) {
-    const std::vector<vk::raii::PhysicalDevice> physicalDevices = instance.instance.enumeratePhysicalDevices();
+    const std::vector<vk::raii::PhysicalDevice> physicalDevices = instance.instance.enumeratePhysicalDevices().value;
     if (physicalDevices.empty()) return PhysicalDeviceResult::err(VulkanError::NoPhysicalDevicesFound);
     int theChosenIndex = 0; float highestScore = 0;
 
@@ -95,8 +95,8 @@ VulkanAdapter::AdapterResult VulkanAdapter::create(std::shared_ptr<VulkanInstanc
     if (!physicalDeviceResult.isOk()) return AdapterResult::err(physicalDeviceResult.unwrapError());
     auto physicalDevice = physicalDeviceResult.unwrap();
 
-    auto queueIndexResult = selectQueueFamilyIndex(vk::QueueFlagBits::eCompute, physicalDevice);
-    if (!physicalDeviceResult.isOk()) return AdapterResult::err(queueIndexResult.unwrapError());
+    auto queueIndexResult = selectQueueFamilyIndex(vk::QueueFlagBits::eGraphics, physicalDevice);
+    if (!queueIndexResult.isOk()) return AdapterResult::err(queueIndexResult.unwrapError());
 
     return AdapterResult::ok(VulkanAdapter(std::move(instance),
         std::make_shared<vk::raii::PhysicalDevice>(std::move(physicalDevice)),
@@ -108,13 +108,17 @@ uint32_t VulkanAdapter::getVulkanVersion() const {
 }
 
 bool VulkanAdapter::hasExtension(const char* extensionName) const {
-    return std::ranges::any_of(physicalDevice->enumerateDeviceExtensionProperties(), [extensionName](const auto& extension) {
+    return std::ranges::any_of(physicalDevice->enumerateDeviceExtensionProperties().value, [extensionName](const auto& extension) {
         return strcmp(extension.extensionName.data(), extensionName) == 0;
     });
 }
 
 bool VulkanAdapter::hasFormatFeature(const vk::Format format, const vk::FormatFeatureFlags neededFlags) const {
     return (physicalDevice->getFormatProperties(format).optimalTilingFeatures & neededFlags) == neededFlags;
+}
+
+bool VulkanAdapter::hasFormatFeature(const FormatRequirement requirement) const {
+    return hasFormatFeature(requirement.format, requirement.features);
 }
 
 bool VulkanAdapter::hasAllFormats(const std::vector<vk::Format> &formats, const vk::FormatFeatureFlags neededFlags) const {
@@ -138,17 +142,31 @@ bool VulkanAdapter::image3DSupported(const vk::Format format) const {
     return res == vk::Result::eSuccess;
 }
 
+bool VulkanAdapter::hasAllFormatRequirements(const std::vector<FormatRequirement> &requirements) {
+    return std::ranges::all_of(requirements, [&](const auto& requirement) {
+        return hasFormatFeature(requirement);
+    });
+}
+
 renderium::SupportedFeatures VulkanAdapter::requestFeatures() const {
     const auto version = getVulkanVersion();
     const auto f = physicalDevice->getFeatures();
-    const auto structChain = physicalDevice->getFeatures2<vk::PhysicalDeviceFeatures2,
-        vk::PhysicalDeviceVulkan11Features, vk::PhysicalDeviceVulkan12Features, vk::PhysicalDeviceVulkan13Features>();
-    const auto& f11 = structChain.get<vk::PhysicalDeviceVulkan11Features>();
-    const auto& f12 = structChain.get<vk::PhysicalDeviceVulkan12Features>();
-    const auto& f13 = structChain.get<vk::PhysicalDeviceVulkan13Features>();
-    auto p = physicalDevice->getProperties();
+    const auto p = physicalDevice->getProperties();
+
+    const auto featuresStructChain = physicalDevice->getFeatures2<vk::PhysicalDeviceFeatures2,
+        vk::PhysicalDeviceVulkan11Features, vk::PhysicalDeviceVulkan12Features,
+        vk::PhysicalDeviceVulkan13Features, vk::PhysicalDevicePortabilitySubsetFeaturesKHR>();
+    const auto propertiesStructureChain = physicalDevice->getProperties2<vk::PhysicalDeviceProperties2,
+    vk::PhysicalDeviceVulkan11Properties, vk::PhysicalDeviceVulkan13Properties>();
+
+    const auto& f11 = featuresStructChain.get<vk::PhysicalDeviceVulkan11Features>();
+    const auto& p11 = propertiesStructureChain.get<vk::PhysicalDeviceVulkan11Properties>();
+    const auto& f12 = featuresStructChain.get<vk::PhysicalDeviceVulkan12Features>();
+    const auto& f13 = featuresStructChain.get<vk::PhysicalDeviceVulkan13Features>();
+    const auto& p13 = propertiesStructureChain.get<vk::PhysicalDeviceVulkan13Properties>();
+
     auto queueFamilyProps = physicalDevice->getQueueFamilyProperties();
-    auto extensions = physicalDevice->enumerateDeviceExtensionProperties();
+    const auto& portability = featuresStructChain.get<vk::PhysicalDevicePortabilitySubsetFeaturesKHR>();
 
     renderium::SupportedFeatures features = {};
 
@@ -170,13 +188,14 @@ renderium::SupportedFeatures VulkanAdapter::requestFeatures() const {
         }
 
     if (f.textureCompressionBC) features |= renderium::SupportedFeatures::TextureCompressionBC;
-    static constexpr vk::Format bcFormats[] = {
+    static constexpr std::array bcFormats = {
         vk::Format::eBc1RgbaUnormBlock, vk::Format::eBc1RgbaSrgbBlock,
         vk::Format::eBc2UnormBlock, vk::Format::eBc2SrgbBlock,
         vk::Format::eBc3UnormBlock, vk::Format::eBc3SrgbBlock,
         vk::Format::eBc4UnormBlock, vk::Format::eBc4SnormBlock,
         vk::Format::eBc5UnormBlock, vk::Format::eBc5SnormBlock,
-        vk::Format::eBc6HUfloatBlock, vk::Format::eBc7UnormBlock, vk::Format::eBc7SrgbBlock
+        vk::Format::eBc6HUfloatBlock, vk::Format::eBc6HSfloatBlock,
+        vk::Format::eBc7UnormBlock, vk::Format::eBc7SrgbBlock
     };
     if (std::ranges::all_of(bcFormats, [&](const auto& format) {
         return image3DSupported(format);
@@ -184,11 +203,12 @@ renderium::SupportedFeatures VulkanAdapter::requestFeatures() const {
 
     if (f.textureCompressionETC2) features |= renderium::SupportedFeatures::TextureCompressionETC2;
     if (f.textureCompressionASTC_LDR) features |= renderium::SupportedFeatures::TextureCompressionASTC;
-    static std::vector astcFormat = {
+    static constexpr std::array astcFormat = {
         vk::Format::eAstc4x4UnormBlock, vk::Format::eAstc4x4SrgbBlock,
         vk::Format::eAstc5x4UnormBlock, vk::Format::eAstc5x4SrgbBlock,
         vk::Format::eAstc5x5UnormBlock, vk::Format::eAstc5x5SrgbBlock,
         vk::Format::eAstc6x5UnormBlock, vk::Format::eAstc6x5SrgbBlock,
+        vk::Format::eAstc6x6UnormBlock, vk::Format::eAstc6x6SrgbBlock,
         vk::Format::eAstc8x5UnormBlock, vk::Format::eAstc8x5SrgbBlock,
         vk::Format::eAstc8x6UnormBlock, vk::Format::eAstc8x6SrgbBlock,
         vk::Format::eAstc8x8UnormBlock, vk::Format::eAstc8x8SrgbBlock,
@@ -203,13 +223,14 @@ renderium::SupportedFeatures VulkanAdapter::requestFeatures() const {
         return image3DSupported(format);
     })) features |= renderium::SupportedFeatures::TextureCompressionASTCSliced3D;
 
-    const auto queueProp = physicalDevice->getQueueFamilyProperties()[queueFamilyIndex];
+    const auto queueProp = queueFamilyProps[queueFamilyIndex];
     if (p.limits.timestampPeriod > 0.0f && p.limits.timestampComputeAndGraphics && queueProp.timestampValidBits > 0)
         features |= renderium::SupportedFeatures::TimestampQuery;
 
     if (f.drawIndirectFirstInstance) features |= renderium::SupportedFeatures::IndirectFirstInstance;
 
-    if (f12.shaderFloat16 && f11.storageBuffer16BitAccess && f11.uniformAndStorageBuffer16BitAccess)
+    if (version >= VK_API_VERSION_1_2 && f12.shaderFloat16 &&
+        f11.storageBuffer16BitAccess && f11.uniformAndStorageBuffer16BitAccess)
         features |= renderium::SupportedFeatures::ShaderF16;
 
     if (hasFormatFeature(vk::Format::eB10G11R11UfloatPack32, vk::FormatFeatureFlagBits::eColorAttachment |
@@ -220,12 +241,64 @@ renderium::SupportedFeatures VulkanAdapter::requestFeatures() const {
         vk::FormatFeatureFlagBits::eStorageImage)) features |= renderium::SupportedFeatures::BGRA8UnormStorage;
 
     static std::vector f32 = {
-        vk::Format::eR32Sfloat, vk::Format::eR32G32Sfloat, vk::Format::eR32G32B32Sfloat, vk::Format::eR32G32B32A32Sfloat};
+        vk::Format::eR32Sfloat, vk::Format::eR32G32Sfloat, vk::Format::eR32G32B32A32Sfloat};
     if (hasAllFormats(f32, vk::FormatFeatureFlagBits::eSampledImage |
         vk::FormatFeatureFlagBits::eSampledImageFilterLinear)) features |= renderium::SupportedFeatures::Float32Filterable;
     if (hasAllFormats(f32, vk::FormatFeatureFlagBits::eColorAttachment |
         vk::FormatFeatureFlagBits::eColorAttachmentBlend)) features |= renderium::SupportedFeatures::Float32Blendable;
 
+    if (f.shaderClipDistance) features |= renderium::SupportedFeatures::ClipDistances;
+    if (f.dualSrcBlend && p.limits.maxFragmentDualSrcAttachments >= 1) features |= renderium::SupportedFeatures::DualSourceBlending;
+
+    constexpr vk::SubgroupFeatureFlags neededOperations = vk::SubgroupFeatureFlagBits::eBasic |
+        vk::SubgroupFeatureFlagBits::eVote | vk::SubgroupFeatureFlagBits::eArithmetic |
+        vk::SubgroupFeatureFlagBits::eBallot | vk::SubgroupFeatureFlagBits::eShuffle |
+        vk::SubgroupFeatureFlagBits::eShuffleRelative | vk::SubgroupFeatureFlagBits::eQuad;
+    constexpr vk::ShaderStageFlags neededStages = vk::ShaderStageFlagBits::eCompute | vk::ShaderStageFlagBits::eFragment;
+    if (version >= VK_API_VERSION_1_1 && (p11.subgroupSupportedOperations & neededOperations) == neededOperations &&
+        (p11.subgroupSupportedStages & neededStages) == neededStages)
+        features |= renderium::SupportedFeatures::Subgroups;
+
+    static std::vector tier1StorageAttachmentFormats = {
+        vk::Format::eR16Unorm, vk::Format::eR16Snorm,
+        vk::Format::eR16G16Unorm, vk::Format::eR16G16Snorm,
+        vk::Format::eR16G16B16A16Unorm, vk::Format::eR16G16B16A16Snorm,
+    };
+    static std::vector tier1AttachmentBlendFormats = {
+        vk::Format::eR8Snorm,
+        vk::Format::eR8G8Snorm,
+        vk::Format::eR8G8B8A8Snorm
+    };
+    bool supportsTier1 = hasAllFormats(tier1StorageAttachmentFormats,
+        vk::FormatFeatureFlagBits::eStorageImage | vk::FormatFeatureFlagBits::eColorAttachment) &&
+            hasAllFormats(tier1AttachmentBlendFormats, vk::FormatFeatureFlagBits::eColorAttachment
+                | vk::FormatFeatureFlagBits::eColorAttachmentBlend);
+
+    static std::vector tier2Formats = {
+        vk::Format::eR8Unorm, vk::Format::eR8Uint, vk::Format::eR8Sint,
+        vk::Format::eR8G8B8A8Unorm, vk::Format::eR8G8B8A8Uint, vk::Format::eR8G8B8A8Sint,
+        vk::Format::eR16Uint, vk::Format::eR16Sfloat,
+        vk::Format::eR16G16B16A16Uint, vk::Format::eR16G16B16A16Sint, vk::Format::eR16G16B16A16Sfloat,
+        vk::Format::eR32G32B32A32Uint, vk::Format::eR32G32B32A32Sint, vk::Format::eR32G32B32A32Sfloat
+    };
+
+    if (supportsTier1) {
+        features |= renderium::SupportedFeatures::TextureFormatsTier1;
+        if (hasAllFormats(tier2Formats, vk::FormatFeatureFlagBits::eStorageImage))
+            features |= renderium::SupportedFeatures::TextureFormatsTier2;
+    }
+
+    if (f.geometryShader || hasExtension(vk::EXTMeshShaderExtensionName))
+        features |= renderium::SupportedFeatures::PrimitiveIndex;
+
+    if (version >= VK_API_VERSION_1_3 && f13.subgroupSizeControl && f13.computeFullSubgroups &&
+        (p13.requiredSubgroupSizeStages & vk::ShaderStageFlagBits::eCompute)
+        && p13.minSubgroupSize > 0 && p13.maxSubgroupSize >= p13.minSubgroupSize)
+            features |= renderium::SupportedFeatures::SubgroupSizeControl;
+
+    bool swz = true;
+    if (hasExtension(vk::KHRPortabilitySubsetExtensionName)) swz = portability.imageViewFormatSwizzle;
+    if (swz) features |= renderium::SupportedFeatures::TextureComponentSwizzle;
 
     return features;
 }
@@ -278,7 +351,7 @@ renderium::SupportedLimits VulkanAdapter::requestLimits() const {
             std::min(8u, limits.maxPerStageDescriptorStorageBuffers) : 0u,
         .maxStorageBuffersInFragmentStage = features.fragmentStoresAndAtomics ?
             std::min(8u, limits.maxPerStageDescriptorStorageBuffers) : 0u,
-        // If false, when in the vertex or fragment stage, the shader can't write to (atomic) storage buffer.
+        // If false, when in the vertex or fragment stage, the shader can't read to (atomic) storage buffer.
         // So then the user wouldn't be able to access storage buffers.
         // Take the minimum of 8 and the maximum amount of per stage(vertex, fragment, ...) storage buffers.
         // Same logic with the textures below.
@@ -332,7 +405,7 @@ renderium::AdapterInfo VulkanAdapter::requestAdapterInfo() const {
     info.architecture = "";
     info.device = std::string(properties.deviceName.data());
 
-    if (version >= VK_VERSION_1_2 || hasExtension(vk::KHRDriverPropertiesExtensionName)) {
+    if (version >= VK_API_VERSION_1_2 || hasExtension(vk::KHRDriverPropertiesExtensionName)) {
         const auto driverProps = physicalDevice->getProperties2<vk::PhysicalDeviceProperties2,
             vk::PhysicalDeviceDriverProperties>().get<vk::PhysicalDeviceDriverProperties>();
         info.description = std::string(driverProps.driverName.data()) + " " + driverProps.driverInfo.data();
@@ -344,19 +417,19 @@ renderium::AdapterInfo VulkanAdapter::requestAdapterInfo() const {
     info.subgroupMinSize = 4;
     info.subgroupMaxSize = 128;
 
-    if (version >= VK_VERSION_1_3 || hasExtension(vk::EXTSubgroupSizeControlExtensionName)) {
+    if (version >= VK_API_VERSION_1_3 || hasExtension(vk::EXTSubgroupSizeControlExtensionName)) {
         const auto subGroupProps = physicalDevice->getProperties2<vk::PhysicalDeviceProperties2,
             vk::PhysicalDeviceSubgroupSizeControlProperties>().get<vk::PhysicalDeviceSubgroupSizeControlProperties>();
         info.subgroupMaxSize = subGroupProps.maxSubgroupSize;
         info.subgroupMinSize = subGroupProps.minSubgroupSize;
-    } else if (version >= VK_VERSION_1_1) {
+    } else if (version >= VK_API_VERSION_1_1) {
         const auto subGroupProps = physicalDevice->getProperties2<vk::PhysicalDeviceProperties2,
             vk::PhysicalDeviceSubgroupProperties>().get<vk::PhysicalDeviceSubgroupProperties>();
         info.subgroupMaxSize = info.subgroupMinSize = subGroupProps.subgroupSize;
     }
 
     info.isFallbackAdapter = properties.deviceType == vk::PhysicalDeviceType::eCpu;
-    return std::move(info);
+    return info;
 }
 
 VulkanAdapter::DeviceResult VulkanAdapter::requestDevice(const renderium::DeviceDescriptor& descriptor) const {

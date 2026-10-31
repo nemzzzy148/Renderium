@@ -71,9 +71,14 @@ target_include_directories( Renderium PUBLIC
 
 enable_testing()
 
-add_subdirectory(sandbox)
+target_compile_definitions(Renderium PUBLIC
+        VULKAN_HPP_NO_STRUCT_CONSTRUCTORS
+        VULKAN_HPP_NO_EXCEPTIONS
+        VK_ENABLE_BETA_EXTENSIONS
+)
 
-target_compile_definitions(Renderium PUBLIC VULKAN_HPP_NO_STRUCT_CONSTRUCTORS)
+
+add_subdirectory(sandbox)
 
 target_link_libraries( Renderium
         Vulkan::Vulkan

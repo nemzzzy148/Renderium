@@ -55,7 +55,6 @@ class VulkanDevice : public std::enable_shared_from_this<VulkanDevice> {
     static VulkanDeviceResult createDevice(const vk::raii::PhysicalDevice& physicalDevice,
         bool surfaceSupport, uint32_t queueFamilyIndex);
 public:
-
     using DeviceResult = renderium::Result<VulkanDevice, VulkanError>;
     VulkanDevice(VulkanDevice&& other) noexcept;
     VulkanDevice& operator=(VulkanDevice&&) = delete;
