@@ -41,7 +41,8 @@ inline constexpr vk::ShaderStageFlagBits VulkanShaderStage_t = VulkanShaderStage
 class VulkanRenderPipeline {
     explicit VulkanRenderPipeline(vk::raii::Pipeline pipeline) : pipeline(std::move(pipeline)) {}
     // shader
-    static vk::raii::ShaderModule createShaderModule(const vk::raii::Device& device,
+    using ShaderModuleResult = renderium::Result<vk::raii::ShaderModule, VulkanError>;
+    static ShaderModuleResult createShaderModule(const vk::raii::Device& device,
         const renderium::shader::ShaderEntryPoint& entryPoint);
     template<IsState State>
     static std::optional<vk::PipelineShaderStageCreateInfo> createShaderStage(const vk::raii::Device& device,

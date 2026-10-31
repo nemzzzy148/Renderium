@@ -12,7 +12,7 @@
 
 namespace rhi::vulkan {
 
-vk::raii::ShaderModule VulkanRenderPipeline::createShaderModule(const vk::raii::Device& device,
+VulkanRenderPipeline::ShaderModuleResult VulkanRenderPipeline::createShaderModule(const vk::raii::Device& device,
         const renderium::shader::ShaderEntryPoint &entryPoint) {
     const vk::ShaderModuleCreateInfo createInfo {
         .codeSize = entryPoint.code.size() * sizeof(uint8_t),
@@ -20,9 +20,9 @@ vk::raii::ShaderModule VulkanRenderPipeline::createShaderModule(const vk::raii::
     };
     auto [result, shaderModule] = device.createShaderModule(createInfo);
     if (result != vk::Result::eSuccess) {
-        return
+        return ShaderModuleResult::err(VulkanError::ShaderModuleCreationError);
     }
-    return {device, createInfo};
+    return ShaderModuleResult::ok(std::move(shaderModule));
 }
 
 template<IsState State>
@@ -31,7 +31,10 @@ std::optional<vk::PipelineShaderStageCreateInfo> VulkanRenderPipeline::createSha
     const auto* specificState = findEntryPoint(
         state.module.getCompiledShader().entryPoints, state.entryPoint);
     if (!specificState) return std::nullopt;
-    shaderModule = createShaderModule(device, *specificState);
+
+    auto shaderResult = createShaderModule(device, *specificState);
+    if (!shaderResult.isOk()) return std::nullopt;
+    shaderModule = shaderResult.unwrap();
 
     vk::PipelineShaderStageCreateInfo vertexInfo {
         .stage = VulkanShaderStage_t<State>,
