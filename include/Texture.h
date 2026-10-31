@@ -24,7 +24,7 @@ enum class RequestError;
 struct Extent3D {
     uint32_t width;
     uint32_t height;
-    uint32_t depthOrArrayLaters;
+    uint32_t depthOrArrayLayers;
 };
 
 enum class TextureDimension  {
@@ -127,7 +127,7 @@ private:
         ~Impl() = default;
 
         explicit Impl(const TextureDescriptor& descriptor): width(descriptor.size.width), height(descriptor.size.height),
-            depthOrArrayLayers(descriptor.size.depthOrArrayLaters), mipLevelCount(descriptor.mipLevelCount),
+            depthOrArrayLayers(descriptor.size.depthOrArrayLayers), mipLevelCount(descriptor.mipLevelCount),
             sampleCount(descriptor.sampleCount), dimension(descriptor.dimension), format(descriptor.format),
             usage(descriptor.usage) {}
 

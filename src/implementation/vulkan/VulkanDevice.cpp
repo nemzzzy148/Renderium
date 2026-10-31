@@ -50,7 +50,7 @@ VulkanDevice::VulkanDeviceResult VulkanDevice::createDevice(const vk::raii::Phys
         .queueCreateInfoCount = 1,
         .pQueueCreateInfos = &queueCreateInfo,
         .enabledExtensionCount = static_cast<uint32_t>(surfaceSupport ? 1 : 0),
-        .ppEnabledExtensionNames = &VulkanAdapter::surfaceExtension
+        .ppEnabledExtensionNames = &vk::KHRSwapchainExtensionName
     };
     return VulkanDeviceResult::ok(
         {std::move(vk::raii::Device(physicalDevice, deviceCreateInfo))});

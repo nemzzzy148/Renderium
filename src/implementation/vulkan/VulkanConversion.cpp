@@ -36,7 +36,7 @@ vk::ImageType VulkanConversion::mapTextureDimension(const renderium::TextureDime
 }
 
 vk::Extent3D VulkanConversion::mapExtent3D(const renderium::Extent3D extent3d) {
-    return {.width = extent3d.width, .height = extent3d.height, .depth = extent3d.depthOrArrayLaters};
+    return {.width = extent3d.width, .height = extent3d.height, .depth = extent3d.depthOrArrayLayers};
 }
 
 vk::Format VulkanConversion::mapTextureFormat(const renderium::TextureFormat textureFormat) {
