@@ -30,7 +30,7 @@ template<typename Api>
 renderium::shader::CompiledShader DeviceImpl<Api>::compileShader(const std::string &code) {
     auto result = shaderCompiler->compileShader(errorState, code);
     if (!result.isOk()) {
-        return renderium::shader::CompiledShader();
+        return {};
     }
     return result.unwrap();
 }
@@ -51,7 +51,6 @@ std::unique_ptr<renderium::RenderPipeline::Impl> DeviceImpl<Api>::createRenderPi
 
 template<typename Api>
 std::unique_ptr<renderium::Buffer::Impl> DeviceImpl<Api>::createBuffer(const renderium::BufferDescriptor &descriptor) {
-
     if (validateBufferDescriptor(errorState, descriptor)) RETURN_INVALID_UNIQUE(Buffer);
 
     auto result = device->createBuffer(descriptor);

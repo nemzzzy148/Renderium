@@ -63,6 +63,7 @@ add_library(Renderium SHARED
         src/implementation/BufferImpl.cpp
         src/implementation/TextureImpl.cpp
         src/implementation/ShaderCompilerImpl.cpp
+        src/implementation/SurfaceImpl.cpp
 )
 
 target_include_directories( Renderium PUBLIC

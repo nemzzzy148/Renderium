@@ -6,6 +6,8 @@
 #include <memory>
 #include <vector>
 
+#include "Texture.h"
+
 namespace rhi {
 template<typename Api>
 class SurfaceImpl;
@@ -44,7 +46,7 @@ struct SurfaceConfiguration {
     uint32_t height;
 
     TextureUsages usage;
-    TextureFormat format;
+    TextureFormat format = TextureFormat::BGRA8Unorm;
 
     PresentMode presentMode = PresentMode::VSync;
     uint32_t maxFramesInFlight = 3;

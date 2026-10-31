@@ -13,6 +13,8 @@ namespace rhi {
 template<typename Api>
 class InstanceImpl;
 
+bool validateSurfaceConfiguration(DeviceErrorState& errorState, const renderium::SurfaceConfiguration& configuration);
+
 template<typename Api>
 struct SurfaceImplConfiguration {
     const Api::Device& device;
@@ -38,6 +40,7 @@ public:
 
     void configure(const renderium::SurfaceConfiguration& configuration) override {
         auto& device = static_cast<DeviceImpl<Api>&>(*configuration.device.impl);
+        if (validateSurfaceConfiguration(device.errorState, configuration)) return;
 
         SurfaceImplConfiguration<Api> implConfiguration{
             .device = device.getBackendDevice(),
@@ -48,9 +51,10 @@ public:
             .presentMode = configuration.presentMode,
             .maxFramesInFlight = configuration.maxFramesInFlight
         };
+
         auto optional = surface.configure(implConfiguration);
         if (optional.has_value()) {
-            device.getDeviceErrorState().report();
+            device.getDeviceErrorState().report(Api::toError(*optional));
         }
     }
 private:

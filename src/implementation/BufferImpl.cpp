@@ -12,7 +12,7 @@ bool validateBufferDescriptor(DeviceErrorState &errorState, const renderium::Buf
     if (descriptor.size == 0) {
         errorState.report({
             renderium::ErrorFilter::Validation,
-            "The size of a gpu buffer cannot be 0."
+            "Buffer creation requires the size to be greater than 0."
         });
         return true;
     }
