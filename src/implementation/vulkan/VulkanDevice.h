@@ -77,6 +77,7 @@ public:
 
     using CommandEncoderResult = renderium::Result<std::shared_ptr<VulkanCommandEncoder>, VulkanError>;
     CommandEncoderResult createCommandEncoder();
+    void releaseCommandEncoder(const VulkanCommandEncoder* commandEncoder);
 private:
     VulkanDevice(std::shared_ptr<VulkanInstance> instance,
         std::shared_ptr<vk::raii::PhysicalDevice> physicalDevice, std::unique_ptr<vk::raii::Device> device,
@@ -138,11 +139,13 @@ private:
 
         using CommandEncoderResult = renderium::Result<std::shared_ptr<VulkanCommandEncoder>, VulkanError>;
         CommandEncoderResult obtainCommandEncoder();
+        void releaseCommandEncoder(const VulkanCommandEncoder* commandEncoder);
     private:
         CommandEncoderResult createCommandEncoder() const;
 
         std::vector<std::shared_ptr<VulkanCommandEncoder>> commandEncoders;
         std::vector<uint32_t> freeEncoders;
+        std::vector<bool> encoderInUse;
 
         VulkanDevice& device;
 

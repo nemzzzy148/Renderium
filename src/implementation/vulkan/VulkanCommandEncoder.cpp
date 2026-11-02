@@ -34,12 +34,16 @@ VulkanCommandEncoder::CommandEncoderResult VulkanCommandEncoder::create(std::sha
 }
 
 std::optional<VulkanError> VulkanCommandEncoder::allocate() {
+    const auto devicePtr = device.lock();
+    if (!devicePtr) {
+        return VulkanError::UnhandledException;
+    }
     const vk::CommandBufferAllocateInfo buffersAllocInfo {
         .commandPool = commandPool,
         .level = vk::CommandBufferLevel::ePrimary,
         .commandBufferCount = allocationCount
     };
-    auto [buffersResult, cBs] = device->getDevice().allocateCommandBuffers(buffersAllocInfo);
+    auto [buffersResult, cBs] = devicePtr->getDevice().allocateCommandBuffers(buffersAllocInfo);
     if (buffersResult != vk::Result::eSuccess) {
         return VulkanError::CommandBufferCreationError;
     }
@@ -53,11 +57,21 @@ std::optional<VulkanError> VulkanCommandEncoder::allocate() {
 }
 
 std::optional<VulkanError> VulkanCommandEncoder::reset() const {
+    const auto devicePtr = device.lock();
+    if (!devicePtr) {
+        return VulkanError::UnhandledException;
+    }
     const auto result = commandPool.reset();
     if (result != vk::Result::eSuccess) {
         return VulkanError::FailedToResetCommandPool;
     }
     return std::nullopt;
+}
+
+void VulkanCommandEncoder::release() {
+    if (const auto devicePtr = device.lock()) {
+        devicePtr->releaseCommandEncoder(this);
+    }
 }
 
 }

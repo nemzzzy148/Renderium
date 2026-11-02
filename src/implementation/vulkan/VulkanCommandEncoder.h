@@ -19,15 +19,18 @@ public:
 
     std::optional<VulkanError> allocate();
     std::optional<VulkanError> reset() const; // only when encoder not in use
+    void release();
 private:
     explicit VulkanCommandEncoder(std::shared_ptr<VulkanDevice> device, vk::raii::CommandPool commandPool,
         std::vector<vk::raii::CommandBuffer> commandBuffers) : device(std::move(device)),
         commandPool(std::move(commandPool)), commandBuffers(std::move(commandBuffers)) {}
     static constexpr size_t allocationCount = 16;
 
-    std::shared_ptr<VulkanDevice> device;
+    std::weak_ptr<VulkanDevice> device;
     vk::raii::CommandPool commandPool;
     std::vector<vk::raii::CommandBuffer> commandBuffers;
+
+    friend class VulkanDevice;
 };
 
 }

@@ -159,6 +159,10 @@ VulkanDevice::CommandEncoderResult VulkanDevice::createCommandEncoder() {
     return commandEncoderManager.obtainCommandEncoder();
 }
 
+void VulkanDevice::releaseCommandEncoder(const VulkanCommandEncoder* commandEncoder) {
+    commandEncoderManager.releaseCommandEncoder(commandEncoder);
+}
+
 VulkanDevice::MemoryManager::MemoryManager(const vk::raii::PhysicalDevice& physicalDevice, const vk::raii::Device& device)
     : physicalDevice(physicalDevice), device(device) {}
 
@@ -270,7 +274,8 @@ MemoryAllocation VulkanDevice::MemoryManager::allocate(Heap &heap, const uint32_
 
 VulkanDevice::CommandEncoderManager::CommandEncoderManager(CommandEncoderManager &&commandEncoderManager,
     VulkanDevice& device) : commandEncoders(std::move(commandEncoderManager.commandEncoders)),
-    freeEncoders(std::move(commandEncoderManager.freeEncoders)), device(device), lock(std::mutex()) {}
+    freeEncoders(std::move(commandEncoderManager.freeEncoders)),
+    encoderInUse(std::move(commandEncoderManager.encoderInUse)), device(device), lock(std::mutex()) {}
 
 VulkanDevice::CommandEncoderManager::CommandEncoderResult VulkanDevice::CommandEncoderManager::obtainCommandEncoder() {
     std::lock_guard guard(lock);
@@ -278,12 +283,27 @@ VulkanDevice::CommandEncoderManager::CommandEncoderResult VulkanDevice::CommandE
         auto result = createCommandEncoder();
         if (!result.isOk()) return std::move(result);
         commandEncoders.emplace_back(std::move(result.unwrap()));
-        freeEncoders.emplace_back(commandEncoders.size() - 1);
+        encoderInUse.emplace_back(true);
+        return CommandEncoderResult::ok(commandEncoders.back());
     }
 
-    std::shared_ptr<VulkanCommandEncoder> commandEncoder = commandEncoders[freeEncoders.back()];
+    const uint32_t encoderIndex = freeEncoders.back();
     freeEncoders.pop_back();
+    encoderInUse[encoderIndex] = true;
+    std::shared_ptr<VulkanCommandEncoder> commandEncoder = commandEncoders[encoderIndex];
     return CommandEncoderResult::ok(std::move(commandEncoder));
+}
+
+void VulkanDevice::CommandEncoderManager::releaseCommandEncoder(const VulkanCommandEncoder* commandEncoder) {
+    std::lock_guard guard(lock);
+    for (uint32_t i = 0; i < commandEncoders.size(); ++i) {
+        if (commandEncoders[i].get() != commandEncoder || !encoderInUse[i]) {
+            continue;
+        }
+        encoderInUse[i] = false;
+        freeEncoders.emplace_back(i);
+        return;
+    }
 }
 
 VulkanDevice::CommandEncoderManager::CommandEncoderResult VulkanDevice::CommandEncoderManager::createCommandEncoder() const {

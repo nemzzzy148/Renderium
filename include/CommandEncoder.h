@@ -16,7 +16,7 @@ namespace renderium {
 
 class CommandEncoder {
     struct Impl {
-        ~Impl() = default;
+        virtual ~Impl() = default;
     };
     std::unique_ptr<Impl> impl;
     explicit CommandEncoder(std::unique_ptr<Impl> impl) : impl(std::move(impl)) {}

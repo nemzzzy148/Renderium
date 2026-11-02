@@ -111,7 +111,7 @@ std::unique_ptr<renderium::CommandEncoder::Impl> DeviceImpl<Api>::createCommandE
     }
 
     return std::unique_ptr<renderium::CommandEncoder::Impl>(
-        new CommandEncoderImpl<Api>(std::move(result.unwrap())));
+        new CommandEncoderImpl<Api>(device, std::move(result.unwrap())));
 }
 
 template class DeviceImpl<VulkanApi>;
