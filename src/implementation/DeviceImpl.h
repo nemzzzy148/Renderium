@@ -26,10 +26,13 @@ public:
     using Device = Api::Device;
 
     [[nodiscard]] const Device& getBackendDevice() const { return *device; }
-    [[nodiscard]] const DeviceErrorState& getDeviceErrorState() const { return errorState; }
+    [[nodiscard]] DeviceErrorState& getDeviceErrorState() { return errorState; }
 
     using QueueResult = renderium::Result<std::unique_ptr<renderium::Queue::Impl>, renderium::RequestError>;
     QueueResult createQueue() override;
+
+    void pushErrorScope(renderium::ErrorFilter filter) override;
+    std::future<renderium::Error> popErrorScope() override;
 
     renderium::shader::CompiledShader compileShader(const std::string &code) override;
     std::unique_ptr<renderium::RenderPipeline::Impl> createRenderPipeline(
@@ -40,7 +43,7 @@ public:
 private:
     explicit DeviceImpl(Device device, std::unique_ptr<IShaderCompiler> shaderCompiler)
         : shaderCompiler(std::move(shaderCompiler)), device(std::make_shared<Device>(std::move(device))) {}
-private:
+
     std::unique_ptr<IShaderCompiler> shaderCompiler;
     std::shared_ptr<Device> device;
     DeviceErrorState errorState;

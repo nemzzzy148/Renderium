@@ -41,7 +41,12 @@ Instance::AdapterResult Instance::requestAdapter(const RequestAdapterOptions &op
     if (!result.isOk()) {
         return AdapterResult::err(RequestError::RequestAdapterError);
     }
-    return AdapterResult::ok(Adapter(std::move(result.unwrap())));
+    auto adapter = result.unwrap();
+    const auto features = adapter->requestFeatures();
+    const auto limits = adapter->requestLimits();
+    auto info = adapter->requestAdapterInfo();
+    return AdapterResult::ok(Adapter(
+        std::move(adapter), features, limits, std::move(info)));
 }
 
 }

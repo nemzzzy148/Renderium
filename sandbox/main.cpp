@@ -1,5 +1,6 @@
 
 #include <assert.h>
+#include <functional>
 #include <iomanip>
 #include <iostream>
 
@@ -61,6 +62,10 @@ float4 fragMain(VertexOutput input) : SV_Target0
     )";
 
 int main() {
+    std::function<void(const renderium::Error&)> errorCallback = [](const renderium::Error& error) {
+        std::printf("%s", error.message.c_str());
+    };
+
     // window
     auto windowResult = renderium::Window::create({});
     assert(windowResult.isOk());
@@ -87,7 +92,9 @@ int main() {
     const auto device = deviceResult.unwrap();
 
     // example texture and buffer
-    auto buffer = device.createBuffer({2048, renderium::BufferUsages::Vertex, false});
+    device.pushErrorScope(renderium::ErrorFilter::Internal);
+    auto buffer = device.createBuffer({0, renderium::BufferUsages::Vertex, false});
+    auto error = device.popErrorScope().get();
 
     auto texture = device.createTexture({{512, 512, 1}, 1, 1,
         renderium::TextureDimension::D2, renderium::TextureFormat::RGBA8Unorm,

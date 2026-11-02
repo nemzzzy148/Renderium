@@ -27,6 +27,16 @@ DeviceImpl<Api>::QueueResult DeviceImpl<Api>::createQueue() {
 }
 
 template<typename Api>
+void DeviceImpl<Api>::pushErrorScope(const renderium::ErrorFilter filter) {
+    errorState.pushErrorScope(filter);
+}
+
+template<typename Api>
+std::future<renderium::Error> DeviceImpl<Api>::popErrorScope() {
+    return errorState.popErrorScope();
+}
+
+template<typename Api>
 renderium::shader::CompiledShader DeviceImpl<Api>::compileShader(const std::string &code) {
     auto result = shaderCompiler->compileShader(errorState, code);
     if (!result.isOk()) {

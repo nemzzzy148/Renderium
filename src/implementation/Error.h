@@ -34,6 +34,7 @@ enum class VulkanError {
     BufferCreationFailed,
     InvalidImageDimensions,
     ImageCreationFailed,
+    ImageViewCreationFailed,
     VertexEntryPointNotFound,
     FragmentEntryPointNotFound,
     ShaderModuleCreationError,

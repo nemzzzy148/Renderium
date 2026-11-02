@@ -125,6 +125,18 @@ renderium::TextureUsages VulkanConversion::toTextureUsages(const vk::ImageUsageF
     return finalUsages;
 }
 
+vk::ImageViewType VulkanConversion::mapTextureViewDimension(const renderium::TextureViewDimension dimension) {
+    switch (dimension) {
+        case renderium::TextureViewDimension::D1: return vk::ImageViewType::e1D;
+        case renderium::TextureViewDimension::D2: return vk::ImageViewType::e2D;
+        case renderium::TextureViewDimension::D2Array: return  vk::ImageViewType::e2DArray;
+        case renderium::TextureViewDimension::Cube: return vk::ImageViewType::eCube;
+        case renderium::TextureViewDimension::CubeArray:  return vk::ImageViewType::eCubeArray;
+        case renderium::TextureViewDimension::D3: return vk::ImageViewType::e3D;
+        default: return vk::ImageViewType::e1D;
+    }
+}
+
 vk::VertexInputRate VulkanConversion::mapVertexStepMode(const renderium::VertexStepMode stepMode) {
     switch (stepMode) {
         case renderium::VertexStepMode::Vertex: return vk::VertexInputRate::eVertex;

@@ -6,6 +6,7 @@
 #include <vulkan/vulkan.hpp>
 
 namespace renderium {
+enum class TextureViewDimension;
 struct Error;
 enum class RequestError;
 enum class BufferUsages : uint16_t;
@@ -35,6 +36,7 @@ public:
     static renderium::PresentMode toPresentMode(vk::PresentModeKHR presentMode);
     static vk::ImageUsageFlags mapTextureUsages(renderium::TextureUsages textureUsages);
     static renderium::TextureUsages toTextureUsages(vk::ImageUsageFlags usages);
+    static vk::ImageViewType mapTextureViewDimension(renderium::TextureViewDimension dimension);
     static vk::VertexInputRate mapVertexStepMode(renderium::VertexStepMode stepMode);
     static vk::Format mapVertexFormat(renderium::VertexFormat vertexFormat);
     static vk::PrimitiveTopology mapPrimitiveTopology(renderium::PrimitiveTopology primitiveTopology);

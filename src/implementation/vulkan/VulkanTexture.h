@@ -23,6 +23,8 @@ public:
 private:
     explicit VulkanTextureView(vk::raii::ImageView view) : view(std::move(view)) {}
     vk::raii::ImageView view = nullptr;
+
+    friend class VulkanTexture;
 };
 
 class VulkanTexture {
@@ -38,7 +40,8 @@ public:
     }
     VulkanTexture& operator=(VulkanTexture&&) = delete;
 
-    [[nodiscard]] VulkanTextureView createView(const renderium::TextureViewDescriptor& descriptor) const;
+    using TextureViewResult = renderium::Result<VulkanTextureView, VulkanError>;
+    [[nodiscard]] TextureViewResult createView(const renderium::TextureViewDescriptor& descriptor) const;
 
     ~VulkanTexture();
 
