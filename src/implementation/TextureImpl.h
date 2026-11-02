@@ -24,8 +24,6 @@ private:
         : Impl(renderium::TextureDescriptor{}), texture(std::nullopt) {}
     std::optional<Texture> texture;
 
-
-
     friend class DeviceImpl<Api>;
 };
 

@@ -4,6 +4,7 @@
 
 #pragma once
 #include <memory>
+#include <mutex>
 #include <unordered_map>
 #include <utility>
 #include <vulkan/vulkan_raii.hpp>
@@ -28,6 +29,7 @@ struct DeviceDescriptor;
 }
 
 namespace rhi::vulkan {
+class VulkanCommandEncoder;
 class VulkanBuffer;
 class VulkanAdapter;
 class VulkanInstance;
@@ -72,13 +74,16 @@ public:
 
     using TextureResult = renderium::Result<VulkanTexture, VulkanError>;
     TextureResult createTexture(const renderium::TextureDescriptor& descriptor);
+
+    using CommandEncoderResult = renderium::Result<std::shared_ptr<VulkanCommandEncoder>, VulkanError>;
+    CommandEncoderResult createCommandEncoder();
 private:
     VulkanDevice(std::shared_ptr<VulkanInstance> instance,
         std::shared_ptr<vk::raii::PhysicalDevice> physicalDevice, std::unique_ptr<vk::raii::Device> device,
         const uint32_t familyQueueIndex)
         : instance(std::move(instance)), physicalDevice(std::move(physicalDevice)),
-          queueFamilyIndex(familyQueueIndex), device(std::move(device)), memoryManager(*physicalDevice, *device){}
-
+        queueFamilyIndex(familyQueueIndex), device(std::move(device)),
+        memoryManager(*physicalDevice, *device), commandEncoderManager(*this) {}
     std::shared_ptr<VulkanInstance> instance;
     std::shared_ptr<vk::raii::PhysicalDevice> physicalDevice;
     uint32_t queueFamilyIndex;
@@ -122,9 +127,28 @@ private:
         std::unordered_map<uint32_t, Heap> bufferHeaps;
         std::unordered_map<uint32_t, Heap> textureHeaps;
     };
-
     MemoryManager memoryManager;
 
+    class CommandEncoderManager {
+    public:
+        explicit CommandEncoderManager(VulkanDevice& device) :
+            commandEncoders(std::vector<std::shared_ptr<VulkanCommandEncoder>>()), freeEncoders(std::vector<uint32_t>{}),
+            device(device), lock(std::mutex()) {}
+        CommandEncoderManager(CommandEncoderManager&& commandEncoderManager, VulkanDevice& device);
+
+        using CommandEncoderResult = renderium::Result<std::shared_ptr<VulkanCommandEncoder>, VulkanError>;
+        CommandEncoderResult obtainCommandEncoder();
+    private:
+        CommandEncoderResult createCommandEncoder() const;
+
+        std::vector<std::shared_ptr<VulkanCommandEncoder>> commandEncoders;
+        std::vector<uint32_t> freeEncoders;
+
+        VulkanDevice& device;
+
+        std::mutex lock;
+    };
+    CommandEncoderManager commandEncoderManager;
 
     friend class VulkanQueue;
 };

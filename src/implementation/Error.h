@@ -40,6 +40,9 @@ enum class VulkanError {
     ShaderModuleCreationError,
     PipelineLayoutCreationError,
     PipelineCreationError,
+    CommandPoolCreationError,
+    CommandBufferCreationError,
+    FailedToResetCommandPool
 };
 }
 

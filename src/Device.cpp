@@ -19,6 +19,10 @@ RenderPipeline Device::createRenderPipeline(const RenderPipelineDescriptor& desc
     return RenderPipeline(impl->createRenderPipeline(descriptor));
 }
 
+CommandEncoder Device::createCommandEncoder() const {
+    return CommandEncoder(impl->createCommandEncoder());
+}
+
 Buffer Device::createBuffer(const BufferDescriptor &descriptor) const {
     return Buffer(impl->createBuffer(descriptor));
 }

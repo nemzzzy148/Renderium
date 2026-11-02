@@ -9,6 +9,7 @@
 
 #include "AdapterInfo.h"
 #include "Buffer.h"
+#include "CommandEncoder.h"
 #include "Pipeline.h"
 #include "Queue.h"
 #include "Result.h"
@@ -26,6 +27,7 @@ class SurfaceImpl;
 }
 
 namespace renderium {
+class CommandEncoder;
 
 struct PipelineLayoutDescriptor;
 class PipelineLayout;
@@ -60,6 +62,8 @@ public:
     [[nodiscard]] ShaderModule createShaderModule(const ShaderModuleDescriptor& descriptor) const;
     // PipelineLayout createPipelineLayout(const PipelineLayoutDescriptor& descriptor);
     [[nodiscard]] RenderPipeline createRenderPipeline(const RenderPipelineDescriptor& descriptor) const;
+
+    [[nodiscard]] CommandEncoder createCommandEncoder() const;
 private:
     struct Impl {
         virtual ~Impl() = default;
@@ -75,6 +79,10 @@ private:
         virtual shader::CompiledShader compileShader(const std::string& code) = 0;
         virtual std::unique_ptr<RenderPipeline::Impl>
             createRenderPipeline(const RenderPipelineDescriptor& descriptor) = 0;
+
+        virtual std::unique_ptr<CommandEncoder::Impl> createCommandEncoder() = 0;
+
+
     };
     explicit Device(std::unique_ptr<Impl> impl, std::unique_ptr<Queue::Impl> queueImpl,
         const SupportedFeatures features, const SupportedLimits &limits, const AdapterInfo& adapterInfo) :

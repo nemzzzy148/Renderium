@@ -14,6 +14,8 @@
 #include "VulkanTexture.h"
 #include "VulkanBuffer.h"
 #include "../Error.h"
+#include "CommandEncoder.h"
+#include "VulkanCommandEncoder.h"
 
 namespace rhi::vulkan {
 
@@ -64,7 +66,7 @@ VulkanDevice::VulkanDevice(VulkanDevice&& other) noexcept
     : std::enable_shared_from_this<VulkanDevice>(), instance(std::move(other.instance)),
       physicalDevice(std::move(other.physicalDevice)), queueFamilyIndex(other.queueFamilyIndex),
       device(std::move(other.device)), memoryManager(std::move(other.memoryManager),
-          *physicalDevice, *device) {}
+          *physicalDevice, *device), commandEncoderManager(std::move(other.commandEncoderManager), *this) {}
 
 VulkanDevice::DeviceResult VulkanDevice::create(std::shared_ptr<VulkanInstance> instance,
         std::shared_ptr<vk::raii::PhysicalDevice> physicalDevice,
@@ -151,6 +153,10 @@ VulkanDevice::TextureResult VulkanDevice::createTexture(const renderium::Texture
     [this](const uint32_t poolIdx, const uint32_t nodeIdx, const uint32_t memoryType) {
         memoryManager.freeTexture(poolIdx, nodeIdx, memoryType); // destructor callback
     }, allocation));
+}
+
+VulkanDevice::CommandEncoderResult VulkanDevice::createCommandEncoder() {
+    return commandEncoderManager.obtainCommandEncoder();
 }
 
 VulkanDevice::MemoryManager::MemoryManager(const vk::raii::PhysicalDevice& physicalDevice, const vk::raii::Device& device)
@@ -260,6 +266,28 @@ MemoryAllocation VulkanDevice::MemoryManager::allocate(Heap &heap, const uint32_
     }
 
     return {allocation.poolIndex, allocation.nodeIndex, memoryType, true};
+}
+
+VulkanDevice::CommandEncoderManager::CommandEncoderManager(CommandEncoderManager &&commandEncoderManager,
+    VulkanDevice& device) : commandEncoders(std::move(commandEncoderManager.commandEncoders)),
+    freeEncoders(std::move(commandEncoderManager.freeEncoders)), device(device), lock(std::mutex()) {}
+
+VulkanDevice::CommandEncoderManager::CommandEncoderResult VulkanDevice::CommandEncoderManager::obtainCommandEncoder() {
+    std::lock_guard guard(lock);
+    if (freeEncoders.empty()) {
+        auto result = createCommandEncoder();
+        if (!result.isOk()) return std::move(result);
+        commandEncoders.emplace_back(std::move(result.unwrap()));
+        freeEncoders.emplace_back(commandEncoders.size() - 1);
+    }
+
+    std::shared_ptr<VulkanCommandEncoder> commandEncoder = commandEncoders[freeEncoders.back()];
+    freeEncoders.pop_back();
+    return CommandEncoderResult::ok(std::move(commandEncoder));
+}
+
+VulkanDevice::CommandEncoderManager::CommandEncoderResult VulkanDevice::CommandEncoderManager::createCommandEncoder() const {
+    return VulkanCommandEncoder::create(device.shared_from_this(), device.queueFamilyIndex);
 }
 
 }

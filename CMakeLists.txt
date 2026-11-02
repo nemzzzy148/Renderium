@@ -64,6 +64,10 @@ add_library(Renderium SHARED
         src/implementation/TextureImpl.cpp
         src/implementation/ShaderCompilerImpl.cpp
         src/implementation/SurfaceImpl.cpp
+        include/CommandEncoder.h
+        src/implementation/CommandEncoderImpl.h
+        src/implementation/vulkan/VulkanCommandEncoder.cpp
+        src/implementation/vulkan/VulkanCommandEncoder.h
 )
 
 target_include_directories( Renderium PUBLIC

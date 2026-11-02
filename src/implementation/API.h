@@ -14,6 +14,7 @@ namespace rhi {
 
 // Vulkan
 namespace vulkan {
+class VulkanCommandEncoder;
 class VulkanQueue;
 class VulkanSurface;
 class VulkanAdapter;
@@ -40,6 +41,8 @@ struct VulkanApi {
     using Buffer = vulkan::VulkanBuffer;
     using Texture = vulkan::VulkanTexture;
     using TextureView = vulkan::VulkanTextureView;
+    using CommandEncoder = vulkan::VulkanCommandEncoder;
+
     static constexpr renderium::shader::ShadingOutputLanguage shaderOutputLanguage =
         renderium::shader::ShadingOutputLanguage::SPIRV;
 

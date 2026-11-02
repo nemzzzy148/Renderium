@@ -6,6 +6,7 @@
 
 #include "Device.h"
 #include "BufferImpl.h"
+#include "CommandEncoder.h"
 #include "DeviceErrorState.h"
 #include "PipelineImpl.h"
 #include "ShaderCompilerImpl.h"
@@ -39,6 +40,8 @@ public:
         const renderium::RenderPipelineDescriptor& descriptor) override;
     std::unique_ptr<renderium::Buffer::Impl> createBuffer(const renderium::BufferDescriptor &descriptor) override;
     std::unique_ptr<renderium::Texture::Impl> createTexture(const renderium::TextureDescriptor &descriptor) override;
+
+    std::unique_ptr<renderium::CommandEncoder::Impl> createCommandEncoder() override;
 
 private:
     explicit DeviceImpl(Device device, std::unique_ptr<IShaderCompiler> shaderCompiler)

@@ -11,8 +11,10 @@
 #include "vulkan/VulkanQueue.h"
 #include "vulkan/VulkanTexture.h"
 #include "QueueImpl.h"
+#include "CommandEncoderImpl.h"
 
 #define RETURN_INVALID_UNIQUE(T) return std::unique_ptr<renderium::T::Impl>(new T##Impl<Api>());
+#define RETURN_INVALID_SHARED(T) return std::shared_ptr<renderium::T::Impl>(new T##Impl<Api>());
 
 namespace rhi {
 
@@ -96,6 +98,20 @@ std::unique_ptr<renderium::Texture::Impl> DeviceImpl<Api>::createTexture(
 
     return std::unique_ptr<renderium::Texture::Impl>(
         new TextureImpl<Api>(std::move(result.unwrap()), descriptor));
+}
+
+template<typename Api>
+std::unique_ptr<renderium::CommandEncoder::Impl> DeviceImpl<Api>::createCommandEncoder() {
+    auto result = device->createCommandEncoder();
+
+    auto process = Process(errorState);
+    if (!result.isOk()) {
+        process.report(Api::toError(result.unwrapError()));
+        RETURN_INVALID_UNIQUE(CommandEncoder);
+    }
+
+    return std::unique_ptr<renderium::CommandEncoder::Impl>(
+        new CommandEncoderImpl<Api>(std::move(result.unwrap())));
 }
 
 template class DeviceImpl<VulkanApi>;

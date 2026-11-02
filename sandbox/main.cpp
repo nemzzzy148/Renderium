@@ -92,8 +92,8 @@ int main() {
     const auto device = deviceResult.unwrap();
 
     // example texture and buffer
-    device.pushErrorScope(renderium::ErrorFilter::Validation);
-    auto buffer = device.createBuffer({0, renderium::BufferUsages::Vertex, false});
+    device.pushErrorScope(renderium::ErrorFilter::Internal);
+    auto buffer = device.createBuffer({1, renderium::BufferUsages::Vertex, false});
     auto error = device.popErrorScope().get();
     if (error) {
         std::printf("%s", error->message.c_str());
@@ -139,7 +139,11 @@ int main() {
         }
     });
 
+    std::cout << "pipeline created\n";
+
     // command encoder
+
+    const auto commandEncoder = device.createCommandEncoder();
 
     // render pass
 
@@ -150,7 +154,6 @@ int main() {
     // pass end
     // queue submit
 
-    std::cout << "pipeline created\n";
     return 0;
 
     // main loop
