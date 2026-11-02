@@ -94,7 +94,7 @@ std::optional<VulkanError> VulkanSurface::createSwapChain(const SurfaceImplConfi
     if (result != vk::Result::eSuccess) { // PANIC
         return VulkanError::SwapChainCreationFailed;
     }
-    swapChain = std::move(swapChain);
+    swapChain = std::move(swpChn);
 
     auto [imagesResult, img] = swapChain.getImages();
     if (imagesResult != vk::Result::eSuccess) { // PANIC
@@ -129,7 +129,7 @@ std::optional<VulkanError> VulkanSurface::createSwapChain(const SurfaceImplConfi
 
 std::optional<VulkanError> VulkanSurface::configure(const SurfaceImplConfiguration<VulkanApi> &configuration) {
     destroySwapChain(configuration.device);
-    createSwapChain(configuration);
+    return createSwapChain(configuration);
 }
 
 }

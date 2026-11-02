@@ -5,6 +5,7 @@
 #pragma once
 #include <future>
 #include <memory>
+#include <optional>
 
 #include "AdapterInfo.h"
 #include "Buffer.h"
@@ -51,7 +52,7 @@ public:
     [[nodiscard]] Queue queue() const;
 
     void pushErrorScope(const ErrorFilter filter) const { impl->pushErrorScope(filter); }
-    [[nodiscard]] std::future<Error> popErrorScope() const { return impl->popErrorScope(); }
+    [[nodiscard]] std::future<std::optional<Error>> popErrorScope() const { return impl->popErrorScope(); }
 
     [[nodiscard]] Buffer createBuffer(const BufferDescriptor& descriptor) const;
     [[nodiscard]] Texture createTexture(const TextureDescriptor& descriptor) const;
@@ -66,7 +67,7 @@ private:
         virtual Result<std::unique_ptr<Queue::Impl>, RequestError> createQueue() = 0;
 
         virtual void pushErrorScope(ErrorFilter filter) = 0;
-        virtual std::future<Error> popErrorScope() = 0;
+        virtual std::future<std::optional<Error>> popErrorScope() = 0;
 
         virtual std::unique_ptr<Buffer::Impl> createBuffer(const BufferDescriptor& descriptor) = 0;
         virtual std::unique_ptr<Texture::Impl> createTexture(const TextureDescriptor& descriptor) = 0;

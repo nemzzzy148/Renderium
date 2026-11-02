@@ -11,13 +11,12 @@
 #include "Shader.h"
 
 namespace rhi {
-class DeviceErrorState;
+class Process;
 
 const renderium::shader::ShaderEntryPoint* findEntryPoint(
     const std::vector<renderium::shader::ShaderEntryPoint>& entryPoints, const std::string& functionName);
 
-bool validateRenderPipelineDescriptor(DeviceErrorState& devicErrorState,
-    const renderium::RenderPipelineDescriptor& descriptor);
+void validateRenderPipelineDescriptor(Process& process, const renderium::RenderPipelineDescriptor &descriptor);
 
 // render pipeline
 

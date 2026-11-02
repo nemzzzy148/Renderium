@@ -18,51 +18,43 @@ const renderium::shader::ShaderEntryPoint* findEntryPoint(
     return &*it;
 }
 
-bool validateRenderPipelineDescriptor(DeviceErrorState &devicErrorState,
-                                      const renderium::RenderPipelineDescriptor &descriptor) {
+void validateRenderPipelineDescriptor(Process& process, const renderium::RenderPipelineDescriptor &descriptor) {
     if (!descriptor.vertex.module.isValid()) {
-        devicErrorState.report({
+        process.report({
             renderium::ErrorFilter::Validation,
             "The vertex shader module is not valid for creating a render pipeline."
         });
-        return true;
     }
 
     if (descriptor.vertex.entryPoint.empty()) {
-        devicErrorState.report({
+        process.report({
             renderium::ErrorFilter::Validation,
             "The vertex entry point string is empty. "
             "The string content is required to locate the entry point function for the vertex state."
         });
-        return true;
     }
 
     if (!descriptor.fragment.module.isValid()) {
-        devicErrorState.report({
+        process.report({
             renderium::ErrorFilter::Validation,
             "The fragment shader module is not valid for creating a render pipeline."
         });
-        return true;
     }
 
     if (descriptor.fragment.entryPoint.empty()) {
-        devicErrorState.report({
+        process.report({
             renderium::ErrorFilter::Validation,
             "The fragment entry point string is empty. "
             "The string content is required to locate the entry point function for the fragment state."
         });
-        return true;
     }
 
     if (descriptor.fragment.targets.empty()) {
-        devicErrorState.report({
+        process.report({
             renderium::ErrorFilter::Validation,
             "No render targets were specified when creating a render pipeline."
         });
-        return true;
     }
-
-    return false;
 }
 
 }

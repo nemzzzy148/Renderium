@@ -7,13 +7,13 @@
 
 #include "DeviceImpl.h"
 #include "Surface.h"
-#include "DeviceErrorState.h"
 
 namespace rhi {
+class Process;
 template<typename Api>
 class InstanceImpl;
 
-bool validateSurfaceConfiguration(DeviceErrorState& errorState, const renderium::SurfaceConfiguration& configuration);
+void validateSurfaceConfiguration(Process& process, const renderium::SurfaceConfiguration& configuration);
 
 template<typename Api>
 struct SurfaceImplConfiguration {
@@ -40,7 +40,10 @@ public:
 
     void configure(const renderium::SurfaceConfiguration& configuration) override {
         auto& device = static_cast<DeviceImpl<Api>&>(*configuration.device.impl);
-        if (validateSurfaceConfiguration(device.errorState, configuration)) return;
+        auto process = Process(device.getDeviceErrorState());
+        validateSurfaceConfiguration(process, configuration);
+
+        if (process.caughtError()) return;
 
         SurfaceImplConfiguration<Api> implConfiguration{
             .device = device.getBackendDevice(),
@@ -54,7 +57,7 @@ public:
 
         auto optional = surface.configure(implConfiguration);
         if (optional.has_value()) {
-            device.getDeviceErrorState().report(Api::toError(*optional));
+            process.report(Api::toError(*optional));
         }
     }
 private:

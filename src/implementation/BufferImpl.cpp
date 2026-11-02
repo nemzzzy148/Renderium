@@ -8,16 +8,13 @@
 
 namespace rhi {
 
-bool validateBufferDescriptor(DeviceErrorState &errorState, const renderium::BufferDescriptor &descriptor) {
+void validateBufferDescriptor(Process& process, const renderium::BufferDescriptor &descriptor) {
     if (descriptor.size == 0) {
-        errorState.report({
+        process.report({
             renderium::ErrorFilter::Validation,
             "Buffer creation requires the size to be greater than 0."
         });
-        return true;
     }
-
-    return false;
 }
 
 }

@@ -32,7 +32,7 @@ public:
     QueueResult createQueue() override;
 
     void pushErrorScope(renderium::ErrorFilter filter) override;
-    std::future<renderium::Error> popErrorScope() override;
+    std::future<std::optional<renderium::Error>> popErrorScope() override;
 
     renderium::shader::CompiledShader compileShader(const std::string &code) override;
     std::unique_ptr<renderium::RenderPipeline::Impl> createRenderPipeline(

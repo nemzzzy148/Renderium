@@ -212,7 +212,7 @@ VulkanRenderPipeline::create(const VulkanDevice& device, const renderium::Render
     auto [result, pipeline] = device.getDevice().createGraphicsPipeline(nullptr,
         pipelineCreateInfo.get<vk::GraphicsPipelineCreateInfo>());
     if (result != vk::Result::eSuccess) {
-        PipelineResult::err(VulkanError::PipelineCreationError);
+        return PipelineResult::err(VulkanError::PipelineCreationError);
     }
 
     return PipelineResult::ok(VulkanRenderPipeline(std::move(pipeline)));

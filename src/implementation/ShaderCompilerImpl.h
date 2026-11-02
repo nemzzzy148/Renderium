@@ -25,7 +25,7 @@ struct IShaderCompiler {
         renderium::shader::ShadingOutputLanguage outputLanguage);
 
     virtual renderium::Result<renderium::shader::CompiledShader, renderium::RequestError> compileShader(
-        DeviceErrorState& errorState, const std::string& shaderCode) = 0;
+        Process& process, const std::string& shaderCode) = 0;
 };
 
 template<typename Api>
@@ -37,7 +37,7 @@ public:
     static ShaderCompilerResult create(renderium::shader::ShadingOutputLanguage outputLanguage);
 
     using ShaderResult = renderium::Result<renderium::shader::CompiledShader, renderium::RequestError>;
-    ShaderResult compileShader(DeviceErrorState& errorState, const std::string &shaderCode) override;
+    ShaderResult compileShader(Process& process, const std::string &shaderCode) override;
     explicit ShaderCompilerImpl(ShaderCompiler shaderCompiler) : shaderCompiler(std::move(shaderCompiler)) {}
 
     ~ShaderCompilerImpl() override = default;

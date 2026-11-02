@@ -44,22 +44,26 @@ public:
     explicit Process(DeviceErrorState& errorState) : errorState(&errorState) {
         handle = errorState.createProcess();
     }
+    ~Process() {
+        if (errorState) {
+            errorState->success(handle);
+        }
+    }
+
     void report(const renderium::Error& error) {
         if (!errorState) return;
         errorState->report(handle, error);
         errorState = nullptr;
+        reported = true;
     }
     void success() {
         if (!errorState) return;
         errorState->success(handle);
         errorState = nullptr;
     }
-    ~Process() {
-        if (errorState) {
-            errorState->success(handle);
-        }
-    }
+    [[nodiscard]] bool caughtError() const { return reported; }
 private:
+    bool reported = false;
     DeviceErrorState* errorState;
     uint32_t handle = 0;
 };

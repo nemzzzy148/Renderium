@@ -9,6 +9,7 @@
 #include "../../implementation/Error.h"
 
 namespace rhi::shader::slang {
+
 SlangCompiler::ShaderCompilerResult SlangCompiler::create(
     const renderium::shader::ShadingOutputLanguage outputLanguage) {
     Slang::ComPtr<::slang::IGlobalSession> globalSession;

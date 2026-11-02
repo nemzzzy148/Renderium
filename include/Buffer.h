@@ -4,6 +4,7 @@
 
 #pragma once
 #include <cstddef>
+#include <memory>
 
 #include "../src/utils/BitwiseOperations.h"
 

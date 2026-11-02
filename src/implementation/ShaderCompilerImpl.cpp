@@ -32,11 +32,11 @@ ShaderCompilerImpl<Api>::ShaderCompilerResult ShaderCompilerImpl<Api>::create(
 }
 
 template<typename Api>
-ShaderCompilerImpl<Api>::ShaderResult ShaderCompilerImpl<Api>::compileShader(DeviceErrorState &errorState,
+ShaderCompilerImpl<Api>::ShaderResult ShaderCompilerImpl<Api>::compileShader(Process& process,
         const std::string &shaderCode) {
     auto result = shaderCompiler.compileShader(shaderCode);
     if (!result.isOk()) {
-        errorState.report({renderium::ErrorFilter::Validation, "Shader compilation failed."});
+        process.report({renderium::ErrorFilter::Validation, "Shader compilation failed."});
         return ShaderResult::err(renderium::RequestError::ShaderCompilationError);
     }
     return ShaderResult::ok(std::move(result.unwrap()));

@@ -92,9 +92,12 @@ int main() {
     const auto device = deviceResult.unwrap();
 
     // example texture and buffer
-    device.pushErrorScope(renderium::ErrorFilter::Internal);
+    device.pushErrorScope(renderium::ErrorFilter::Validation);
     auto buffer = device.createBuffer({0, renderium::BufferUsages::Vertex, false});
     auto error = device.popErrorScope().get();
+    if (error) {
+        std::printf("%s", error->message.c_str());
+    }
 
     auto texture = device.createTexture({{512, 512, 1}, 1, 1,
         renderium::TextureDimension::D2, renderium::TextureFormat::RGBA8Unorm,

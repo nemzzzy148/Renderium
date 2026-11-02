@@ -32,13 +32,14 @@ void DeviceImpl<Api>::pushErrorScope(const renderium::ErrorFilter filter) {
 }
 
 template<typename Api>
-std::future<renderium::Error> DeviceImpl<Api>::popErrorScope() {
+std::future<std::optional<renderium::Error>> DeviceImpl<Api>::popErrorScope() {
     return errorState.popErrorScope();
 }
 
 template<typename Api>
 renderium::shader::CompiledShader DeviceImpl<Api>::compileShader(const std::string &code) {
-    auto result = shaderCompiler->compileShader(errorState, code);
+    auto process = Process(errorState);
+    auto result = shaderCompiler->compileShader(process, code);
     if (!result.isOk()) {
         return {};
     }
@@ -48,11 +49,14 @@ renderium::shader::CompiledShader DeviceImpl<Api>::compileShader(const std::stri
 template<typename Api>
 std::unique_ptr<renderium::RenderPipeline::Impl> DeviceImpl<Api>::createRenderPipeline(
     const renderium::RenderPipelineDescriptor &descriptor) {
-    if (validateRenderPipelineDescriptor(errorState, descriptor)) RETURN_INVALID_UNIQUE(RenderPipeline);
+    auto process = Process(errorState);
+    validateRenderPipelineDescriptor(process, descriptor); // captures faults
+
+    if (process.caughtError()) RETURN_INVALID_UNIQUE(RenderPipeline);
 
     auto result = Api::RenderPipeline::create(*device, descriptor);
     if (!result.isOk()) {
-        errorState.report(Api::toError(result.unwrapError()));
+        process.report(Api::toError(result.unwrapError()));
         RETURN_INVALID_UNIQUE(RenderPipeline);
     }
     return std::unique_ptr<renderium::RenderPipeline::Impl>(
@@ -61,11 +65,14 @@ std::unique_ptr<renderium::RenderPipeline::Impl> DeviceImpl<Api>::createRenderPi
 
 template<typename Api>
 std::unique_ptr<renderium::Buffer::Impl> DeviceImpl<Api>::createBuffer(const renderium::BufferDescriptor &descriptor) {
-    if (validateBufferDescriptor(errorState, descriptor)) RETURN_INVALID_UNIQUE(Buffer);
+    auto process = Process(errorState);
+    validateBufferDescriptor(process, descriptor);
+
+    if (process.caughtError()) RETURN_INVALID_UNIQUE(Buffer);
 
     auto result = device->createBuffer(descriptor);
     if (!result.isOk()) {
-        errorState.report(Api::toError(result.unwrapError()));
+        process.report(Api::toError(result.unwrapError()));
         RETURN_INVALID_UNIQUE(Buffer);
     }
 
@@ -76,11 +83,14 @@ std::unique_ptr<renderium::Buffer::Impl> DeviceImpl<Api>::createBuffer(const ren
 template<typename Api>
 std::unique_ptr<renderium::Texture::Impl> DeviceImpl<Api>::createTexture(
         const renderium::TextureDescriptor &descriptor) {
-    if (validateTextureDescriptor(errorState, descriptor)) RETURN_INVALID_UNIQUE(Texture);
+    auto process = Process(errorState);
+    validateTextureDescriptor(process, descriptor);
+
+    if (process.caughtError()) RETURN_INVALID_UNIQUE(Texture);
 
     auto result = device->createTexture(descriptor);
     if (!result.isOk()) {
-        errorState.report(Api::toError(result.unwrapError()));
+        process.report(Api::toError(result.unwrapError()));
         RETURN_INVALID_UNIQUE(Texture);
     }
 

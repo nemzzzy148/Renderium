@@ -9,9 +9,9 @@
 #include "Buffer.h"
 
 namespace rhi {
-class DeviceErrorState;
+class Process;
 
-bool validateBufferDescriptor(DeviceErrorState& errorState, const renderium::BufferDescriptor& descriptor);
+void validateBufferDescriptor(Process& process, const renderium::BufferDescriptor &descriptor);
 
 template<typename Api>
 class BufferImpl : public renderium::Buffer::Impl {

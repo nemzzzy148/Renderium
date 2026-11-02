@@ -11,7 +11,7 @@
 
 namespace rhi {
 
-bool validateTextureDescriptor(DeviceErrorState& errorState, const renderium::TextureDescriptor& descriptor);
+bool validateTextureDescriptor(Process& process, const renderium::TextureDescriptor& descriptor);
 
 template<typename Api>
 class TextureImpl : public renderium::Texture::Impl {
