@@ -6,10 +6,10 @@
 #include "GlfwWindow.h"
 
 #include "Window.h"
-#include "../../API.h"
-#include "../../Error.h"
-#include "../../vulkan/VulkanInstance.h"
-#include "../../WindowImpl.h"
+#include "../../implementation/AdapterImpl.h"
+#include "../../implementation/Error.h"
+#include "../../implementation/vulkan/VulkanInstance.h"
+#include "../../implementation/WindowImpl.h"
 
 
 namespace rhi {

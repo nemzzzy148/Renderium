@@ -4,19 +4,21 @@
 
 #include "VulkanCommandEncoder.h"
 
+#include <numeric>
+
 #include "../Error.h"
 #include "VulkanDevice.h"
 
 namespace rhi::vulkan {
 
-VulkanCommandEncoder::CommandEncoderResult VulkanCommandEncoder::create(std::shared_ptr<VulkanDevice> device,
-        const uint32_t queueFamilyIndex) {
+VulkanCommandPool::CommandPoolResult VulkanCommandPool::create(std::shared_ptr<VulkanDevice> device,
+    const uint32_t queueFamilyIndex) {
     const vk::CommandPoolCreateInfo poolInfo {
         .queueFamilyIndex = queueFamilyIndex
     };
     auto [poolResult, pool] = device->getDevice().createCommandPool(poolInfo);
     if (poolResult != vk::Result::eSuccess) {
-        return CommandEncoderResult::err(VulkanError::CommandPoolCreationError);
+        return CommandPoolResult::err(VulkanError::CommandPoolCreationError);
     }
 
     const vk::CommandBufferAllocateInfo buffersAllocInfo {
@@ -24,43 +26,55 @@ VulkanCommandEncoder::CommandEncoderResult VulkanCommandEncoder::create(std::sha
         .level = vk::CommandBufferLevel::ePrimary,
         .commandBufferCount = allocationCount
     };
-    auto [buffersResult, commandBuffers] = device->getDevice().allocateCommandBuffers(buffersAllocInfo);
+    auto [buffersResult, cBs] = device->getDevice().allocateCommandBuffers(buffersAllocInfo);
     if (buffersResult != vk::Result::eSuccess) {
-        return CommandEncoderResult::err(VulkanError::CommandBufferCreationError);
+        return CommandPoolResult::err(VulkanError::CommandBufferCreationError);
     }
 
-    return CommandEncoderResult::ok(std::make_shared<VulkanCommandEncoder>(
-        VulkanCommandEncoder(std::move(device), std::move(pool), std::move(commandBuffers))));
+    std::vector<std::shared_ptr<vk::raii::CommandBuffer>> commandBuffers;
+    commandBuffers.reserve(allocationCount);
+    for (auto& commandBuffer : cBs) {
+        commandBuffers.emplace_back(std::make_unique<vk::raii::CommandBuffer>(std::move(commandBuffer)));
+    }
+
+    std::vector<uint32_t> free;
+    addFree(free, allocationCount, 0);
+
+
+    return CommandPoolResult::ok(std::make_shared<VulkanCommandPool>(
+        VulkanCommandPool(std::move(device), std::move(pool),
+            std::move(commandBuffers), std::move(free))));
 }
 
-std::optional<VulkanError> VulkanCommandEncoder::allocate() {
-    const auto devicePtr = device.lock();
-    if (!devicePtr) {
-        return VulkanError::UnhandledException;
-    }
+std::optional<VulkanError> VulkanCommandPool::allocate() {
+    const auto device = weakDevice.lock();
+    if (!device) return VulkanError::UnhandledException;
+
     const vk::CommandBufferAllocateInfo buffersAllocInfo {
         .commandPool = commandPool,
         .level = vk::CommandBufferLevel::ePrimary,
         .commandBufferCount = allocationCount
     };
-    auto [buffersResult, cBs] = devicePtr->getDevice().allocateCommandBuffers(buffersAllocInfo);
+    auto [buffersResult, cBs] = device->getDevice().allocateCommandBuffers(buffersAllocInfo);
     if (buffersResult != vk::Result::eSuccess) {
         return VulkanError::CommandBufferCreationError;
     }
 
     commandBuffers.reserve(commandBuffers.size() + allocationCount);
+    const uint32_t oldSize = commandBuffers.size();
     for (auto& commandBuffer: cBs) {
-        commandBuffers.push_back(std::move(commandBuffer));
+        commandBuffers.push_back(std::make_unique<vk::raii::CommandBuffer>(std::move(commandBuffer)));
     }
+
+    addFree(freeCommandBuffers, allocationCount, oldSize);
 
     return std::nullopt; // no error
 }
 
-std::optional<VulkanError> VulkanCommandEncoder::reset() const {
-    const auto devicePtr = device.lock();
-    if (!devicePtr) {
-        return VulkanError::UnhandledException;
-    }
+std::optional<VulkanError> VulkanCommandPool::reset() const {
+    const auto device = weakDevice.lock();
+    if (!device) return VulkanError::UnhandledException;
+
     const auto result = commandPool.reset();
     if (result != vk::Result::eSuccess) {
         return VulkanError::FailedToResetCommandPool;
@@ -68,9 +82,33 @@ std::optional<VulkanError> VulkanCommandEncoder::reset() const {
     return std::nullopt;
 }
 
-void VulkanCommandEncoder::release() {
-    if (const auto devicePtr = device.lock()) {
-        devicePtr->releaseCommandEncoder(this);
+VulkanCommandPool::CommandBufferResult VulkanCommandPool::getAvailableCommandBuffer() {
+    if (freeCommandBuffers.empty()) {
+        if (const auto allocationResult = allocate()) {
+            return CommandBufferResult::err(*allocationResult);
+        }
+    }
+    const uint32_t index = freeCommandBuffers.back();
+    freeCommandBuffers.pop_back();
+
+    return CommandBufferResult::ok(commandBuffers[index]);
+}
+
+void VulkanCommandPool::addFree(std::vector<uint32_t> &free, const uint32_t count, const uint32_t begin) {
+    const size_t oldSize = free.size();
+    free.reserve(oldSize + count);
+    std::iota(free.begin() + oldSize, free.end(), begin);
+}
+
+VulkanCommandEncoder::CommandEncoderResult VulkanCommandEncoder::create(std::weak_ptr<VulkanDevice> device,
+    std::shared_ptr<VulkanCommandPool> commandPool) {
+    return CommandEncoderResult::ok(std::unique_ptr<VulkanCommandEncoder>(
+        new VulkanCommandEncoder(std::move(device), std::move(commandPool))));
+}
+
+VulkanCommandEncoder::~VulkanCommandEncoder() {
+    if (const auto device = weakDevice.lock()) {
+        device->releaseCommandEncoder(&*commandPool);
     }
 }
 

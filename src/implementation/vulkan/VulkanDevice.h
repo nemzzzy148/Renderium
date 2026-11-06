@@ -29,6 +29,7 @@ struct DeviceDescriptor;
 }
 
 namespace rhi::vulkan {
+class VulkanCommandPool;
 class VulkanCommandEncoder;
 class VulkanBuffer;
 class VulkanAdapter;
@@ -75,16 +76,16 @@ public:
     using TextureResult = renderium::Result<VulkanTexture, VulkanError>;
     TextureResult createTexture(const renderium::TextureDescriptor& descriptor);
 
-    using CommandEncoderResult = renderium::Result<std::shared_ptr<VulkanCommandEncoder>, VulkanError>;
+    using CommandEncoderResult = renderium::Result<std::unique_ptr<VulkanCommandEncoder>, VulkanError>;
     CommandEncoderResult createCommandEncoder();
-    void releaseCommandEncoder(const VulkanCommandEncoder* commandEncoder);
+    void releaseCommandEncoder(const VulkanCommandPool* pool);
 private:
     VulkanDevice(std::shared_ptr<VulkanInstance> instance,
         std::shared_ptr<vk::raii::PhysicalDevice> physicalDevice, std::unique_ptr<vk::raii::Device> device,
         const uint32_t familyQueueIndex)
         : instance(std::move(instance)), physicalDevice(std::move(physicalDevice)),
         queueFamilyIndex(familyQueueIndex), device(std::move(device)),
-        memoryManager(*physicalDevice, *device), commandEncoderManager(*this) {}
+        memoryManager(*physicalDevice, *device), commandPoolManager(*this) {}
     std::shared_ptr<VulkanInstance> instance;
     std::shared_ptr<vk::raii::PhysicalDevice> physicalDevice;
     uint32_t queueFamilyIndex;
@@ -130,28 +131,28 @@ private:
     };
     MemoryManager memoryManager;
 
-    class CommandEncoderManager {
+    class CommandPoolManager {
     public:
-        explicit CommandEncoderManager(VulkanDevice& device) :
-            commandEncoders(std::vector<std::shared_ptr<VulkanCommandEncoder>>()), freeEncoders(std::vector<uint32_t>{}),
-            device(device), lock(std::mutex()) {}
-        CommandEncoderManager(CommandEncoderManager&& commandEncoderManager, VulkanDevice& device);
+        explicit CommandPoolManager(VulkanDevice& device) :
+            commandPools(std::vector<std::shared_ptr<VulkanCommandPool>>()), freePools(std::vector<uint32_t>{}),
+            poolsInUse(std::vector<bool>{}), device(device), lock(std::mutex()) {}
+        CommandPoolManager(CommandPoolManager&& commandPoolManager, VulkanDevice& device);
 
-        using CommandEncoderResult = renderium::Result<std::shared_ptr<VulkanCommandEncoder>, VulkanError>;
-        CommandEncoderResult obtainCommandEncoder();
-        void releaseCommandEncoder(const VulkanCommandEncoder* commandEncoder);
+        using CommandPoolResult = renderium::Result<std::shared_ptr<VulkanCommandPool>, VulkanError>;
+        CommandPoolResult obtainCommandPool();
+        void releaseCommandPool(const VulkanCommandPool* commandPool);
     private:
-        CommandEncoderResult createCommandEncoder() const;
+        CommandPoolResult createCommandPool() const;
 
-        std::vector<std::shared_ptr<VulkanCommandEncoder>> commandEncoders;
-        std::vector<uint32_t> freeEncoders;
-        std::vector<bool> encoderInUse;
+        std::vector<std::shared_ptr<VulkanCommandPool>> commandPools;
+        std::vector<uint32_t> freePools;
+        std::vector<bool> poolsInUse;
 
         VulkanDevice& device;
 
         std::mutex lock;
     };
-    CommandEncoderManager commandEncoderManager;
+    CommandPoolManager commandPoolManager;
 
     friend class VulkanQueue;
 };

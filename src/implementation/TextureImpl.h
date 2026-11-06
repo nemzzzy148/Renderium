@@ -8,21 +8,37 @@
 
 #include "Texture.h"
 #include "DeviceErrorState.h"
+#include "DeviceImpl.h"
+#include "ITexture.h"
+#include "Resource.h"
+#include "DeviceState.h"
 
 namespace rhi {
+
+template<typename Api>
+class TextureResource final : public renderium::detail::Resource {
+public:
+    TextureResource(std::shared_ptr<DeviceState<Api>> deviceState, const resource::ResourceId id)
+        : id(id), deviceState(std::move(deviceState)) {}
+
+    ~TextureResource() override {
+        deviceState->textures.removeRef(id.handle, id.version);
+    }
+private:
+    resource::ResourceId id;
+    std::shared_ptr<DeviceState<Api>> deviceState;
+};
 
 bool validateTextureDescriptor(Process& process, const renderium::TextureDescriptor& descriptor);
 
 template<typename Api>
-class TextureImpl : public renderium::Texture::Impl {
+class TextureImpl : public ITexture {
 public:
     using Texture = Api::Texture;
 private:
     explicit TextureImpl(Texture texture, const renderium::TextureDescriptor& descriptor)
-        : Impl(descriptor), texture(std::move(texture)) {}
-    explicit TextureImpl()
-        : Impl(renderium::TextureDescriptor{}), texture(std::nullopt) {}
-    std::optional<Texture> texture;
+        : texture(std::move(texture)) {}
+    Texture texture;
 
     friend class DeviceImpl<Api>;
 };

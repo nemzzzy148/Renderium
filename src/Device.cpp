@@ -7,6 +7,7 @@
 #include "Queue.h"
 #include "Shader.h"
 #include "Error.h"
+#include "resource/ResourceManager.h"
 
 namespace renderium {
 
@@ -15,7 +16,6 @@ ShaderModule Device::createShaderModule(const ShaderModuleDescriptor& descriptor
 }
 
 RenderPipeline Device::createRenderPipeline(const RenderPipelineDescriptor& descriptor) const {
-    // error handling happens on the 2nd layer(implementation layer)
     return RenderPipeline(impl->createRenderPipeline(descriptor));
 }
 
@@ -23,8 +23,12 @@ CommandEncoder Device::createCommandEncoder() const {
     return CommandEncoder(impl->createCommandEncoder());
 }
 
+Device::Device(std::unique_ptr<Impl> impl, std::unique_ptr<Queue::Impl> queueImpl, const SupportedFeatures features,
+    const SupportedLimits &limits, const AdapterInfo &adapterInfo) : features(features), limits(limits),
+    adapterInfo(adapterInfo), impl(std::move(impl)), queueImpl(std::move(queueImpl)) {}
+
 Buffer Device::createBuffer(const BufferDescriptor &descriptor) const {
-    return Buffer(impl->createBuffer(descriptor));
+    return Buffer(impl->createBuffer(descriptor), descriptor);
 }
 
 Texture Device::createTexture(const TextureDescriptor &descriptor) const {

@@ -4,7 +4,6 @@
 
 #pragma once
 #include "Result.h"
-#include "../../InstanceImpl.h"
 #include "GLFW/glfw3.h"
 
 namespace renderium {

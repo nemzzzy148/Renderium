@@ -6,7 +6,7 @@
 
 #include "implementation/API.h"
 #include "implementation/WindowImpl.h"
-#include "implementation/window/glfw/GlfwWindow.h"
+#include "window/glfw/GlfwWindow.h"
 
 namespace renderium {
 

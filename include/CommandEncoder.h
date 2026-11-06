@@ -18,7 +18,7 @@ class CommandEncoder {
     struct Impl {
         virtual ~Impl() = default;
     };
-    std::unique_ptr<Impl> impl;
+    std::unique_ptr<Impl> impl; // can be nullptr
     explicit CommandEncoder(std::unique_ptr<Impl> impl) : impl(std::move(impl)) {}
 
     friend class Device;

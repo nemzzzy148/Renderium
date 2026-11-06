@@ -3,17 +3,10 @@
 //
 
 #pragma once
-#include <cstddef>
 #include <memory>
 
+#include "Resource.h"
 #include "../src/utils/BitwiseOperations.h"
-
-namespace rhi {
-template<typename Api>
-class BufferImpl;
-template<typename Api>
-class DeviceImpl;
-}
 
 namespace renderium {
 
@@ -39,35 +32,23 @@ enum class BufferMapState {
 
 struct BufferDescriptor {
     uint64_t size;
-    BufferUsages usages;
+    BufferUsages usage;
     bool mappedAtCreation = false;
 };
 
 class Buffer {
 public:
-    [[nodiscard]] uint64_t size() const { return impl->size; }
-    [[nodiscard]] BufferUsages usage() const { return impl->usage; }
-    [[nodiscard]] BufferMapState mapState() const { return impl->mapState; }
+    [[nodiscard]] uint64_t getSize() const { return size; }
+    [[nodiscard]] BufferUsages getUsage() const { return usage; }
+    // [[nodiscard]] BufferMapState mapState() const { return BufferMapState::Unmapped; }
 private:
-    struct Impl {
-        ~Impl() = default;
-        Impl(const uint64_t size, const BufferUsages usage, const BufferMapState mapState)
-            : size(size), usage(usage), mapState(mapState) {}
+    explicit Buffer(std::shared_ptr<detail::Resource> resource, const BufferDescriptor& descriptor);
 
-        const uint64_t size;
-        const BufferUsages usage;
-        BufferMapState mapState;
-    };
+    uint64_t size;
+    BufferUsages usage;
 
-    std::unique_ptr<Impl> impl;
-    explicit Buffer(std::unique_ptr<Impl> impl) : impl(std::move(impl)) {}
-
+    std::shared_ptr<detail::Resource> resource;
     friend class Device;
-
-    template<typename Api>
-    friend class rhi::BufferImpl;
-    template<typename Api>
-    friend class rhi::DeviceImpl;
 };
 
 }

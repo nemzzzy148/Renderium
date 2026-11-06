@@ -16,20 +16,12 @@ class CommandEncoderImpl : public renderium::CommandEncoder::Impl {
 public:
     using Device = Api::Device;
     using CommandEncoder = Api::CommandEncoder;
-
-    ~CommandEncoderImpl() override {
-        if (commandEncoder) {
-            (*commandEncoder)->release();
-        }
-    }
-
 private:
-    explicit CommandEncoderImpl(std::shared_ptr<Device> device, std::shared_ptr<CommandEncoder> commandEncoder)
-        : device(std::move(device)), commandEncoder(std::move(commandEncoder)) {}
-    explicit CommandEncoderImpl() : device(nullptr), commandEncoder(std::nullopt) {}
+    explicit CommandEncoderImpl(std::shared_ptr<DeviceState<Api>> device, std::unique_ptr<CommandEncoder> commandEncoder)
+        : deviceState(std::move(device)), commandEncoder(std::move(commandEncoder)) {}
 
-    std::shared_ptr<Device> device;
-    std::optional<std::shared_ptr<CommandEncoder> > commandEncoder;
+    std::shared_ptr<DeviceState<Api>> deviceState;
+    std::unique_ptr<CommandEncoder> commandEncoder;
 
     friend class DeviceImpl<Api>;
 };

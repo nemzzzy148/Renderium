@@ -66,7 +66,7 @@ VulkanDevice::VulkanDevice(VulkanDevice&& other) noexcept
     : std::enable_shared_from_this<VulkanDevice>(), instance(std::move(other.instance)),
       physicalDevice(std::move(other.physicalDevice)), queueFamilyIndex(other.queueFamilyIndex),
       device(std::move(other.device)), memoryManager(std::move(other.memoryManager),
-          *physicalDevice, *device), commandEncoderManager(std::move(other.commandEncoderManager), *this) {}
+          *physicalDevice, *device), commandPoolManager(std::move(other.commandPoolManager), *this) {}
 
 VulkanDevice::DeviceResult VulkanDevice::create(std::shared_ptr<VulkanInstance> instance,
         std::shared_ptr<vk::raii::PhysicalDevice> physicalDevice,
@@ -86,7 +86,7 @@ VulkanDevice::DeviceResult VulkanDevice::create(std::shared_ptr<VulkanInstance> 
 VulkanDevice::BufferResult VulkanDevice::createBuffer(const renderium::BufferDescriptor &descriptor) {
     if (descriptor.size == 0) return BufferResult::err(VulkanError::InvalidBufferSize);
 
-    const vk::BufferUsageFlags usage = VulkanConversion::mapBufferUsages(descriptor.usages);
+    const vk::BufferUsageFlags usage = VulkanConversion::mapBufferUsages(descriptor.usage);
     const vk::BufferCreateInfo bufferInfo {
         .size = descriptor.size,
         .usage = usage,
@@ -102,7 +102,7 @@ VulkanDevice::BufferResult VulkanDevice::createBuffer(const renderium::BufferDes
 
     // a better optimization would be mapped write(visible and coherent) and map read(visible and cached)
     const vk::MemoryPropertyFlags memoryProperties =
-        (utils::any(descriptor.usages & (renderium::BufferUsages::MapRead | renderium::BufferUsages::MapWrite))) ?
+        (utils::any(descriptor.usage & (renderium::BufferUsages::MapRead | renderium::BufferUsages::MapWrite))) ?
         vk::MemoryPropertyFlagBits::eHostVisible & vk::MemoryPropertyFlagBits::eHostCoherent // true
         : vk::MemoryPropertyFlagBits::eDeviceLocal; // false
 
@@ -156,11 +156,20 @@ VulkanDevice::TextureResult VulkanDevice::createTexture(const renderium::Texture
 }
 
 VulkanDevice::CommandEncoderResult VulkanDevice::createCommandEncoder() {
-    return commandEncoderManager.obtainCommandEncoder();
+    auto poolResult = commandPoolManager.obtainCommandPool();
+    if (!poolResult.isOk()) {
+        return CommandEncoderResult::err(poolResult.unwrapError());
+    }
+    auto encoderResult = VulkanCommandEncoder::create(weak_from_this(), std::move(poolResult.unwrap()));
+    if (!encoderResult.isOk()) {
+        return CommandEncoderResult::err(encoderResult.unwrapError());
+    }
+
+    return CommandEncoderResult::ok(std::move(encoderResult.unwrap()));
 }
 
-void VulkanDevice::releaseCommandEncoder(const VulkanCommandEncoder* commandEncoder) {
-    commandEncoderManager.releaseCommandEncoder(commandEncoder);
+void VulkanDevice::releaseCommandEncoder(const VulkanCommandPool* pool) {
+    commandPoolManager.releaseCommandPool(pool);
 }
 
 VulkanDevice::MemoryManager::MemoryManager(const vk::raii::PhysicalDevice& physicalDevice, const vk::raii::Device& device)
@@ -272,42 +281,44 @@ MemoryAllocation VulkanDevice::MemoryManager::allocate(Heap &heap, const uint32_
     return {allocation.poolIndex, allocation.nodeIndex, memoryType, true};
 }
 
-VulkanDevice::CommandEncoderManager::CommandEncoderManager(CommandEncoderManager &&commandEncoderManager,
-    VulkanDevice& device) : commandEncoders(std::move(commandEncoderManager.commandEncoders)),
-    freeEncoders(std::move(commandEncoderManager.freeEncoders)),
-    encoderInUse(std::move(commandEncoderManager.encoderInUse)), device(device), lock(std::mutex()) {}
+VulkanDevice::CommandPoolManager::CommandPoolManager(CommandPoolManager &&commandPoolManager,
+    VulkanDevice& device) : commandPools(std::move(commandPoolManager.commandPools)),
+    freePools(std::move(commandPoolManager.freePools)),
+    poolsInUse(std::move(commandPoolManager.poolsInUse)), device(device), lock(std::mutex()) {}
 
-VulkanDevice::CommandEncoderManager::CommandEncoderResult VulkanDevice::CommandEncoderManager::obtainCommandEncoder() {
+VulkanDevice::CommandPoolManager::CommandPoolResult VulkanDevice::CommandPoolManager::obtainCommandPool() {
     std::lock_guard guard(lock);
-    if (freeEncoders.empty()) {
-        auto result = createCommandEncoder();
+
+    if (freePools.empty()) {
+        auto result = createCommandPool();
         if (!result.isOk()) return std::move(result);
-        commandEncoders.emplace_back(std::move(result.unwrap()));
-        encoderInUse.emplace_back(true);
-        return CommandEncoderResult::ok(commandEncoders.back());
+        commandPools.emplace_back(std::move(result.unwrap()));
+        poolsInUse.emplace_back(true);
+        return CommandPoolResult::ok(commandPools.back());
     }
 
-    const uint32_t encoderIndex = freeEncoders.back();
-    freeEncoders.pop_back();
-    encoderInUse[encoderIndex] = true;
-    std::shared_ptr<VulkanCommandEncoder> commandEncoder = commandEncoders[encoderIndex];
-    return CommandEncoderResult::ok(std::move(commandEncoder));
+    const uint32_t poolIndex = freePools.back();
+    freePools.pop_back();
+    poolsInUse[poolIndex] = true;
+    std::shared_ptr<VulkanCommandPool> commandPool = commandPools[poolIndex];
+    return CommandPoolResult::ok(std::move(commandPool));
 }
 
-void VulkanDevice::CommandEncoderManager::releaseCommandEncoder(const VulkanCommandEncoder* commandEncoder) {
+void VulkanDevice::CommandPoolManager::releaseCommandPool(const VulkanCommandPool *commandPool) {
     std::lock_guard guard(lock);
-    for (uint32_t i = 0; i < commandEncoders.size(); ++i) {
-        if (commandEncoders[i].get() != commandEncoder || !encoderInUse[i]) {
+    for (uint32_t i = 0; i < commandPools.size(); ++i) {
+        if (commandPools[i].get() != commandPool || !poolsInUse[i]) {
             continue;
         }
-        encoderInUse[i] = false;
-        freeEncoders.emplace_back(i);
+        poolsInUse[i] = false;
+        freePools.emplace_back(i);
         return;
     }
 }
 
-VulkanDevice::CommandEncoderManager::CommandEncoderResult VulkanDevice::CommandEncoderManager::createCommandEncoder() const {
-    return VulkanCommandEncoder::create(device.shared_from_this(), device.queueFamilyIndex);
+VulkanDevice::CommandPoolManager::CommandPoolResult VulkanDevice::CommandPoolManager::createCommandPool() const {
+    std::putchar('a');
+    return VulkanCommandPool::create(device.shared_from_this(), device.queueFamilyIndex);
 }
 
 }

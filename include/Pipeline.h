@@ -8,17 +8,16 @@
 
 #include "Fragment.h"
 #include "Primitive.h"
-#include "Result.h"
+#include "Resource.h"
 #include "Vertex.h"
 
-namespace rhi {
+namespace resource {
+template<typename T>
+class ResourceManager;
+}
 
-template<typename Api>
-class RenderPipelineImpl;
-template<typename Api>
-class ComputePipelineImpl;
-template<typename Api>
-class DeviceImpl;
+namespace rhi {
+class IRenderPipeline;
 }
 
 namespace renderium {
@@ -43,20 +42,10 @@ struct RenderPipelineDescriptor {
 };
 
 class RenderPipeline {
-    struct Impl {
-        ~Impl() = default;
+    explicit RenderPipeline(std::shared_ptr<detail::Resource> resource);
 
-        bool valid = true;
-    };
-
-    explicit RenderPipeline(std::unique_ptr<Impl> impl) : impl(std::move(impl)) {}
-    std::unique_ptr<Impl> impl;
-
+    std::shared_ptr<detail::Resource> resource;
     friend class Device;
-    template<typename Api>
-    friend class rhi::RenderPipelineImpl;
-    template<typename Api>
-    friend class rhi::DeviceImpl;
 };
 
 struct ComputePipelineDescriptor {

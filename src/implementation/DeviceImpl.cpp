@@ -12,6 +12,7 @@
 #include "vulkan/VulkanTexture.h"
 #include "QueueImpl.h"
 #include "CommandEncoderImpl.h"
+#include "../resource/ResourceManager.h"
 
 #define RETURN_INVALID_UNIQUE(T) return std::unique_ptr<renderium::T::Impl>(new T##Impl<Api>());
 #define RETURN_INVALID_SHARED(T) return std::shared_ptr<renderium::T::Impl>(new T##Impl<Api>());
@@ -20,7 +21,7 @@ namespace rhi {
 
 template<typename Api>
 DeviceImpl<Api>::QueueResult DeviceImpl<Api>::createQueue() {
-    auto result = Api::Queue::create(*device);
+    auto result = Api::Queue::create(*deviceState->device);
     if (!result.isOk()) {
         return QueueResult::err(renderium::RequestError::QueueCreateError);
     }
@@ -30,17 +31,17 @@ DeviceImpl<Api>::QueueResult DeviceImpl<Api>::createQueue() {
 
 template<typename Api>
 void DeviceImpl<Api>::pushErrorScope(const renderium::ErrorFilter filter) {
-    errorState.pushErrorScope(filter);
+    deviceState->errorState.pushErrorScope(filter);
 }
 
 template<typename Api>
 std::future<std::optional<renderium::Error>> DeviceImpl<Api>::popErrorScope() {
-    return errorState.popErrorScope();
+    return deviceState->errorState.popErrorScope();
 }
 
 template<typename Api>
 renderium::shader::CompiledShader DeviceImpl<Api>::compileShader(const std::string &code) {
-    auto process = Process(errorState);
+    auto process = Process(deviceState->errorState);
     auto result = shaderCompiler->compileShader(process, code);
     if (!result.isOk()) {
         return {};
@@ -49,69 +50,72 @@ renderium::shader::CompiledShader DeviceImpl<Api>::compileShader(const std::stri
 }
 
 template<typename Api>
-std::unique_ptr<renderium::RenderPipeline::Impl> DeviceImpl<Api>::createRenderPipeline(
+DeviceImpl<Api>::ResourceResult DeviceImpl<Api>::createRenderPipeline(
     const renderium::RenderPipelineDescriptor &descriptor) {
-    auto process = Process(errorState);
+    auto process = Process(deviceState->errorState);
     validateRenderPipelineDescriptor(process, descriptor); // captures faults
 
-    if (process.caughtError()) RETURN_INVALID_UNIQUE(RenderPipeline);
+    if (process.caughtError()) return nullptr;
 
-    auto result = Api::RenderPipeline::create(*device, descriptor);
+    auto result = Api::RenderPipeline::create(*deviceState->device, descriptor);
     if (!result.isOk()) {
         process.report(Api::toError(result.unwrapError()));
-        RETURN_INVALID_UNIQUE(RenderPipeline);
+        return nullptr;
     }
-    return std::unique_ptr<renderium::RenderPipeline::Impl>(
-        new RenderPipelineImpl<Api>(std::move(result.unwrap())));
+    auto id = deviceState->renderPipelines.allocate(std::unique_ptr<IRenderPipeline>(
+        new RenderPipelineImpl<Api>(std::move(result.unwrap()))));
+    return std::shared_ptr<renderium::detail::Resource>(new RenderPipelineResource<Api>(deviceState, id));
 }
 
 template<typename Api>
-std::unique_ptr<renderium::Buffer::Impl> DeviceImpl<Api>::createBuffer(const renderium::BufferDescriptor &descriptor) {
-    auto process = Process(errorState);
+DeviceImpl<Api>::ResourceResult DeviceImpl<Api>::createBuffer(const renderium::BufferDescriptor &descriptor) {
+    auto process = Process(deviceState->errorState);
     validateBufferDescriptor(process, descriptor);
 
-    if (process.caughtError()) RETURN_INVALID_UNIQUE(Buffer);
+    if (process.caughtError()) return nullptr;
 
-    auto result = device->createBuffer(descriptor);
+    auto result = deviceState->device->createBuffer(descriptor);
     if (!result.isOk()) {
         process.report(Api::toError(result.unwrapError()));
-        RETURN_INVALID_UNIQUE(Buffer);
+        return nullptr;
     }
 
-    return std::unique_ptr<renderium::Buffer::Impl>(
-        new BufferImpl<Api>(std::move(result.unwrap()), descriptor));
+    auto id = deviceState->buffers.allocate(std::unique_ptr<IBuffer>(
+        new BufferImpl<Api>(std::move(result.unwrap()))));
+    return std::shared_ptr<renderium::detail::Resource>(new BufferResource<Api>(deviceState, id));
 }
 
 template<typename Api>
-std::unique_ptr<renderium::Texture::Impl> DeviceImpl<Api>::createTexture(
+DeviceImpl<Api>::ResourceResult DeviceImpl<Api>::createTexture(
         const renderium::TextureDescriptor &descriptor) {
-    auto process = Process(errorState);
+    auto process = Process(deviceState->errorState);
     validateTextureDescriptor(process, descriptor);
 
-    if (process.caughtError()) RETURN_INVALID_UNIQUE(Texture);
+    if (process.caughtError()) return nullptr;
 
-    auto result = device->createTexture(descriptor);
+    auto result = deviceState->device->createTexture(descriptor);
     if (!result.isOk()) {
         process.report(Api::toError(result.unwrapError()));
-        RETURN_INVALID_UNIQUE(Texture);
+        return nullptr;
     }
 
-    return std::unique_ptr<renderium::Texture::Impl>(
-        new TextureImpl<Api>(std::move(result.unwrap()), descriptor));
+    auto id = deviceState->textures.allocate(std::unique_ptr<ITexture>(
+        new TextureImpl<Api>(std::move(result.unwrap()), descriptor)));
+    return std::shared_ptr<renderium::detail::Resource>(new TextureResource<Api>(deviceState, id));
 }
 
 template<typename Api>
 std::unique_ptr<renderium::CommandEncoder::Impl> DeviceImpl<Api>::createCommandEncoder() {
-    auto result = device->createCommandEncoder();
+    auto result = deviceState->device->createCommandEncoder();
 
-    auto process = Process(errorState);
+    auto process = Process(deviceState->errorState);
     if (!result.isOk()) {
         process.report(Api::toError(result.unwrapError()));
-        RETURN_INVALID_UNIQUE(CommandEncoder);
+        return nullptr;
     }
 
     return std::unique_ptr<renderium::CommandEncoder::Impl>(
-        new CommandEncoderImpl<Api>(device, std::move(result.unwrap())));
+        new CommandEncoderImpl<Api>(deviceState, std::move(result.unwrap())));
 }
 
 template class DeviceImpl<VulkanApi>;

@@ -7,27 +7,39 @@
 #include <optional>
 
 #include "Buffer.h"
+#include "DeviceImpl.h"
+#include "IBuffer.h"
+#include "Resource.h"
+#include "DeviceState.h"
 
 namespace rhi {
 class Process;
 
+template<typename Api>
+class BufferResource final : public renderium::detail::Resource {
+public:
+    BufferResource(std::shared_ptr<DeviceState<Api>> deviceState, const resource::ResourceId id)
+        : id(id), deviceState(std::move(deviceState)) {}
+
+    ~BufferResource() override {
+        deviceState->buffers.removeRef(id.handle, id.version);
+    }
+private:
+    resource::ResourceId id;
+    std::shared_ptr<DeviceState<Api>> deviceState;
+};
+
 void validateBufferDescriptor(Process& process, const renderium::BufferDescriptor &descriptor);
 
 template<typename Api>
-class BufferImpl : public renderium::Buffer::Impl {
+class BufferImpl : public IBuffer {
 public:
     using Buffer = Api::Buffer;
-
-    [[nodiscard]] bool isValid() const { return buffer.has_value(); }
 private:
-    explicit BufferImpl(Buffer buffer, const renderium::BufferDescriptor& descriptor)
-        : Impl(descriptor.size, descriptor.usages, descriptor.mappedAtCreation ?
-            renderium::BufferMapState::Mapped : renderium::BufferMapState::Unmapped),
-          buffer(std::move(buffer)) {}
-    explicit BufferImpl()
-        : Impl(0, renderium::BufferUsages::None, renderium::BufferMapState::Unmapped), buffer(std::nullopt) {}
+    explicit BufferImpl(Buffer buffer)
+        : buffer(std::move(buffer)) {}
 
-    std::optional<Buffer> buffer;
+    Buffer buffer;
 
     friend class DeviceImpl<Api>;
 };

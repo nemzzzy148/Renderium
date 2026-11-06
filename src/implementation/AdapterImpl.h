@@ -34,7 +34,9 @@ public:
 
         return DeviceResult::ok(
             std::unique_ptr<renderium::Device::Impl>(new DeviceImpl<Api>(
-                std::move(deviceResult.unwrap()), std::move(shaderCompilerResult.unwrap()))));
+                std::make_shared<DeviceState<Api>>(
+                    std::make_shared<typename Api::Device>(std::move(deviceResult.unwrap()))),
+                std::move(shaderCompilerResult.unwrap()))));
     }
 
     renderium::SupportedFeatures requestFeatures() override { return adapter.requestFeatures(); }

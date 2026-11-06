@@ -34,7 +34,7 @@ public:
 
     VulkanTexture(VulkanTexture&& other) noexcept
         : destructCallback(std::move(other.destructCallback)), image(std::move(other.image)),
-          device(std::move(other.device)), poolIdx(other.poolIdx), nodeIdx(other.nodeIdx),
+          weakDevice(std::move(other.weakDevice)), poolIdx(other.poolIdx), nodeIdx(other.nodeIdx),
           memoryType(other.memoryType) {
         other.destructCallback = {};
     }
@@ -47,14 +47,14 @@ public:
 
     static constexpr vk::MemoryPropertyFlags memoryProperties = vk::MemoryPropertyFlagBits::eDeviceLocal;
 private:
-    explicit VulkanTexture(std::shared_ptr<VulkanDevice> device,
+    explicit VulkanTexture(std::weak_ptr<VulkanDevice> device,
         std::function<void(uint32_t, uint32_t, uint32_t)> destructCallback, const MemoryAllocation& allocation)
-        : destructCallback(std::move(destructCallback)), device(std::move(device)),
+        : destructCallback(std::move(destructCallback)), weakDevice(std::move(device)),
         poolIdx(allocation.poolIndex), nodeIdx(allocation.nodeIndex), memoryType(allocation.memoryType) {}
 
     std::function<void(uint32_t, uint32_t, uint32_t)> destructCallback;
     vk::raii::Image image = nullptr;
-    std::shared_ptr<VulkanDevice> device;
+    std::weak_ptr<VulkanDevice> weakDevice;
 
     const uint32_t poolIdx, nodeIdx, memoryType;
 

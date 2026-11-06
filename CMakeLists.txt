@@ -24,8 +24,8 @@ add_library(Renderium SHARED
         sandbox/main.cpp
         include/Window.h
         src/implementation/WindowImpl.h
-        src/implementation/window/glfw/GlfwWindow.cpp
-        src/implementation/window/glfw/GlfwWindow.h
+        src/window/glfw/GlfwWindow.cpp
+        src/window/glfw/GlfwWindow.h
         src/Window.cpp
         src/implementation/Error.h
         src/implementation/DeviceImpl.h
@@ -68,6 +68,22 @@ add_library(Renderium SHARED
         src/implementation/CommandEncoderImpl.h
         src/implementation/vulkan/VulkanCommandEncoder.cpp
         src/implementation/vulkan/VulkanCommandEncoder.h
+        include/Pass.h
+        src/implementation/PassImpl.h
+        src/implementation/vulkan/VulkanPass.cpp
+        src/implementation/vulkan/VulkanPass.h
+        src/track/BufferUsageTracker.cpp
+        src/track/BufferUsageTracker.h
+        src/resource/ResourceManager.cpp
+        src/resource/ResourceManager.h
+        src/implementation/ITexture.h
+        src/implementation/IBuffer.h
+        src/implementation/IPipeline.h
+        src/Texture.cpp
+        src/Buffer.cpp
+        src/Pipeline.cpp
+        include/Resource.h
+        src/implementation/DeviceState.h
 )
 
 target_include_directories( Renderium PUBLIC

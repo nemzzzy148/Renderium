@@ -3,20 +3,13 @@
 //
 
 #pragma once
-#include <cstdint>
 #include <memory>
-#include <utility>
 #include <vector>
 
 #include "Result.h"
+#include "Resource.h"
 #include "../src/utils/BitwiseOperations.h"
 
-namespace rhi {
-template<typename Api>
-class TextureImpl;
-template<typename Api>
-class DeviceImpl;
-}
 
 namespace renderium {
 enum class RequestError;
@@ -111,44 +104,30 @@ struct TextureDescriptor {
 
 class Texture {
 public:
+    [[nodiscard]] uint32_t getWidth() const { return width; }
+    [[nodiscard]] uint32_t getHeight() const { return height; }
+    [[nodiscard]] uint32_t getDepthOrArrayLayers() const { return depthOrArrayLayers; }
+    [[nodiscard]] uint32_t getMipLevelCount() const { return mipLevelCount; }
+    [[nodiscard]] uint32_t getSampleCount() const { return sampleCount; }
+    [[nodiscard]] TextureDimension getDimension() const { return dimension; }
+    [[nodiscard]] TextureFormat getFormat() const { return format; }
+    [[nodiscard]] TextureUsages getUsage() const { return usage; }
+
     using TextureViewResult = Result<TextureView, RequestError>;
-    [[nodiscard]] TextureViewResult createView(const TextureViewDescriptor& descriptor);
-
-    [[nodiscard]] uint32_t width() const { return impl->width; }
-    [[nodiscard]] uint32_t height() const { return impl->height; }
-    [[nodiscard]] uint32_t depthOrArrayLayers() const { return impl->depthOrArrayLayers; }
-    [[nodiscard]] uint32_t mipLevelCount() const { return impl->mipLevelCount; }
-    [[nodiscard]] uint32_t sampleCount() const { return impl->sampleCount; }
-    [[nodiscard]] TextureDimension dimension() const { return impl->dimension; }
-    [[nodiscard]] TextureFormat format() const { return impl->format; }
-    [[nodiscard]] TextureUsages usage() const { return impl->usage; }
+    [[nodiscard]] TextureViewResult createView(const TextureDescriptor& descriptor);
 private:
-    struct Impl {
-        ~Impl() = default;
+    explicit Texture(std::shared_ptr<detail::Resource> resource, const TextureDescriptor& descriptor);
 
-        explicit Impl(const TextureDescriptor& descriptor): width(descriptor.size.width), height(descriptor.size.height),
-            depthOrArrayLayers(descriptor.size.depthOrArrayLayers), mipLevelCount(descriptor.mipLevelCount),
-            sampleCount(descriptor.sampleCount), dimension(descriptor.dimension), format(descriptor.format),
-            usage(descriptor.usage) {}
-
-        const uint32_t width;
-        const uint32_t height;
-        const uint32_t depthOrArrayLayers;
-        const uint32_t mipLevelCount;
-        const uint32_t sampleCount;
-        const TextureDimension dimension;
-        const TextureFormat format;
-        const TextureUsages usage;
-    };
-    std::unique_ptr<Impl> impl;
-    explicit Texture(std::unique_ptr<Impl> impl, const TextureDescriptor&)
-        : impl(std::move(impl)) {}
-
+    uint32_t width;
+    uint32_t height;
+    uint32_t depthOrArrayLayers;
+    uint32_t mipLevelCount;
+    uint32_t sampleCount;
+    TextureDimension dimension;
+    TextureFormat format;
+    TextureUsages usage;
+    std::shared_ptr<detail::Resource> resource;
     friend class Device;
-    template<typename Api>
-    friend class rhi::TextureImpl;
-    template<typename Api>
-    friend class rhi::DeviceImpl;
 };
 
 }
