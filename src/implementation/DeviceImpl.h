@@ -31,7 +31,7 @@ public:
     [[nodiscard]] const Device& getBackendDevice() const { return *deviceState->device; }
     [[nodiscard]] DeviceErrorState& getDeviceErrorState() { return deviceState->errorState; }
 
-    using QueueResult = renderium::Result<std::unique_ptr<renderium::Queue::Impl>, renderium::RequestError>;
+    using QueueResult = renderium::Result<std::shared_ptr<renderium::Queue::Impl>, renderium::RequestError>;
     QueueResult createQueue() override;
 
     void pushErrorScope(renderium::ErrorFilter filter) override;
@@ -52,6 +52,7 @@ private:
 
     std::unique_ptr<IShaderCompiler> shaderCompiler;
     std::shared_ptr<DeviceState<Api>> deviceState;
+    std::weak_ptr<QueueImpl<Api>> weakQueue;
 
     friend class SurfaceImpl<Api>;
     friend class AdapterImpl<Api>;

@@ -25,8 +25,8 @@ DeviceImpl<Api>::QueueResult DeviceImpl<Api>::createQueue() {
     if (!result.isOk()) {
         return QueueResult::err(renderium::RequestError::QueueCreateError);
     }
-    return QueueResult::ok(std::unique_ptr<renderium::Queue::Impl>(
-        new QueueImpl<Api>(std::move(result.unwrap()))));
+    return QueueResult::ok(std::shared_ptr<renderium::Queue::Impl>(
+        new QueueImpl<Api>(std::move(result.unwrap()), deviceState) ));
 }
 
 template<typename Api>

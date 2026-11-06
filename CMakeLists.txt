@@ -86,6 +86,7 @@ add_library(Renderium SHARED
         src/track/UsageTracker.h
         src/track/ScopeTracker.cpp
         src/track/ScopeTracker.h
+        src/implementation/QueueImpl.cpp
 )
 
 target_include_directories( Renderium PUBLIC

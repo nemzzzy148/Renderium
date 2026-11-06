@@ -106,6 +106,10 @@ VulkanCommandEncoder::CommandEncoderResult VulkanCommandEncoder::create(std::wea
         new VulkanCommandEncoder(std::move(device), std::move(commandPool))));
 }
 
+VulkanCommandPool::CommandBufferResult VulkanCommandEncoder::getAvailableCommandBuffer() const {
+    return commandPool->getAvailableCommandBuffer();
+}
+
 VulkanCommandEncoder::~VulkanCommandEncoder() {
     if (const auto device = weakDevice.lock()) {
         device->releaseCommandEncoder(&*commandPool);

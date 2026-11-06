@@ -24,9 +24,9 @@ private:
     struct Impl {
         ~Impl() = default;
     };
-    const Impl& impl;
+    std::shared_ptr<Impl> impl;
 
-    explicit Queue(const Impl& impl) : impl(impl) {}
+    explicit Queue(std::shared_ptr<Impl> impl) : impl(std::move(impl)) {}
     template<typename Api>
     friend class rhi::QueueImpl;
     template<typename Api>

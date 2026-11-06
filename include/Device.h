@@ -70,7 +70,7 @@ private:
 
         using ResourceResult = std::shared_ptr<detail::Resource>;
 
-        virtual Result<std::unique_ptr<Queue::Impl>, RequestError> createQueue() = 0;
+        virtual Result<std::shared_ptr<Queue::Impl>, RequestError> createQueue() = 0;
 
         virtual void pushErrorScope(ErrorFilter filter) = 0;
         virtual std::future<std::optional<Error>> popErrorScope() = 0;
@@ -82,14 +82,12 @@ private:
         virtual ResourceResult createRenderPipeline(const RenderPipelineDescriptor& descriptor) = 0;
 
         virtual std::unique_ptr<CommandEncoder::Impl> createCommandEncoder() = 0;
-
-
     };
-    explicit Device(std::unique_ptr<Impl> impl, std::unique_ptr<Queue::Impl> queueImpl,
+    explicit Device(std::unique_ptr<Impl> impl, std::shared_ptr<Queue::Impl> queueImpl,
         const SupportedFeatures features, const SupportedLimits &limits, const AdapterInfo& adapterInfo);
 
     std::unique_ptr<Impl> impl;
-    std::unique_ptr<Queue::Impl> queueImpl;
+    std::shared_ptr<Queue::Impl> queueImpl;
 
     template<typename Api>
     friend class rhi::DeviceImpl;

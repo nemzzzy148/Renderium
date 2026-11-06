@@ -34,7 +34,8 @@ VulkanTexture::TextureViewResult VulkanTexture::createView(const renderium::Text
     if (result != vk::Result::eSuccess) {
         return TextureViewResult::err(VulkanError::ImageViewCreationFailed);
     }
-    return TextureViewResult::ok(VulkanTextureView(std::move(view)));
+    return TextureViewResult::ok(VulkanTextureView(
+        std::make_unique<vk::raii::ImageView>(std::move(view))));
 }
 
 VulkanTexture::~VulkanTexture() {

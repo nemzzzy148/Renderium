@@ -9,6 +9,7 @@
 #include "Texture.h"
 #include "VulkanConversion.h"
 #include "VulkanInstance.h"
+#include "VulkanTexture.h"
 #include "../WindowImpl.h"
 #include "../Error.h"
 #include "../SurfaceImpl.h"
@@ -58,10 +59,23 @@ renderium::SurfaceCapabilities VulkanSurface::getCapabilities(const VulkanDevice
     return {usages, std::move(formats), std::move(presentModes)};
 }
 
+VulkanSurface::TextureViewResult VulkanSurface::getCurrentTexture() {
+    auto [imageResult, imageIndex] =
+        swapChain.acquireNextImage(UINT64_MAX, nullptr, nullptr);
+
+    if (imageResult == vk::Result::eErrorOutOfDateKHR) {
+        return TextureViewResult::err(VulkanError::SwapChainOutOfDate);
+    }
+    if (imageResult != vk::Result::eSuccess) {
+        return TextureViewResult::err(VulkanError::UnhandledException);
+    }
+
+    return TextureViewResult::ok(VulkanTextureView(views[imageIndex]));
+}
+
 void VulkanSurface::destroySwapChain(const VulkanDevice& device) {
     device.getDevice().waitIdle();
     images.clear();
-    imageViews.clear();
 }
 
 std::optional<VulkanError> VulkanSurface::createSwapChain(const SurfaceImplConfiguration<VulkanApi> &configuration) {
@@ -102,19 +116,21 @@ std::optional<VulkanError> VulkanSurface::createSwapChain(const SurfaceImplConfi
     }
     images = std::move(img);
 
-    vk::ImageViewCreateInfo imageViewInfo{
+    vk::ImageViewCreateInfo viewInfo{
         .viewType = vk::ImageViewType::e2D,
         .format = format,
-        .subresourceRange = { vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1}
+        .subresourceRange = {vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1}
     };
-    for (const auto& image : images) {
-        imageViewInfo.image = image;
-        auto [imgViewResult, imageView] = device.getDevice().createImageView(imageViewInfo);
-        if (imgViewResult != vk::Result::eSuccess) { // PANIC
+    views.reserve(images.size());
+    for (const auto &image : images) {
+        viewInfo.image = image;
+        auto [viewResult, view] = device.getDevice().createImageView(viewInfo);
+        if (viewResult != vk::Result::eSuccess) {
             return VulkanError::FailedToCreateSwapChainImageViews;
         }
-        imageViews.emplace_back(std::move(imageView));
+        views.emplace_back(std::make_shared<vk::raii::ImageView>(std::move(view)));
     }
+
 
     if (!presentCompleteSemaphores.empty()) return std::nullopt;
     for (uint32_t i = 0; i < images.size(); i++) {
@@ -124,6 +140,7 @@ std::optional<VulkanError> VulkanSurface::createSwapChain(const SurfaceImplConfi
         }
         presentCompleteSemaphores.emplace_back(std::move(semaphore));
     }
+
     return std::nullopt;
 }
 

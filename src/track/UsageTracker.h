@@ -16,14 +16,14 @@ template<Usage T>
 class UsageTracker {
 public:
     explicit UsageTracker(uint32_t reservedSize = 1024);
-    void add(resource::ResourceId id, T usage);
+    void add(resource::ResourceId id);
     void merge(const ScopeTracker<T>& scope); // return value underlines changes
     std::optional<T> get(resource::ResourceId id);
     void remove(resource::ResourceId id);
 private:
     std::mutex lock;
 
-    std::unordered_map<resource::ResourceId, T> usages;
+    std::unordered_map<resource::ResourceId, std::optional<T>> usages; // At creation, the resource does not have a usage.
 };
 
 }

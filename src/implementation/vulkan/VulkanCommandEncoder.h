@@ -43,6 +43,8 @@ public:
     using CommandEncoderResult = renderium::Result<std::unique_ptr<VulkanCommandEncoder>, VulkanError>;
     static CommandEncoderResult create(std::weak_ptr<VulkanDevice> device, std::shared_ptr<VulkanCommandPool> commandPool);
 
+    VulkanCommandPool::CommandBufferResult getAvailableCommandBuffer() const;
+
     ~VulkanCommandEncoder();
 private:
     explicit VulkanCommandEncoder(std::weak_ptr<VulkanDevice> device, std::shared_ptr<VulkanCommandPool> commandPool)

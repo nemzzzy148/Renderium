@@ -4,7 +4,6 @@
 
 #include "UsageTracker.h"
 
-#include <__ranges/views.h>
 #include <ranges>
 
 namespace track {
@@ -15,19 +14,26 @@ UsageTracker<T>::UsageTracker(const uint32_t reservedSize) {
 }
 
 template<Usage T>
-void UsageTracker<T>::add(resource::ResourceId id, T usage) {
+void UsageTracker<T>::add(resource::ResourceId id) {
     std::lock_guard guard(lock);
-    usages.insert(id, usage);
+    usages.insert(id, std::nullopt);
 }
 
 template<Usage T>
 void UsageTracker<T>::merge(const ScopeTracker<T>& scope) {
     std::lock_guard guard(lock);
     const auto& changes = scope.getChanges();
-    for (const auto& change : changes) {
-        if (change.second.begin == change.second.end) return; // no changes were made
-        if (!usages.contains(change.first) || usages.at() != change.second.begin) continue;
-        usages.at(change.first) = change.second.end;
+    for (const auto& [id, change] : changes) {
+        if (change.begin && (change.begin == change.end)) continue; // Skip if no changes were made
+        if (!usages.contains(id)) continue;
+
+        auto& usage = usages.at(id);
+
+        // Skip if the current usage state doesn't match the expected one.
+        if (change.begin.has_value() != usage.has_value()) continue;
+        if (usage && *change.second.begin != *usage) continue;
+
+        usage = change.end;
     }
 }
 

@@ -4,15 +4,24 @@
 
 #pragma once
 
+#include "DeviceState.h"
+#include "../track/UsageTracker.h"
 #include "vulkan/VulkanQueue.h"
+#include "DeviceImpl.h"
+#include "Queue.h"
 
 namespace rhi {
 
 template<typename Api>
 class QueueImpl : public renderium::Queue::Impl {
     using Queue = Api::Queue;
-    explicit QueueImpl(Queue queue) : queue(std::move(queue)) {}
+    explicit QueueImpl(Queue queue, std::shared_ptr<DeviceState<Api>> deviceState)
+        : queue(std::move(queue)), deviceState(std::move(deviceState)) {}
     Queue queue;
+    std::shared_ptr<DeviceState<Api>> deviceState;
+
+    track::UsageTracker<renderium::BufferUsages> bufferTracker;
+    track::UsageTracker<renderium::TextureUsages> textureTracker;
 
     friend class DeviceImpl<Api>;
 };

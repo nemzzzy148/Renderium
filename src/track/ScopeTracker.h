@@ -6,6 +6,7 @@
 #include <type_traits>
 #include <unordered_map>
 #include <vector>
+#include <Buffer.h>
 
 #include "../resource/ResourceManager.h"
 
@@ -17,12 +18,12 @@ enum class TextureUsages : uint8_t;
 namespace track {
 
 template<typename T>
-concept Usage = std::is_same_v<renderium::TextureUsages, std::remove_cvref<T>> ||
-                std::is_same_v<renderium::BufferUsages, std::remove_cvref<T>>;
+concept Usage = std::is_same_v<renderium::TextureUsages, std::remove_cvref_t<T>> ||
+                std::is_same_v<renderium::BufferUsages, std::remove_cvref_t<T>>;
 
 template<Usage T>
 struct Merge {
-    T begin;
+    std::optional<T> begin; // The resource may be uninitialized at creation.
     T end;
 };
 

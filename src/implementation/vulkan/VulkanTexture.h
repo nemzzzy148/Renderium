@@ -21,10 +21,11 @@ class VulkanTextureView {
 public:
     // static VulkanTextureView create(const vk::raii::Image& image, const renderium::TextureViewDescriptor& descriptor);
 private:
-    explicit VulkanTextureView(vk::raii::ImageView view) : view(std::move(view)) {}
-    vk::raii::ImageView view = nullptr;
+    explicit VulkanTextureView(std::shared_ptr<vk::raii::ImageView> view) : view(std::move(view)) {}
+    std::shared_ptr<vk::raii::ImageView> view;
 
     friend class VulkanTexture;
+    friend class VulkanSurface;
 };
 
 class VulkanTexture {
