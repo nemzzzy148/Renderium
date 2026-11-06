@@ -72,8 +72,6 @@ add_library(Renderium SHARED
         src/implementation/PassImpl.h
         src/implementation/vulkan/VulkanPass.cpp
         src/implementation/vulkan/VulkanPass.h
-        src/track/BufferUsageTracker.cpp
-        src/track/BufferUsageTracker.h
         src/resource/ResourceManager.cpp
         src/resource/ResourceManager.h
         src/implementation/ITexture.h
@@ -84,6 +82,10 @@ add_library(Renderium SHARED
         src/Pipeline.cpp
         include/Resource.h
         src/implementation/DeviceState.h
+        src/track/UsageTracker.cpp
+        src/track/UsageTracker.h
+        src/track/ScopeTracker.cpp
+        src/track/ScopeTracker.h
 )
 
 target_include_directories( Renderium PUBLIC

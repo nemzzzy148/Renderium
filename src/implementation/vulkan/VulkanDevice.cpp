@@ -306,6 +306,7 @@ VulkanDevice::CommandPoolManager::CommandPoolResult VulkanDevice::CommandPoolMan
 
 void VulkanDevice::CommandPoolManager::releaseCommandPool(const VulkanCommandPool *commandPool) {
     std::lock_guard guard(lock);
+
     for (uint32_t i = 0; i < commandPools.size(); ++i) {
         if (commandPools[i].get() != commandPool || !poolsInUse[i]) {
             continue;
@@ -317,7 +318,6 @@ void VulkanDevice::CommandPoolManager::releaseCommandPool(const VulkanCommandPoo
 }
 
 VulkanDevice::CommandPoolManager::CommandPoolResult VulkanDevice::CommandPoolManager::createCommandPool() const {
-    std::putchar('a');
     return VulkanCommandPool::create(device.shared_from_this(), device.queueFamilyIndex);
 }
 
