@@ -13,6 +13,11 @@ class Process;
 template<typename Api>
 class InstanceImpl;
 
+template<typename Api>
+class SurfaceTextureResource final : public renderium::detail::Resource {
+
+};
+
 void validateSurfaceConfiguration(Process& process, const renderium::SurfaceConfiguration& configuration);
 
 template<typename Api>
@@ -33,35 +38,13 @@ class SurfaceImpl : public renderium::Surface::Impl {
 public:
     using Surface = Api::Surface;
 
-    renderium::SurfaceCapabilities getCapabilities(const renderium::Device& device) override {
-        const auto& deviceImpl = static_cast<const DeviceImpl<Api>&>(*device.impl);
-        return surface.getCapabilities(deviceImpl.getBackendDevice());
-    }
-
-    void configure(const renderium::SurfaceConfiguration& configuration) override {
-        auto& device = static_cast<DeviceImpl<Api>&>(*configuration.device.impl);
-        auto process = Process(device.getDeviceErrorState());
-        validateSurfaceConfiguration(process, configuration);
-
-        if (process.caughtError()) return;
-
-        SurfaceImplConfiguration<Api> implConfiguration{
-            .device = device.getBackendDevice(),
-            .width = configuration.width,
-            .height = configuration.height,
-            .usage = configuration.usage,
-            .format = configuration.format,
-            .presentMode = configuration.presentMode,
-            .maxFramesInFlight = configuration.maxFramesInFlight
-        };
-
-        auto optional = surface.configure(implConfiguration);
-        if (optional.has_value()) {
-            process.report(Api::toError(*optional));
-        }
-    }
+    renderium::SurfaceCapabilities getCapabilities(const renderium::Device& device) override;
+    bool configure(const renderium::SurfaceConfiguration& configuration) override;
+    std::shared_ptr<renderium::detail::Resource> getCurrentTexture() override;
 private:
-    explicit SurfaceImpl(Surface surface) : surface(std::move(surface)) {}
+    explicit SurfaceImpl(Surface surface, std::shared_ptr<DeviceState<Api>> deviceState)
+        : surface(std::move(surface)) {}
+
     Surface surface;
 
     friend class DeviceImpl<Api>;

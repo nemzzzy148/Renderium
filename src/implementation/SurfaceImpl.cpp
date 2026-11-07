@@ -35,4 +35,40 @@ void validateSurfaceConfiguration(Process& process, const renderium::SurfaceConf
     }
 }
 
+template<typename Api>
+renderium::SurfaceCapabilities SurfaceImpl<Api>::getCapabilities(const renderium::Device &device) {
+    const auto& deviceImpl = static_cast<const DeviceImpl<Api>&>(*device.impl);
+    return surface.getCapabilities(deviceImpl.getBackendDevice());
+}
+
+template<typename Api>
+bool SurfaceImpl<Api>::configure(const renderium::SurfaceConfiguration &configuration) {
+    auto& device = static_cast<DeviceImpl<Api>&>(*configuration.device.impl);
+    auto process = Process(device.getDeviceErrorState());
+    validateSurfaceConfiguration(process, configuration);
+
+    if (process.caughtError()) return true;
+
+    SurfaceImplConfiguration<Api> implConfiguration{
+        .device = device.getBackendDevice(),
+        .width = configuration.width,
+        .height = configuration.height,
+        .usage = configuration.usage,
+        .format = configuration.format,
+        .presentMode = configuration.presentMode,
+        .maxFramesInFlight = configuration.maxFramesInFlight
+    };
+
+    auto optional = surface.configure(implConfiguration);
+    if (optional.has_value()) {
+        process.report(Api::toError(*optional));
+    }
+    return false;
+}
+
+template<typename Api>
+std::shared_ptr<renderium::detail::Resource> SurfaceImpl<Api>::getCurrentTexture() {
+
+}
+
 }

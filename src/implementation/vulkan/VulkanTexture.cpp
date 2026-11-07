@@ -27,9 +27,6 @@ VulkanTexture::TextureViewResult VulkanTexture::createView(const renderium::Text
             }
     };
 
-    const auto device = weakDevice.lock();
-    if (!device) return TextureViewResult::err(VulkanError::UnhandledException);
-
     auto [result, view] = device->getDevice().createImageView(viewInfo);
     if (result != vk::Result::eSuccess) {
         return TextureViewResult::err(VulkanError::ImageViewCreationFailed);

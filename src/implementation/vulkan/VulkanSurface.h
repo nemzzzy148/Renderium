@@ -6,6 +6,7 @@
 #include <vector>
 #include <vulkan/vulkan_raii.hpp>
 
+#include "Resource.h"
 #include "Result.h"
 
 namespace renderium {
@@ -34,12 +35,12 @@ public:
     using SurfaceResult = renderium::Result<VulkanSurface, VulkanError>;
     static SurfaceResult create(const VulkanInstance& instance, const renderium::Window& window);
 
-    [[nodiscard]] renderium::SurfaceCapabilities getCapabilities(const VulkanDevice& device) const;
+    [[nodiscard]] renderium::SurfaceCapabilities getCapabilities(const VulkanDevice& vulkanDevice) const;
 
     using TextureViewResult = renderium::Result<VulkanTextureView, VulkanError>;
     TextureViewResult getCurrentTexture();
 private:
-    void destroySwapChain(const VulkanDevice& device);
+    void destroySwapChain();
     std::optional<VulkanError> createSwapChain(const SurfaceImplConfiguration<VulkanApi>& configuration);
 public:
     std::optional<VulkanError> configure(const SurfaceImplConfiguration<VulkanApi>& configuration);
@@ -49,8 +50,12 @@ private:
     vk::raii::SurfaceKHR surface;
     vk::raii::SwapchainKHR swapChain = nullptr;
     std::vector<vk::Image> images;
-    std::vector<std::shared_ptr<vk::raii::ImageView>> views;
+
+    vk::raii::Fence fence = nullptr;
     std::vector<vk::raii::Semaphore> presentCompleteSemaphores;
+    std::vector<vk::raii::Semaphore> renderFinishedSemaphores;
+
+    std::shared_ptr<const VulkanDevice> device;
 
     friend class VulkanDevice;
 };

@@ -128,6 +128,7 @@ private:
     TextureUsages usage;
     std::shared_ptr<detail::Resource> resource;
     friend class Device;
+    friend class Surface;
 };
 
 }

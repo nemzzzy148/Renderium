@@ -26,8 +26,8 @@ VulkanSurface::SurfaceResult VulkanSurface::create(const VulkanInstance& instanc
 
 // possible window backends template
 
-renderium::SurfaceCapabilities VulkanSurface::getCapabilities(const VulkanDevice& device) const {
-    const auto& physicalDevice = device.getPhysicalDevice();
+renderium::SurfaceCapabilities VulkanSurface::getCapabilities(const VulkanDevice& vulkanDevice) const {
+    const auto& physicalDevice = vulkanDevice.getPhysicalDevice();
 
     // formats
     auto [formatResult, vulkanFormats] = physicalDevice.getSurfaceFormatsKHR(surface);
@@ -69,12 +69,11 @@ VulkanSurface::TextureViewResult VulkanSurface::getCurrentTexture() {
     if (imageResult != vk::Result::eSuccess) {
         return TextureViewResult::err(VulkanError::UnhandledException);
     }
-
-    return TextureViewResult::ok(VulkanTextureView(views[imageIndex]));
 }
 
-void VulkanSurface::destroySwapChain(const VulkanDevice& device) {
-    device.getDevice().waitIdle();
+void VulkanSurface::destroySwapChain() {
+    if (!device) return;
+    device->getDevice().waitIdle();
     images.clear();
 }
 
@@ -83,10 +82,10 @@ std::optional<VulkanError> VulkanSurface::createSwapChain(const SurfaceImplConfi
     const vk::ImageUsageFlags usage = VulkanConversion::mapTextureUsages(configuration.usage);
     const vk::PresentModeKHR presentMode = VulkanConversion::mapPresentMode(configuration.presentMode);
 
-    auto& device = configuration.device;
+    auto& vulkanDevice = device->getDevice();
 
     auto [capabilitiesResult, capabilities]
-        = device.getPhysicalDevice().getSurfaceCapabilitiesKHR(surface);
+        = device->getPhysicalDevice().getSurfaceCapabilitiesKHR(surface);
 
     const vk::SwapchainCreateInfoKHR swapChainInfo{
         .surface = surface,
@@ -104,7 +103,7 @@ std::optional<VulkanError> VulkanSurface::createSwapChain(const SurfaceImplConfi
         .oldSwapchain = nullptr
     };
 
-    auto [result, swpChn] = device.getDevice().createSwapchainKHR(swapChainInfo);
+    auto [result, swpChn] = vulkanDevice.createSwapchainKHR(swapChainInfo);
     if (result != vk::Result::eSuccess) { // PANIC
         return VulkanError::SwapChainCreationFailed;
     }
@@ -116,25 +115,9 @@ std::optional<VulkanError> VulkanSurface::createSwapChain(const SurfaceImplConfi
     }
     images = std::move(img);
 
-    vk::ImageViewCreateInfo viewInfo{
-        .viewType = vk::ImageViewType::e2D,
-        .format = format,
-        .subresourceRange = {vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1}
-    };
-    views.reserve(images.size());
-    for (const auto &image : images) {
-        viewInfo.image = image;
-        auto [viewResult, view] = device.getDevice().createImageView(viewInfo);
-        if (viewResult != vk::Result::eSuccess) {
-            return VulkanError::FailedToCreateSwapChainImageViews;
-        }
-        views.emplace_back(std::make_shared<vk::raii::ImageView>(std::move(view)));
-    }
-
-
     if (!presentCompleteSemaphores.empty()) return std::nullopt;
     for (uint32_t i = 0; i < images.size(); i++) {
-        auto [semaphoreResult, semaphore] = device.getDevice().createSemaphore(vk::SemaphoreCreateInfo());
+        auto [semaphoreResult, semaphore] = vulkanDevice.createSemaphore(vk::SemaphoreCreateInfo());
         if (semaphoreResult != vk::Result::eSuccess) { // PANIC
             return VulkanError::FailedToCreateSwapChainSemaphores;
         }
@@ -145,7 +128,12 @@ std::optional<VulkanError> VulkanSurface::createSwapChain(const SurfaceImplConfi
 }
 
 std::optional<VulkanError> VulkanSurface::configure(const SurfaceImplConfiguration<VulkanApi> &configuration) {
-    destroySwapChain(configuration.device);
+    destroySwapChain();
+
+    if (device && &configuration.device != device.get()) {
+        device = configuration.device.shared_from_this();
+    }
+
     return createSwapChain(configuration);
 }
 

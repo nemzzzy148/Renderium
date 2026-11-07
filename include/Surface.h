@@ -52,23 +52,37 @@ struct SurfaceConfiguration {
     uint32_t maxFramesInFlight = 3;
 };
 
+struct SurfaceTexture {
+    Texture texture;
+};
+
 class Surface {
 public:
-    [[nodiscard]] SurfaceCapabilities getCapabilities(const Device& device) const {
-        return impl->getCapabilities(device);
-    }
-    void configure(const SurfaceConfiguration& configuration) const {
-        impl->configure(configuration);
-    }
+    [[nodiscard]] SurfaceCapabilities getCapabilities(const Device& device) const;
+    void configure(const SurfaceConfiguration& configuration);
+    [[nodiscard]] SurfaceTexture getCurrentTexture() const;
 private:
     struct Impl {
         virtual ~Impl() = default;
 
         virtual SurfaceCapabilities getCapabilities(const Device& device) = 0;
-        virtual void configure(const SurfaceConfiguration& configuration) = 0;
+        virtual bool configure(const SurfaceConfiguration& configuration) = 0;
+
+        virtual std::shared_ptr<detail::Resource> getCurrentTexture() = 0;
     };
     explicit Surface(std::unique_ptr<Impl> impl) : impl(std::move(impl)) {}
+
     std::unique_ptr<Impl> impl;
+
+    TextureDescriptor currentTextureState {
+        .size = {0, 0, 1},
+        .mipLevelCount = 1,
+        .sampleCount = 1,
+        .dimension = TextureDimension::D2,
+        .format = TextureFormat::BGRA8Unorm,
+        .usage = TextureUsages::None,
+        .viewFormats = {TextureFormat::BGRA8Unorm}
+    };
 
     friend class Instance;
     template<typename Api>
