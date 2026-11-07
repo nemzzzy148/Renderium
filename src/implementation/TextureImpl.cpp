@@ -4,6 +4,9 @@
 
 #include "TextureImpl.h"
 
+#include "API.h"
+#include "vulkan/VulkanTexture.h"
+
 #include <bit>
 #include <cmath>
 #include <algorithm>
@@ -73,7 +76,34 @@ bool validateTextureDescriptor(Process& process, const renderium::TextureDescrip
             });
         }
     }
-    
+    return !process.caughtError();
 }
+
+template<typename Api>
+std::unique_ptr<renderium::TextureView::Impl> TextureResource<Api>::createView(
+    const renderium::TextureViewDescriptor &descriptor) {
+    ITexture* texture = deviceState->textures.get(id.handle, id.version);
+    if (!texture) return nullptr;
+    return texture->createView(descriptor);
+}
+
+template<typename Api>
+std::unique_ptr<renderium::TextureView::Impl>  TextureImpl<Api>::createView(const renderium::TextureViewDescriptor &descriptor) {
+    auto deviceState = weakDeviceState.lock();
+    if (!deviceState) return nullptr;
+
+    auto process = Process(deviceState->errorState);
+    auto result = texture.createView(descriptor);
+    if (!result.isOk()) {
+        process.report(Api::toError(result.unwrapError()));
+        return nullptr;
+    }
+
+    return std::unique_ptr<renderium::TextureView::Impl>(
+        new TextureViewImpl<Api>(std::move(result.unwrap())));
+}
+
+template class TextureImpl<VulkanApi>;
+template class TextureResource<VulkanApi>;
 
 }

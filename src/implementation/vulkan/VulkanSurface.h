@@ -25,7 +25,7 @@ struct VulkanApi;
 }
 
 namespace rhi::vulkan {
-class VulkanTextureView;
+class VulkanTexture;
 class VulkanDevice;
 enum class VulkanError;
 class VulkanInstance;
@@ -37,10 +37,10 @@ public:
 
     [[nodiscard]] renderium::SurfaceCapabilities getCapabilities(const VulkanDevice& vulkanDevice) const;
 
-    using TextureViewResult = renderium::Result<VulkanTextureView, VulkanError>;
-    TextureViewResult getCurrentTexture();
+    using TextureResult = renderium::Result<VulkanTexture, VulkanError>;
+    [[nodiscard]] TextureResult getCurrentTexture() const;
 private:
-    void destroySwapChain();
+    std::optional<VulkanError> destroySwapChain();
     std::optional<VulkanError> createSwapChain(const SurfaceImplConfiguration<VulkanApi>& configuration);
 public:
     std::optional<VulkanError> configure(const SurfaceImplConfiguration<VulkanApi>& configuration);

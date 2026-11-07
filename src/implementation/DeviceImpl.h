@@ -39,10 +39,9 @@ public:
 
     renderium::shader::CompiledShader compileShader(const std::string &code) override;
 
-    using ResourceResult = renderium::Device::Impl::ResourceResult;
-    ResourceResult createRenderPipeline(const renderium::RenderPipelineDescriptor& descriptor) override;
-    ResourceResult createBuffer(const renderium::BufferDescriptor &descriptor) override;
-    ResourceResult createTexture(const renderium::TextureDescriptor &descriptor) override;
+    SharedResource createRenderPipeline(const renderium::RenderPipelineDescriptor& descriptor) override;
+    SharedResource createBuffer(const renderium::BufferDescriptor &descriptor) override;
+    SharedTextureResource createTexture(const renderium::TextureDescriptor &descriptor) override;
 
     std::unique_ptr<renderium::CommandEncoder::Impl> createCommandEncoder() override;
 

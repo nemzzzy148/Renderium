@@ -14,6 +14,10 @@ namespace rhi::vulkan {
 // --- texture ---
 
 VulkanTexture::TextureViewResult VulkanTexture::createView(const renderium::TextureViewDescriptor &descriptor) const {
+    if (!device || image == nullptr) {
+        return TextureViewResult::err(VulkanError::ImageViewCreationFailed);
+    }
+
     const vk::ImageViewCreateInfo viewInfo {
         .image = image,
         .viewType = VulkanConversion::mapTextureViewDimension(descriptor.dimension),

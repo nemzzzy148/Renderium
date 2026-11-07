@@ -10,8 +10,21 @@
 #include "Resource.h"
 #include "../src/utils/BitwiseOperations.h"
 
+namespace rhi {
+class ITexture;
+template<typename Api>
+class TextureImpl;
+template<typename Api>
+class TextureViewImpl;
+template<typename Api>
+class TextureResource;
+}
 
 namespace renderium {
+namespace detail {
+class TextureResource;
+}
+
 enum class RequestError;
 
 struct Extent3D {
@@ -27,6 +40,8 @@ enum class TextureDimension  {
 };
 
 enum class TextureFormat {
+    None,
+
     R8Unorm,
 
     RG8Unorm,
@@ -71,25 +86,42 @@ enum class TextureAspect {
 };
 
 struct TextureViewDescriptor {
-    TextureFormat format;
-    TextureViewDimension dimension;
-    TextureUsages usages = TextureUsages::None;
+    TextureFormat format = TextureFormat::None;
+    TextureViewDimension dimension = TextureViewDimension::D2;
+    TextureUsages usage = TextureUsages::None;
     TextureAspect aspect = TextureAspect::All;
     uint32_t baseMipLevel = 0;
-    uint32_t mipLevelCount;
+    uint32_t mipLevelCount = 1;
     uint32_t baseArrayLayer = 0;
-    uint32_t arrayLayerCount;
+    uint32_t arrayLayerCount = 1;
 };
 
 class TextureView {
-public:
-
-private:
     struct Impl {
         ~Impl() = default;
     };
+    explicit TextureView(std::unique_ptr<Impl> impl) : impl(std::move(impl)) {}
     std::unique_ptr<Impl> impl;
+
+    friend class Texture;
+    friend class detail::TextureResource;
+    friend class rhi::ITexture;
+    template<typename Api>
+    friend class rhi::TextureViewImpl;
+    template<typename Api>
+    friend class rhi::TextureImpl;
+    template<typename Api>
+    friend class rhi::TextureResource;
 };
+
+namespace detail {
+
+class TextureResource : public Resource {
+public:
+    virtual std::unique_ptr<TextureView::Impl> createView(const TextureViewDescriptor& descriptor) = 0;
+};
+
+}
 
 struct TextureDescriptor {
     Extent3D size;
@@ -113,10 +145,9 @@ public:
     [[nodiscard]] TextureFormat getFormat() const { return format; }
     [[nodiscard]] TextureUsages getUsage() const { return usage; }
 
-    using TextureViewResult = Result<TextureView, RequestError>;
-    [[nodiscard]] TextureViewResult createView(const TextureDescriptor& descriptor);
+    [[nodiscard]] TextureView createView(const TextureViewDescriptor& descriptor) const;
 private:
-    explicit Texture(std::shared_ptr<detail::Resource> resource, const TextureDescriptor& descriptor);
+    explicit Texture(std::shared_ptr<detail::TextureResource> resource, const TextureDescriptor& descriptor);
 
     uint32_t width;
     uint32_t height;
@@ -126,7 +157,7 @@ private:
     TextureDimension dimension;
     TextureFormat format;
     TextureUsages usage;
-    std::shared_ptr<detail::Resource> resource;
+    std::shared_ptr<detail::TextureResource> resource;
     friend class Device;
     friend class Surface;
 };

@@ -4,6 +4,11 @@
 
 #include "InstanceImpl.h"
 
+#include "API.h"
+#include "vulkan/VulkanAdapter.h"
+#include "vulkan/VulkanInstance.h"
+#include "vulkan/VulkanSurface.h"
+
 namespace rhi {
 
 template<typename Api>
@@ -41,5 +46,7 @@ InstanceImpl<Api>::SurfaceResult InstanceImpl<Api>::createSurface(const renderiu
     return SurfaceResult::ok(
         std::unique_ptr<renderium::Surface::Impl>(new SurfaceImpl<Api>(std::move(result.unwrap()))));
 }
+
+template class InstanceImpl<VulkanApi>;
 
 }

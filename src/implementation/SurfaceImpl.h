@@ -40,12 +40,15 @@ public:
 
     renderium::SurfaceCapabilities getCapabilities(const renderium::Device& device) override;
     bool configure(const renderium::SurfaceConfiguration& configuration) override;
-    std::shared_ptr<renderium::detail::Resource> getCurrentTexture() override;
+
+    // later implement that present just returns a premade texture.
+    std::shared_ptr<renderium::detail::TextureResource> getCurrentTexture() override;
 private:
-    explicit SurfaceImpl(Surface surface, std::shared_ptr<DeviceState<Api>> deviceState)
+    explicit SurfaceImpl(Surface surface)
         : surface(std::move(surface)) {}
 
     Surface surface;
+    std::shared_ptr<DeviceState<Api>> deviceState;
 
     friend class DeviceImpl<Api>;
     friend class InstanceImpl<Api>;

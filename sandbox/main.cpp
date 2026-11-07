@@ -70,41 +70,50 @@ int main() {
     auto windowResult = renderium::Window::create({});
     assert(windowResult.isOk());
     const auto window = windowResult.unwrap();
+    std::printf("Window creation succeeded!\n");
 
     // instance
     auto instanceResult = renderium::Instance::create({});
     assert(instanceResult.isOk());
     const auto instance = instanceResult.unwrap();
+    std::printf("Instance creation succeeded!\n");
 
     // surface
     auto surfaceResult = instance.createSurface(window);
     assert(surfaceResult.isOk());
     const auto surface = surfaceResult.unwrap();
+    std::printf("Surface creation succeeded!\n");
 
     // adapter
-    auto adapterResult = instance.requestAdapter({.compatibleSurface = &surface, .powerPreference = renderium::PowerPreference::None});
+    auto adapterResult = instance.requestAdapter({
+        .compatibleSurface = &surface,
+        .powerPreference = renderium::PowerPreference::None
+    });
     assert(adapterResult.isOk());
     const auto adapter = adapterResult.unwrap();
+    std::printf("Adapter creation succeeded!\n");
 
     // device
     auto deviceResult = adapter.requestDevice({});
     assert(deviceResult.isOk());
     const auto device = deviceResult.unwrap();
+    std::printf("Device creation succeeded!\n");
 
     // example texture and buffer
-    device.pushErrorScope(renderium::ErrorFilter::Internal);
     auto buffer = device.createBuffer({1, renderium::BufferUsages::Vertex, false});
-    auto error = device.popErrorScope().get();
-    if (error) {
-        std::printf("%s", error->message.c_str());
-    }
+    std::printf("Buffer creation succeeded!\n");
 
-    auto texture = device.createTexture({{512, 512, 1}, 1, 1,
+    const auto texture = device.createTexture({{512, 512, 1}, 1, 1,
         renderium::TextureDimension::D2, renderium::TextureFormat::RGBA8Unorm,
         renderium::TextureUsages::StorageBinding, {renderium::TextureFormat::RGBA8Unorm}});
+    std::printf("Texture creation succeeded!\n");
+
+    const auto textureView = texture.createView(renderium::TextureViewDescriptor{}); // default values
+    std::printf("Texture view creation succeeded!\n");
 
     // queue
     const auto queue = device.queue();
+    std::printf("Queue creation succeeded!\n");
 
     // surface configurations
     auto [usages, formats, presentModes] =
@@ -117,9 +126,15 @@ int main() {
         .format = formats[0],
         .presentMode = presentModes[0]
     });
+    std::printf("Surface configuration succeeded!\n");
+
+    auto surfaceTexture = surface.getCurrentTexture();
+    std::printf("Surface texture creation succeeded!\n");
+    //auto surfaceView = surfaceTexture.texture.createView(renderium::TextureViewDescriptor{});
 
     // shader
     auto shaderModule = device.createShaderModule({.code = slangShaderCode}); // can be dead
+    std::printf("Shader module creation succeeded!\n");
 
     // pipeline // seg fault with pipeline, shader is invalid
     auto renderPipeline = device.createRenderPipeline({ // can be dead
@@ -138,12 +153,11 @@ int main() {
             .cullMode = renderium::CullMode::None
         }
     });
-
-    std::cout << "pipeline created\n";
+    std::printf("Render pipeline creation succeeded!\n");
 
     // command encoder
-
     const auto commandEncoder = device.createCommandEncoder();
+    std::printf("Command encoder creation succeeded!\n");
 
     // render pass
 

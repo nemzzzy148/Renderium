@@ -146,13 +146,13 @@ VulkanDevice::TextureResult VulkanDevice::createTexture(const renderium::Texture
     const auto allocation = memoryManager.textureAllocation(alignment, size,
         memoryTypeBits, VulkanTexture::memoryProperties);
     if (!allocation.valid) {
-        TextureResult::err(allocation.error);
+        return TextureResult::err(allocation.error);
     }
 
     return TextureResult::ok(VulkanTexture(shared_from_this(),
     [this](const uint32_t poolIdx, const uint32_t nodeIdx, const uint32_t memoryType) {
         memoryManager.freeTexture(poolIdx, nodeIdx, memoryType); // destructor callback
-    }, allocation));
+    }, allocation, std::move(image)));
 }
 
 VulkanDevice::CommandEncoderResult VulkanDevice::createCommandEncoder() {

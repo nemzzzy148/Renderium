@@ -43,8 +43,7 @@ struct VulkanApi {
     using TextureView = vulkan::VulkanTextureView;
     using CommandEncoder = vulkan::VulkanCommandEncoder;
 
-    static constexpr renderium::shader::ShadingOutputLanguage shaderOutputLanguage =
-        renderium::shader::ShadingOutputLanguage::SPIRV;
+    static constexpr auto shaderOutputLanguage = renderium::shader::ShadingOutputLanguage::SPIRV;
 
     static constexpr auto toError = &vulkan::VulkanConversion::toError;
     static constexpr auto toRequestError = &vulkan::VulkanConversion::toRequestError;

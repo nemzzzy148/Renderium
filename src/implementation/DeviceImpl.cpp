@@ -50,7 +50,7 @@ renderium::shader::CompiledShader DeviceImpl<Api>::compileShader(const std::stri
 }
 
 template<typename Api>
-DeviceImpl<Api>::ResourceResult DeviceImpl<Api>::createRenderPipeline(
+DeviceImpl<Api>::SharedResource DeviceImpl<Api>::createRenderPipeline(
     const renderium::RenderPipelineDescriptor &descriptor) {
     auto process = Process(deviceState->errorState);
     validateRenderPipelineDescriptor(process, descriptor); // captures faults
@@ -68,7 +68,7 @@ DeviceImpl<Api>::ResourceResult DeviceImpl<Api>::createRenderPipeline(
 }
 
 template<typename Api>
-DeviceImpl<Api>::ResourceResult DeviceImpl<Api>::createBuffer(const renderium::BufferDescriptor &descriptor) {
+DeviceImpl<Api>::SharedResource DeviceImpl<Api>::createBuffer(const renderium::BufferDescriptor &descriptor) {
     auto process = Process(deviceState->errorState);
     validateBufferDescriptor(process, descriptor);
 
@@ -86,7 +86,7 @@ DeviceImpl<Api>::ResourceResult DeviceImpl<Api>::createBuffer(const renderium::B
 }
 
 template<typename Api>
-DeviceImpl<Api>::ResourceResult DeviceImpl<Api>::createTexture(
+DeviceImpl<Api>::SharedTextureResource DeviceImpl<Api>::createTexture(
         const renderium::TextureDescriptor &descriptor) {
     auto process = Process(deviceState->errorState);
     validateTextureDescriptor(process, descriptor);
@@ -100,8 +100,8 @@ DeviceImpl<Api>::ResourceResult DeviceImpl<Api>::createTexture(
     }
 
     auto id = deviceState->textures.allocate(std::unique_ptr<ITexture>(
-        new TextureImpl<Api>(std::move(result.unwrap()), descriptor)));
-    return std::shared_ptr<renderium::detail::Resource>(new TextureResource<Api>(deviceState, id));
+        new TextureImpl<Api>(std::move(result.unwrap()), deviceState)));
+    return std::shared_ptr<renderium::detail::TextureResource>(new TextureResource<Api>(deviceState, id));
 }
 
 template<typename Api>

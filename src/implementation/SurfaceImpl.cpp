@@ -4,6 +4,10 @@
 
 #include "SurfaceImpl.h"
 
+#include "API.h"
+#include "vulkan/VulkanSurface.h"
+#include "vulkan/VulkanTexture.h"
+
 namespace rhi {
 
 void validateSurfaceConfiguration(Process& process, const renderium::SurfaceConfiguration& configuration) {
@@ -44,6 +48,7 @@ renderium::SurfaceCapabilities SurfaceImpl<Api>::getCapabilities(const renderium
 template<typename Api>
 bool SurfaceImpl<Api>::configure(const renderium::SurfaceConfiguration &configuration) {
     auto& device = static_cast<DeviceImpl<Api>&>(*configuration.device.impl);
+    deviceState = device.deviceState;
     auto process = Process(device.getDeviceErrorState());
     validateSurfaceConfiguration(process, configuration);
 
@@ -67,8 +72,23 @@ bool SurfaceImpl<Api>::configure(const renderium::SurfaceConfiguration &configur
 }
 
 template<typename Api>
-std::shared_ptr<renderium::detail::Resource> SurfaceImpl<Api>::getCurrentTexture() {
+std::shared_ptr<renderium::detail::TextureResource> SurfaceImpl<Api>::getCurrentTexture() {
+    if (!deviceState) return nullptr; // no device state == not configured
+    auto result = surface.getCurrentTexture();
 
+    auto process = Process(deviceState->errorState);
+    if (!result.isOk()) {
+        process.report(Api::toError(result.unwrapError()));
+        return nullptr;
+    }
+
+    auto allocation = deviceState->textures.allocate(std::unique_ptr<ITexture>(
+        new TextureImpl<Api>(std::move(result.unwrap()), deviceState)));
+
+    return std::shared_ptr<renderium::detail::TextureResource>(
+        new TextureResource<Api>(deviceState, allocation));
 }
+
+template class SurfaceImpl<VulkanApi>;
 
 }

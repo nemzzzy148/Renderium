@@ -3,12 +3,17 @@
 //
 
 #pragma once
+#include "Result.h"
+#include "Texture.h"
 
 namespace rhi {
 
 class ITexture {
 public:
-    ~ITexture() = default;
+    virtual ~ITexture() = default;
+
+    virtual std::unique_ptr<renderium::TextureView::Impl>
+        createView(const renderium::TextureViewDescriptor& descriptor) = 0;
 };
 
 }

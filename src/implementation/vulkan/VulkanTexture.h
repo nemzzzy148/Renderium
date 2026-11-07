@@ -48,18 +48,20 @@ public:
 
     static constexpr vk::MemoryPropertyFlags memoryProperties = vk::MemoryPropertyFlagBits::eDeviceLocal;
 private:
-    explicit VulkanTexture(std::shared_ptr<VulkanDevice> device,
-        std::function<void(uint32_t, uint32_t, uint32_t)> destructCallback, const MemoryAllocation& allocation)
-        : destructCallback(std::move(destructCallback)), device(std::move(device)),
+    explicit VulkanTexture(std::shared_ptr<const VulkanDevice> device,
+        std::function<void(uint32_t, uint32_t, uint32_t)> destructCallback, const MemoryAllocation& allocation,
+        vk::raii::Image image = nullptr)
+        : destructCallback(std::move(destructCallback)), image(std::move(image)), device(std::move(device)),
         poolIdx(allocation.poolIndex), nodeIdx(allocation.nodeIndex), memoryType(allocation.memoryType) {}
 
     std::function<void(uint32_t, uint32_t, uint32_t)> destructCallback;
     vk::raii::Image image = nullptr;
-    std::shared_ptr<VulkanDevice> device;
+    std::shared_ptr<const VulkanDevice> device;
 
     const uint32_t poolIdx, nodeIdx, memoryType;
 
     friend class VulkanDevice;
+    friend class VulkanSurface;
 };
 
 }

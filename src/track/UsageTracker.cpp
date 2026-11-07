@@ -4,6 +4,8 @@
 
 #include "UsageTracker.h"
 
+#include "Texture.h"
+
 #include <ranges>
 
 namespace track {
@@ -16,7 +18,7 @@ UsageTracker<T>::UsageTracker(const uint32_t reservedSize) {
 template<Usage T>
 void UsageTracker<T>::add(resource::ResourceId id) {
     std::lock_guard guard(lock);
-    usages.insert(id, std::nullopt);
+    usages.try_emplace(id, std::nullopt);
 }
 
 template<Usage T>
@@ -31,7 +33,7 @@ void UsageTracker<T>::merge(const ScopeTracker<T>& scope) {
 
         // Skip if the current usage state doesn't match the expected one.
         if (change.begin.has_value() != usage.has_value()) continue;
-        if (usage && *change.second.begin != *usage) continue;
+        if (usage && *change.begin != *usage) continue;
 
         usage = change.end;
     }
@@ -50,5 +52,8 @@ void UsageTracker<T>::remove(resource::ResourceId id) {
     if (!usages.contains(id)) return;
     usages.erase(id);
 }
+
+template class UsageTracker<renderium::BufferUsages>;
+template class UsageTracker<renderium::TextureUsages>;
 
 }

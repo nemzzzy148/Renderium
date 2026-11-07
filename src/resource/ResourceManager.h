@@ -14,6 +14,8 @@ namespace resource {
 struct ResourceId {
     uint32_t handle;
     uint32_t version;
+
+    bool operator==(const ResourceId&) const = default;
 };
 
 template<typename T>
@@ -44,3 +46,10 @@ private:
 };
 
 }
+
+template<>
+struct std::hash<resource::ResourceId> {
+    std::size_t operator()(const resource::ResourceId& id) const noexcept {
+        return hash<uint32_t>{}(id.handle) ^ (hash<uint32_t>{}(id.version) << 1);
+    }
+};

@@ -59,22 +59,29 @@ renderium::SurfaceCapabilities VulkanSurface::getCapabilities(const VulkanDevice
     return {usages, std::move(formats), std::move(presentModes)};
 }
 
-VulkanSurface::TextureViewResult VulkanSurface::getCurrentTexture() {
+VulkanSurface::TextureResult VulkanSurface::getCurrentTexture() const {
     auto [imageResult, imageIndex] =
         swapChain.acquireNextImage(UINT64_MAX, nullptr, nullptr);
 
     if (imageResult == vk::Result::eErrorOutOfDateKHR) {
-        return TextureViewResult::err(VulkanError::SwapChainOutOfDate);
+        return TextureResult::err(VulkanError::SwapChainOutOfDate);
     }
     if (imageResult != vk::Result::eSuccess) {
-        return TextureViewResult::err(VulkanError::UnhandledException);
+        return TextureResult::err(VulkanError::UnhandledException);
     }
+
+    return TextureResult::ok(
+        VulkanTexture(device, nullptr, MemoryAllocation(0, 0, 0, 0)));
 }
 
-void VulkanSurface::destroySwapChain() {
-    if (!device) return;
-    device->getDevice().waitIdle();
+std::optional<VulkanError> VulkanSurface::destroySwapChain() {
+    if (!device) return std::nullopt;
+    if (const auto result = device->getDevice().waitIdle();
+            result != vk::Result::eSuccess) {
+        return VulkanError::FailedToWaitOnDevice;
+    }
     images.clear();
+    return std::nullopt;
 }
 
 std::optional<VulkanError> VulkanSurface::createSwapChain(const SurfaceImplConfiguration<VulkanApi> &configuration) {
@@ -86,6 +93,9 @@ std::optional<VulkanError> VulkanSurface::createSwapChain(const SurfaceImplConfi
 
     auto [capabilitiesResult, capabilities]
         = device->getPhysicalDevice().getSurfaceCapabilitiesKHR(surface);
+    if (capabilitiesResult != vk::Result::eSuccess) {
+        return VulkanError::FailedToGetSurfaceCapabilities;
+    }
 
     const vk::SwapchainCreateInfoKHR swapChainInfo{
         .surface = surface,
@@ -128,11 +138,12 @@ std::optional<VulkanError> VulkanSurface::createSwapChain(const SurfaceImplConfi
 }
 
 std::optional<VulkanError> VulkanSurface::configure(const SurfaceImplConfiguration<VulkanApi> &configuration) {
-    destroySwapChain();
+    auto destroyResult = destroySwapChain();
+    if (destroyResult.has_value()) return destroyResult;
 
-    if (device && &configuration.device != device.get()) {
+    if (!device || &configuration.device != device.get()) {
         device = configuration.device.shared_from_this();
-    }
+    } // Chooses new device when it does not have one / it is different.
 
     return createSwapChain(configuration);
 }
