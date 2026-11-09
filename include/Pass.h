@@ -12,6 +12,7 @@ class RenderPassImpl;
 }
 
 namespace renderium {
+class RenderPipeline;
 class TextureView;
 
 class Color {
@@ -49,7 +50,7 @@ enum class StoreOp {
 };
 
 struct RenderPassColorAttachment {
-    TextureView& textureView;
+    const TextureView& textureView;
     Color clearValue;
     LoadOp loadOp;
     StoreOp storeOp;
@@ -61,11 +62,23 @@ struct RenderPassDescriptor {
 };
 
 class RenderPass {
+public:
+    ~RenderPass();
+
+    void setPipeline(const RenderPipeline& pipeline) const;
+
+    void draw(uint32_t vertexCount, uint32_t instanceCount = 1,
+        uint32_t firstVertex = 0, uint32_t firstInstance = 0) const;
+
+    void end() const;
+private:
     struct Impl {
         virtual ~Impl() = default;
     };
+    explicit RenderPass(std::unique_ptr<Impl> impl) : impl(std::move(impl)) {}
     std::unique_ptr<Impl> impl;
 
+    friend class CommandEncoder;
     template<typename Api>
     friend class rhi::RenderPassImpl;
 };

@@ -9,6 +9,7 @@
 #include "vulkan/VulkanQueue.h"
 #include "DeviceImpl.h"
 #include "Queue.h"
+#include "../synchronization/TimelineCounter.h"
 
 namespace rhi {
 
@@ -19,6 +20,8 @@ class QueueImpl : public renderium::Queue::Impl {
         : queue(std::move(queue)), deviceState(std::move(deviceState)) {}
     Queue queue;
     std::shared_ptr<DeviceState<Api>> deviceState;
+
+    synchronization::TimelineCounter timeline;
 
     track::UsageTracker<renderium::BufferUsages> bufferTracker;
     track::UsageTracker<renderium::TextureUsages> textureTracker;

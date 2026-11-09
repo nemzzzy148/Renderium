@@ -16,3 +16,4 @@
 #include "Queue.h"
 #include "Result.h"
 #include "Shader.h"
+#include "Pass.h"

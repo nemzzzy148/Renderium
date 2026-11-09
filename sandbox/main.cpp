@@ -1,10 +1,10 @@
 
-#include <assert.h>
+#include <cassert>
 #include <functional>
 #include <iomanip>
 #include <iostream>
 
-#include "Renderium.h"
+#include <Renderium.h>
 
 void printUInt8Vector(const std::vector<uint8_t>& text) {
     for (const uint8_t byte : text) {
@@ -20,7 +20,7 @@ void printUInt8Vector(const std::vector<uint8_t>& text) {
 }
 
 const std::string slangShaderCode = R"(
-        struct VertexOutput
+struct VertexOutput
 {
     float4 position : SV_Position;
     float3 color    : COLOR0;
@@ -59,10 +59,10 @@ float4 fragMain(VertexOutput input) : SV_Target0
 {
     return float4(input.color, 1.0);
 }
-    )";
+)";
 
 int main() {
-    std::function<void(const renderium::Error&)> errorCallback = [](const renderium::Error& error) {
+    std::function errorCallback = [](const renderium::Error& error) {
         std::printf("%s", error.message.c_str());
     };
 
@@ -100,7 +100,7 @@ int main() {
     std::printf("Device creation succeeded!\n");
 
     // example texture and buffer
-    auto buffer = device.createBuffer({1, renderium::BufferUsages::Vertex, false});
+    const auto buffer = device.createBuffer({1, renderium::BufferUsages::Vertex, false});
     std::printf("Buffer creation succeeded!\n");
 
     const auto texture = device.createTexture({{512, 512, 1}, 1, 1,
@@ -116,7 +116,7 @@ int main() {
     std::printf("Queue creation succeeded!\n");
 
     // surface configurations
-    auto [usages, formats, presentModes] =
+    const auto [usages, formats, presentModes] =
         surface.getCapabilities(device);
     surface.configure({
         .device = device,
@@ -128,16 +128,12 @@ int main() {
     });
     std::printf("Surface configuration succeeded!\n");
 
-    auto surfaceTexture = surface.getCurrentTexture();
-    std::printf("Surface texture creation succeeded!\n");
-    //auto surfaceView = surfaceTexture.texture.createView(renderium::TextureViewDescriptor{});
-
     // shader
-    auto shaderModule = device.createShaderModule({.code = slangShaderCode}); // can be dead
+    const auto shaderModule = device.createShaderModule({.code = slangShaderCode}); // can be dead
     std::printf("Shader module creation succeeded!\n");
 
     // pipeline // seg fault with pipeline, shader is invalid
-    auto renderPipeline = device.createRenderPipeline({ // can be dead
+    const auto renderPipeline = device.createRenderPipeline({ // can be dead
         .vertex = {
             .module = shaderModule,
             .entryPoint = "vertMain"
@@ -155,24 +151,45 @@ int main() {
     });
     std::printf("Render pipeline creation succeeded!\n");
 
-    // command encoder
-    const auto commandEncoder = device.createCommandEncoder();
-    std::printf("Command encoder creation succeeded!\n");
-
-    // render pass
-
-    // set texture as surface
-
-    // pass set pipeline
-    // pass draw 3
-    // pass end
-    // queue submit
-
-    return 0;
 
     // main loop
+    uint32_t i = 0;
     while (!window.shouldClose()) {
         window.waitEvents();
+
+        printf("Frame: %i\n", i++);
+
+        // asset management is still lacking
+        const auto [surfaceTexture] = surface.getCurrentTexture();
+        const auto surfaceView = surfaceTexture.createView(renderium::TextureViewDescriptor{});
+
+        renderium::RenderPassColorAttachment colorAttachment{
+            .textureView = surfaceView,
+            .clearValue = renderium::Color::Black,
+            .loadOp = renderium::LoadOp::Clear,
+            .storeOp = renderium::StoreOp::Store
+        };
+
+
+        // command encoder
+        const auto commandEncoder = device.createCommandEncoder();
+
+        // render pass
+        const auto renderPass = commandEncoder.beginRenderPass({
+            .colorAttachments = {colorAttachment}
+        });
+
+        renderPass.setPipeline(renderPipeline);
+
+        renderPass.draw(3);
+
+        renderPass.end();
+
+        // pass set pipeline
+        // pass draw 3
+        // pass end
+        // queue submit
     }
+
     return 0;
 }

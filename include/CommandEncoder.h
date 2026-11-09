@@ -13,8 +13,13 @@ class DeviceImpl;
 }
 
 namespace renderium {
+struct RenderPassDescriptor;
+class RenderPass;
 
 class CommandEncoder {
+public:
+    [[nodiscard]] RenderPass beginRenderPass(const RenderPassDescriptor& descriptor) const;
+private:
     struct Impl {
         virtual ~Impl() = default;
     };
