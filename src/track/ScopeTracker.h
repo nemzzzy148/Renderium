@@ -28,12 +28,18 @@ struct Merge {
 };
 
 template<Usage T>
+using BeginUsages = std::vector<std::pair<resource::ResourceId, T>>;
+
+template<Usage T>
 class ScopeTracker {
 public:
-    explicit ScopeTracker(const std::vector<std::pair<resource::ResourceId, T>>& beginUsages);
+    ScopeTracker() = default;
     void setUsage(resource::ResourceId id, T usage);
 
+    void initialize(const BeginUsages<T>& beginUsages);
     const std::unordered_map<resource::ResourceId, Merge<T>>& getChanges() const { return changes; }
+
+    void reset();
 private:
     std::unordered_map<resource::ResourceId, Merge<T>> changes;
 };

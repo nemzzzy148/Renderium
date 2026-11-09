@@ -18,6 +18,8 @@ template<typename Api>
 class TextureViewImpl;
 template<typename Api>
 class TextureResource;
+template<typename Api>
+class RenderPassImpl;
 }
 
 namespace renderium {
@@ -96,11 +98,17 @@ struct TextureViewDescriptor {
     uint32_t arrayLayerCount = 1;
 };
 
+namespace detail {
+class TextureResource;
+}
+
 class TextureView {
     struct Impl {
         ~Impl() = default;
     };
-    explicit TextureView(std::unique_ptr<Impl> impl) : impl(std::move(impl)) {}
+    explicit TextureView(std::unique_ptr<Impl> impl, std::shared_ptr<detail::TextureResource> textureResource)
+        : impl(std::move(impl)), textureResource(std::move(textureResource)) {}
+    std::shared_ptr<detail::TextureResource> textureResource;
     std::unique_ptr<Impl> impl;
 
     friend class Texture;
@@ -112,6 +120,8 @@ class TextureView {
     friend class rhi::TextureImpl;
     template<typename Api>
     friend class rhi::TextureResource;
+    template<typename Api>
+    friend class rhi::RenderPassImpl;
 };
 
 namespace detail {

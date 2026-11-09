@@ -4,16 +4,19 @@
 
 #include "Pass.h"
 
+#include "Pipeline.h"
+
 namespace renderium {
 
 RenderPass::~RenderPass() { end(); }
 
 void RenderPass::setPipeline(const RenderPipeline &pipeline) const {
-
+    impl->setPipeline(*pipeline.resource);
 }
 
-void RenderPass::draw(uint32_t vertexCount, uint32_t instanceCount, uint32_t firstVertex, uint32_t firstInstance) const {
-
+void RenderPass::draw(const uint32_t vertexCount, const uint32_t instanceCount, const uint32_t firstVertex,
+        const uint32_t firstInstance) const {
+    impl->draw(vertexCount, instanceCount, firstVertex, firstInstance);
 }
 
 void RenderPass::end() const {

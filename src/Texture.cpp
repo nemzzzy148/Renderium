@@ -9,7 +9,7 @@
 namespace renderium {
 
 TextureView Texture::createView(const TextureViewDescriptor &descriptor) const {
-    if (!resource) return TextureView(nullptr);
+    if (!resource) return TextureView(nullptr, nullptr);
 
     TextureViewDescriptor desc = descriptor;
     if (descriptor.format == TextureFormat::None) {
@@ -18,7 +18,7 @@ TextureView Texture::createView(const TextureViewDescriptor &descriptor) const {
     if (descriptor.usage == TextureUsages::None ) {
         desc.usage = usage;
     }
-    return TextureView(resource->createView(desc));
+    return TextureView(resource->createView(desc), resource);
 }
 
 Texture::Texture(std::shared_ptr<detail::TextureResource> resource, const TextureDescriptor &descriptor)

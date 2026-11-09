@@ -46,6 +46,7 @@ class RenderPipeline {
 
     std::shared_ptr<detail::Resource> resource;
     friend class Device;
+    friend class RenderPass;
 };
 
 struct ComputePipelineDescriptor {

@@ -16,8 +16,6 @@ class CommandEncoderImpl : public renderium::CommandEncoder::Impl {
 public:
     using Device = Api::Device;
     using CommandEncoder = Api::CommandEncoder;
-
-    
 private:
     explicit CommandEncoderImpl(std::shared_ptr<DeviceState<Api>> device, std::unique_ptr<CommandEncoder> commandEncoder)
         : deviceState(std::move(device)), commandEncoder(std::move(commandEncoder)) {}

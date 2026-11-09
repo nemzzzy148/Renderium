@@ -12,6 +12,10 @@ class RenderPassImpl;
 }
 
 namespace renderium {
+namespace detail {
+class Resource;
+}
+
 class RenderPipeline;
 class TextureView;
 
@@ -66,7 +70,6 @@ public:
     ~RenderPass();
 
     void setPipeline(const RenderPipeline& pipeline) const;
-
     void draw(uint32_t vertexCount, uint32_t instanceCount = 1,
         uint32_t firstVertex = 0, uint32_t firstInstance = 0) const;
 
@@ -74,9 +77,15 @@ public:
 private:
     struct Impl {
         virtual ~Impl() = default;
+
+        virtual void setPipeline(const detail::Resource& pipeline) = 0;
+        virtual void draw(uint32_t vertexCount, uint32_t instanceCount, uint32_t firstVertex,
+            uint32_t firstInstance) = 0;
+
+        virtual void end() = 0;
     };
-    explicit RenderPass(std::unique_ptr<Impl> impl) : impl(std::move(impl)) {}
-    std::unique_ptr<Impl> impl;
+    explicit RenderPass(std::shared_ptr<Impl> impl) : impl(std::move(impl)) {}
+    std::shared_ptr<Impl> impl;
 
     friend class CommandEncoder;
     template<typename Api>

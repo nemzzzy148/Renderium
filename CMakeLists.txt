@@ -92,6 +92,10 @@ add_library(Renderium SHARED
         src/Pass.cpp
         src/synchronization/TimelineCounter.cpp
         src/synchronization/TimelineCounter.h
+        src/implementation/CommandBufferImpl.h
+        src/implementation/vulkan/VulkanCommandBuffer.cpp
+        src/implementation/vulkan/VulkanCommandBuffer.h
+        src/implementation/PassImpl.cpp
 )
 
 target_include_directories( Renderium PUBLIC

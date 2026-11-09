@@ -8,7 +8,13 @@
 namespace track {
 
 template<Usage T>
-ScopeTracker<T>::ScopeTracker(const std::vector<std::pair<resource::ResourceId, T>>& beginUsages) {
+void ScopeTracker<T>::setUsage(resource::ResourceId id, T usage) {
+    if (!changes.contains(id)) return;
+    changes.at(id).end = usage;
+}
+
+template<Usage T>
+void ScopeTracker<T>::initialize(const BeginUsages<T> &beginUsages) {
     changes.reserve(beginUsages.size());
     for (const auto& item : beginUsages) {
         changes.emplace(item.first, Merge<T>{item.second, item.second});
@@ -16,9 +22,8 @@ ScopeTracker<T>::ScopeTracker(const std::vector<std::pair<resource::ResourceId, 
 }
 
 template<Usage T>
-void ScopeTracker<T>::setUsage(resource::ResourceId id, T usage) {
-    if (!changes.contains(id)) return;
-    changes.at(id).end = usage;
+void ScopeTracker<T>::reset() {
+    changes.clear();
 }
 
 }
