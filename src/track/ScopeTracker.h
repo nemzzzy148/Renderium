@@ -34,12 +34,11 @@ template<Usage T>
 class ScopeTracker {
 public:
     ScopeTracker() = default;
-    void setUsage(resource::ResourceId id, T usage);
-
-    void initialize(const BeginUsages<T>& beginUsages);
+    void addUsage(resource::ResourceId id, std::optional<T> beginUsage, T endUsage);
+    void addBeginUsage(resource::ResourceId id, std::optional<T> usage);
+    void setEndUsage(resource::ResourceId id, T usage);
     const std::unordered_map<resource::ResourceId, Merge<T>>& getChanges() const { return changes; }
-
-    void reset();
+    bool hasUsage(resource::ResourceId id);
 private:
     std::unordered_map<resource::ResourceId, Merge<T>> changes;
 };

@@ -11,6 +11,7 @@
 #include "../src/utils/BitwiseOperations.h"
 
 namespace rhi {
+enum class PassType;
 class ITexture;
 template<typename Api>
 class TextureImpl;
@@ -18,8 +19,8 @@ template<typename Api>
 class TextureViewImpl;
 template<typename Api>
 class TextureResource;
-template<typename Api>
-class RenderPassImpl;
+template<PassType Type, typename Api>
+class PassImpl;
 }
 
 namespace renderium {
@@ -120,8 +121,8 @@ class TextureView {
     friend class rhi::TextureImpl;
     template<typename Api>
     friend class rhi::TextureResource;
-    template<typename Api>
-    friend class rhi::RenderPassImpl;
+    template<rhi::PassType Type, typename Api>
+    friend class rhi::PassImpl;
 };
 
 namespace detail {

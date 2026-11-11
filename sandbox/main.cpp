@@ -185,6 +185,9 @@ int main() {
 
         renderPass.end();
 
+        auto commandBuffer = commandEncoder.finish();
+
+
         // pass set pipeline
         // pass draw 3
         // pass end

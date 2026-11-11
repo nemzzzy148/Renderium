@@ -96,6 +96,7 @@ add_library(Renderium SHARED
         src/implementation/vulkan/VulkanCommandBuffer.cpp
         src/implementation/vulkan/VulkanCommandBuffer.h
         src/implementation/PassImpl.cpp
+        src/implementation/CommandEncoderImpl.cpp
 )
 
 target_include_directories( Renderium PUBLIC

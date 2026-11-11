@@ -5,6 +5,7 @@
 #pragma once
 #include "DeviceErrorState.h"
 #include "../resource/ResourceManager.h"
+#include "../track/UsageTracker.h"
 
 namespace rhi {
 class IRenderPipeline;
@@ -23,6 +24,9 @@ struct DeviceState {
     resource::ResourceManager<ITexture> textures;
     resource::ResourceManager<IBuffer> buffers;
     resource::ResourceManager<IRenderPipeline> renderPipelines;
+
+    track::UsageTracker<renderium::BufferUsages> bufferTracker;
+    track::UsageTracker<renderium::TextureUsages> textureTracker;
 };
 
 }

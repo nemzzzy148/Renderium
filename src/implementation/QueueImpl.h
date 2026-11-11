@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "CommandBufferImpl.h"
 #include "DeviceState.h"
 #include "../track/UsageTracker.h"
 #include "vulkan/VulkanQueue.h"
@@ -23,8 +24,7 @@ class QueueImpl : public renderium::Queue::Impl {
 
     synchronization::TimelineCounter timeline;
 
-    track::UsageTracker<renderium::BufferUsages> bufferTracker;
-    track::UsageTracker<renderium::TextureUsages> textureTracker;
+    std::queue<CommandBufferImpl<Api>> commands;
 
     friend class DeviceImpl<Api>;
 };
