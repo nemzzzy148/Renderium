@@ -46,10 +46,15 @@ void ResourceManager<T>::removeRef(uint32_t handle, uint32_t version) {
     auto refCount = resources[handle].refCount;
 
     if (refCount == 1) {
-        pendingDeletion.emplace(handle);
+        deletionQueue.emplace(handle, version);
     } else {
         --resources[handle].refCount;
     }
+}
+
+template<typename T>
+const std::unordered_set<ResourceId> & ResourceManager<T>::getDeletionQueue() {
+    return deletionQueue;
 }
 
 template<typename T>
@@ -59,6 +64,13 @@ void ResourceManager<T>::release(uint32_t handle, uint32_t version) {
     resources[handle].item.reset();
     ++resources[handle].version;
     free.emplace_back(handle);
+}
+
+template<typename T>
+void ResourceManager<T>::releaseResource(const ResourceId id) {
+    if (!deletionQueue.contains(id)) return;
+    deletionQueue.erase(id);
+    release(id.handle, id.version);
 }
 
 template<typename T>

@@ -4,6 +4,9 @@
 
 #pragma once
 
+#include <vector>
+#include <memory>
+
 namespace rhi {
 template<typename Api>
 class QueueImpl;
@@ -20,9 +23,13 @@ class CommandBuffer;
 
 class Queue {
 public:
+    void submit(const std::vector<std::reference_wrapper<const CommandBuffer>>& commandBuffers) const;
+    void submit(const CommandBuffer& commandBuffer) const;
 private:
     struct Impl {
         ~Impl() = default;
+
+        virtual void submit(const std::vector<std::reference_wrapper<const CommandBuffer>>& commandBuffers) = 0;
     };
     std::shared_ptr<Impl> impl;
 

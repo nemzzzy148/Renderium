@@ -6,6 +6,9 @@
 
 namespace rhi {
 
+template<typename Api>
+void QueueImpl<Api>::submit(const std::vector<std::reference_wrapper<const renderium::CommandBuffer>> &commandBuffers) {
 
+}
 
 }

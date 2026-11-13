@@ -185,7 +185,9 @@ int main() {
 
         renderPass.end();
 
-        auto commandBuffer = commandEncoder.finish();
+        const auto commandBuffer = commandEncoder.finish();
+
+        queue.submit(commandBuffer);
 
 
         // pass set pipeline
