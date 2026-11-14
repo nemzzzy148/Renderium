@@ -8,7 +8,7 @@
 
 #include "CommandEncoder.h"
 #include "DeviceState.h"
-#include "vulkan/VulkanCommandEncoder.h"
+#include "vulkan/VulkanCommandBuffer.h"
 #include "Texture.h"
 
 namespace rhi {
@@ -36,15 +36,15 @@ template<typename Api>
 class CommandEncoderImpl : public renderium::CommandEncoder::Impl {
 public:
     using Device = Api::Device;
-    using CommandEncoder = Api::CommandEncoder;
+    using CommandBuffer = Api::CommandBuffer;
 
     std::shared_ptr<IPassImpl>
         beginRenderPass(const renderium::RenderPassDescriptor &descriptor) override;
     std::unique_ptr<renderium::CommandBuffer::Impl>
         finish(const renderium::CommandBufferDescriptor &descriptor) override;
 private:
-    explicit CommandEncoderImpl(std::shared_ptr<DeviceState<Api>> device, std::unique_ptr<CommandEncoder> commandEncoder)
-        : deviceState(std::move(device)), commandEncoder(std::move(commandEncoder)) {}
+    explicit CommandEncoderImpl(std::shared_ptr<DeviceState<Api>> device, std::unique_ptr<CommandBuffer> commandBuffer)
+        : deviceState(std::move(device)), commandBuffer(std::move(commandBuffer)) {}
 
     CommandCollection generateCommandCollection();
 
@@ -54,7 +54,7 @@ private:
     static Unit& insertCommand(CommandCollection& collection, CommandUnitType type);
 
     std::shared_ptr<DeviceState<Api>> deviceState;
-    std::unique_ptr<CommandEncoder> commandEncoder;
+    std::unique_ptr<CommandBuffer> commandBuffer;
 
     std::queue<std::shared_ptr<IPassImpl>> passes;
     bool hasFinished = false;

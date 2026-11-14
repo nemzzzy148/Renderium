@@ -13,14 +13,14 @@ namespace rhi {
 
 template<typename Api>
 class CommandBufferImpl : public renderium::CommandBuffer::Impl {
-    using CommandEncoder = Api::CommandEncoder;
+    using CommandBuffer = Api::CommandBuffer;
     explicit CommandBufferImpl(std::shared_ptr<DeviceState<Api>> deviceState,
-        std::unique_ptr<CommandEncoder> commandEncoder, CommandCollection collection)
-        : deviceState(std::move(deviceState)), commandEncoder(std::move(commandEncoder))
+        std::unique_ptr<CommandBuffer> commandBuffer, CommandCollection collection)
+        : deviceState(std::move(deviceState)), commandBuffer(std::move(commandBuffer))
         , collection(std::move(collection)) {}
 
     std::shared_ptr<DeviceState<Api>> deviceState;
-    std::unique_ptr<CommandEncoder> commandEncoder;
+    std::unique_ptr<CommandBuffer> commandBuffer;
 
     CommandCollection collection;
 };

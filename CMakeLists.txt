@@ -66,8 +66,6 @@ add_library(Renderium SHARED
         src/implementation/SurfaceImpl.cpp
         include/CommandEncoder.h
         src/implementation/CommandEncoderImpl.h
-        src/implementation/vulkan/VulkanCommandEncoder.cpp
-        src/implementation/vulkan/VulkanCommandEncoder.h
         include/Pass.h
         src/implementation/PassImpl.h
         src/implementation/vulkan/VulkanPass.cpp
@@ -100,6 +98,8 @@ add_library(Renderium SHARED
         src/Queue.cpp
         src/resource/ResourceTracker.cpp
         src/resource/ResourceTracker.h
+        src/implementation/CommandTranslation.cpp
+        src/implementation/CommandTranslation.h
 )
 
 target_include_directories( Renderium PUBLIC

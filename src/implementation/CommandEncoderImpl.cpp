@@ -25,7 +25,7 @@ std::unique_ptr<renderium::CommandBuffer::Impl> CommandEncoderImpl<Api>::finish(
     auto commandCollection = generateCommandCollection(); // queue is invalid after this
 
     return std::unique_ptr<renderium::CommandBuffer::Impl>(
-        new CommandBufferImpl<Api>(std::move(deviceState), std::move(commandEncoder), std::move(commandCollection)));
+        new CommandBufferImpl<Api>(std::move(deviceState), std::move(commandBuffer), std::move(commandCollection)));
 }
 
 template<typename Api>

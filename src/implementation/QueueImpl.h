@@ -6,9 +6,9 @@
 
 #include "CommandBufferImpl.h"
 #include "DeviceState.h"
-#include "../track/UsageTracker.h"
 #include "DeviceImpl.h"
 #include "Queue.h"
+#include "../resource/ResourceTracker.h"
 #include "../synchronization/TimelineCounter.h"
 
 namespace rhi {
@@ -19,16 +19,25 @@ public:
     using Queue = Api::Queue;
 
     void submit(const std::vector<std::reference_wrapper<const renderium::CommandBuffer>>& commandBuffers) override;
+    void trackBuffers(const std::vector<resource::ResourceId>& ids);
+    void trackTextures(const std::vector<resource::ResourceId>& ids);
+    void trackRenderPipelines(const std::vector<resource::ResourceId>& ids);
 private:
     explicit QueueImpl(Queue queue, std::shared_ptr<DeviceState<Api>> deviceState)
         : queue(std::move(queue)), deviceState(std::move(deviceState)) {}
     Queue queue;
     std::shared_ptr<DeviceState<Api>> deviceState;
 
-    synchronization::TimelineCounter timeline;
+    void incrementTimeline();
+    synchronization::TimelineCounter submitTimeline;
+    uint32_t devicePoll();
+    synchronization::TimelineCounter completedTimeline;
+
+    resource::ResourceTracker bufferTracker;
+    resource::ResourceTracker textureTracker;
+    resource::ResourceTracker renderPipelineTracker;
 
     std::queue<CommandBufferImpl<Api>> commands;
-
     friend class DeviceImpl<Api>;
 };
 

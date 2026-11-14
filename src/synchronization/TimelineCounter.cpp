@@ -14,4 +14,9 @@ uint32_t TimelineCounter::get() const {
     return value.load(std::memory_order_acquire);
 }
 
+void TimelineCounter::set(const uint32_t index) {
+    if (index <= get()) return;
+    value.store(index, std::memory_order_release);
+}
+
 }
