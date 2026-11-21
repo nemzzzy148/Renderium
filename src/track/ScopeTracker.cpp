@@ -27,4 +27,7 @@ bool ScopeTracker<T>::hasUsage(resource::ResourceId id) {
     return changes.contains(id);
 }
 
+template class ScopeTracker<renderium::TextureUsages>;
+template class ScopeTracker<renderium::BufferUsages>;
+
 }

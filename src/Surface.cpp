@@ -29,4 +29,7 @@ SurfaceTexture Surface::getCurrentTexture() const {
     return {Texture(impl->getCurrentTexture(), impl->currentTextureState)};
 }
 
+void Surface::present() const {
+    impl->present();
+}
 }

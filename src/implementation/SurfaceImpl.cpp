@@ -89,6 +89,10 @@ std::shared_ptr<renderium::detail::TextureResource> SurfaceImpl<Api>::getCurrent
         new TextureResource<Api>(deviceState, allocation));
 }
 
+template<typename Api>
+void SurfaceImpl<Api>::present() {
+}
+
 template class SurfaceImpl<VulkanApi>;
 
 }

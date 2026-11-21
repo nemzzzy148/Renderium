@@ -74,6 +74,11 @@ void ResourceManager<T>::releaseResource(const ResourceId id) {
 }
 
 template<typename T>
+T * ResourceManager<T>::get(const ResourceId id) {
+    return get(id.handle, id.version);
+}
+
+template<typename T>
 T* ResourceManager<T>::get(uint32_t handle, uint32_t version) {
     std::lock_guard lock(registerLock);
     if (resources.size() <= handle || resources[handle].version != version) return nullptr;

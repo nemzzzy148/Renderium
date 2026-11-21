@@ -4,6 +4,10 @@
 
 #include "QueueImpl.h"
 
+#include "API.h"
+#include "vulkan/VulkanQueue.h"
+#include "vulkan/VulkanDevice.h"
+
 namespace rhi {
 
 template<typename Api>
@@ -31,7 +35,7 @@ template<typename Api>
 void QueueImpl<Api>::incrementTimeline() {
     submitTimeline.increase();
 
-    auto currentCompletedTimeline = completedTimeline.increase();
+    auto currentCompletedTimeline = completedTimeline.get();
     bufferTracker.removeDependencies(deviceState->buffers, currentCompletedTimeline);
     textureTracker.removeDependencies(deviceState->textures, currentCompletedTimeline);
     renderPipelineTracker.removeDependencies(deviceState->renderPipelines, currentCompletedTimeline);
@@ -39,6 +43,15 @@ void QueueImpl<Api>::incrementTimeline() {
 
 template<typename Api>
 uint32_t QueueImpl<Api>::devicePoll() {
-    return deviceState->device->poll(); // Polls current completed timeline index.
+    auto pollingResult = deviceState->device->poll(); // Polls current completed timeline index.
+    auto process = Process(deviceState->errorState);
+    if (!pollingResult.isOk()) {
+        process.report(Api::toError(pollingResult.unwrapError()));
+        return 0;
+    }
+    return pollingResult.unwrap();
 }
+
+template class QueueImpl<VulkanApi>;
+
 }

@@ -5,6 +5,7 @@
 #pragma once
 #include <memory>
 #include <mutex>
+#include <queue>
 #include <unordered_map>
 #include <utility>
 #include <vulkan/vulkan_raii.hpp>
@@ -14,6 +15,7 @@
 #include "../Error.h"
 #include "../../memory/TLSF.h"
 #include "../../utils/Hashes.h"
+#include "VulkanCommandBuffer.h"
 
 namespace rhi {
 struct VulkanApi;
@@ -29,7 +31,6 @@ struct DeviceDescriptor;
 }
 
 namespace rhi::vulkan {
-class VulkanCommandPool;
 class VulkanCommandEncoder;
 class VulkanBuffer;
 class VulkanAdapter;
@@ -70,27 +71,44 @@ public:
     [[nodiscard]] const vk::raii::Device& getDevice() const { return *device; }
     [[nodiscard]] uint32_t getQueueFamilyIndex() const { return queueFamilyIndex; }
 
-    using BufferResult = renderium::Result<VulkanBuffer, VulkanError>;
-    BufferResult createBuffer(const renderium::BufferDescriptor& descriptor);
-
-    using TextureResult = renderium::Result<VulkanTexture, VulkanError>;
-    TextureResult createTexture(const renderium::TextureDescriptor& descriptor);
-
-    using CommandEncoderResult = renderium::Result<std::unique_ptr<VulkanCommandEncoder>, VulkanError>;
-    CommandEncoderResult createCommandEncoder();
-    void releaseCommandEncoder(const VulkanCommandPool* pool);
+    using PollResult = renderium::Result<uint32_t, VulkanError>;
+    PollResult poll() const;
 private:
-    VulkanDevice(std::shared_ptr<VulkanInstance> instance,
-        std::shared_ptr<vk::raii::PhysicalDevice> physicalDevice, std::unique_ptr<vk::raii::Device> device,
-        const uint32_t familyQueueIndex)
-        : instance(std::move(instance)), physicalDevice(std::move(physicalDevice)),
-        queueFamilyIndex(familyQueueIndex), device(std::move(device)),
-        memoryManager(*physicalDevice, *device), commandPoolManager(*this) {}
     std::shared_ptr<VulkanInstance> instance;
     std::shared_ptr<vk::raii::PhysicalDevice> physicalDevice;
     uint32_t queueFamilyIndex;
     std::unique_ptr<vk::raii::Device> device;
 
+    // --- synchronization ---
+    struct IVulkanTimeline {
+        virtual ~IVulkanTimeline() = default;
+
+        using ValueResult = renderium::Result<uint64_t, VulkanError>;
+        virtual ValueResult getValue() = 0;
+    };
+    std::unique_ptr<IVulkanTimeline> timeline;
+
+    class VulkanTimelineSemaphore : public IVulkanTimeline {
+    public:
+        using TimelineResult = renderium::Result<std::unique_ptr<VulkanTimelineSemaphore>, VulkanError>;
+        static TimelineResult create(vk::raii::Device& device);
+
+        using ValueResult = renderium::Result<uint64_t, VulkanError>;
+        ValueResult getValue() override;
+    private:
+        explicit VulkanTimelineSemaphore(vk::raii::Semaphore semaphore) : semaphore(std::move(semaphore)) {}
+        vk::raii::Semaphore semaphore;
+    };
+    // class VulkanFenceTimeline : public IVulkanTimeline {};
+
+    // --- memory manager ---
+public:
+    using BufferResult = renderium::Result<VulkanBuffer, VulkanError>;
+    BufferResult createBuffer(const renderium::BufferDescriptor& descriptor);
+
+    using TextureResult = renderium::Result<VulkanTexture, VulkanError>;
+    TextureResult createTexture(const renderium::TextureDescriptor& descriptor);
+private:
     class MemoryManager {
     public:
         explicit MemoryManager(const vk::raii::PhysicalDevice& physicalDevice, const vk::raii::Device& device);
@@ -131,28 +149,48 @@ private:
     };
     MemoryManager memoryManager;
 
-    class CommandPoolManager {
+    // --- command pool manager ---
+public:
+    using CommandBufferResult = renderium::Result<std::unique_ptr<VulkanCommandBuffer>, VulkanError>;
+    CommandBufferResult createCommandBuffer();
+    void releaseCommandBuffer(uint32_t handle);
+private:
+    class CommandPoolManager { // pools are not multithreaded
     public:
-        explicit CommandPoolManager(VulkanDevice& device) :
-            commandPools(std::vector<std::shared_ptr<VulkanCommandPool>>()), freePools(std::vector<uint32_t>{}),
-            poolsInUse(std::vector<bool>{}), device(device), lock(std::mutex()) {}
+        explicit CommandPoolManager(VulkanDevice& device);
         CommandPoolManager(CommandPoolManager&& commandPoolManager, VulkanDevice& device);
 
-        using CommandPoolResult = renderium::Result<std::shared_ptr<VulkanCommandPool>, VulkanError>;
-        CommandPoolResult obtainCommandPool();
-        void releaseCommandPool(const VulkanCommandPool* commandPool);
+        using CommandBufferResult = renderium::Result<std::unique_ptr<VulkanCommandBuffer>, VulkanError>;
+        CommandBufferResult obtainCommandBuffer();
+        void releaseCommandBuffer(uint32_t handle);
     private:
-        CommandPoolResult createCommandPool() const;
+        using CommandPoolResult = renderium::Result<std::unique_ptr<VulkanCommandPool>, VulkanError>;
+        [[nodiscard]] CommandPoolResult createCommandPool() const;
 
-        std::vector<std::shared_ptr<VulkanCommandPool>> commandPools;
-        std::vector<uint32_t> freePools;
-        std::vector<bool> poolsInUse;
+        struct CommandPoolEntry {
+            std::unique_ptr<VulkanCommandPool> commandPool;
+            uint64_t lastSubmittedTimelineIndex; // Most recent timeline index of the command buffer that was submitted.
+            uint32_t lastIdx; // The index of the last used buffer. Element 0 -> 1
+            bool beingUsed;
+
+            std::shared_ptr<vk::raii::CommandBuffer> getAvailableCommandBuffer();
+            // The reset is canceled if the buffer is still in use.
+            [[nodiscard]] std::optional<VulkanError> reset(uint64_t currentCompletedTimelineIndex);
+        };
+        std::vector<CommandPoolEntry>  commandPools;
 
         VulkanDevice& device;
-
         std::mutex lock;
     };
     CommandPoolManager commandPoolManager;
+
+    VulkanDevice(std::shared_ptr<VulkanInstance> instance,
+        std::shared_ptr<vk::raii::PhysicalDevice> physicalDevice, std::unique_ptr<vk::raii::Device> device,
+        std::unique_ptr<IVulkanTimeline> timeline,
+        const uint32_t familyQueueIndex)
+        : instance(std::move(instance)), physicalDevice(std::move(physicalDevice)),
+        queueFamilyIndex(familyQueueIndex), device(std::move(device)),
+        timeline(std::move(timeline)), memoryManager(*physicalDevice, *device), commandPoolManager(*this) {}
 
     friend class VulkanQueue;
 };

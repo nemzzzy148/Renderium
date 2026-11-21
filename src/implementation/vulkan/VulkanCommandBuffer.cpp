@@ -4,19 +4,22 @@
 
 #include "VulkanCommandBuffer.h"
 
-#include <numeric>
-
 #include "../Error.h"
 #include "VulkanDevice.h"
 
 
 namespace rhi::vulkan {
 
-VulkanCommandPool::CommandPoolResult VulkanCommandPool::create(std::shared_ptr<VulkanDevice> device,
+VulkanCommandPool::CommandPoolResult VulkanCommandPool::create(std::weak_ptr<VulkanDevice> weakDevice,
     const uint32_t queueFamilyIndex) {
+    auto device = weakDevice.lock();
+    if (!device) return CommandPoolResult::err(VulkanError::InvalidArgument);
+
     const vk::CommandPoolCreateInfo poolInfo {
         .queueFamilyIndex = queueFamilyIndex
     };
+
+
     auto [poolResult, pool] = device->getDevice().createCommandPool(poolInfo);
     if (poolResult != vk::Result::eSuccess) {
         return CommandPoolResult::err(VulkanError::CommandPoolCreationError);
@@ -35,16 +38,13 @@ VulkanCommandPool::CommandPoolResult VulkanCommandPool::create(std::shared_ptr<V
     std::vector<std::shared_ptr<vk::raii::CommandBuffer>> commandBuffers;
     commandBuffers.reserve(allocationCount);
     for (auto& commandBuffer : cBs) {
-        commandBuffers.emplace_back(std::make_unique<vk::raii::CommandBuffer>(std::move(commandBuffer)));
+        commandBuffers.emplace_back(std::make_shared<vk::raii::CommandBuffer>(std::move(commandBuffer)));
     }
 
-    std::vector<uint32_t> free;
-    addFree(free, allocationCount, 0);
 
-
-    return CommandPoolResult::ok(std::make_shared<VulkanCommandPool>(
-        VulkanCommandPool(std::move(device), std::move(pool),
-            std::move(commandBuffers), std::move(free))));
+    return CommandPoolResult::ok(std::make_unique<VulkanCommandPool>(
+        VulkanCommandPool(std::move(weakDevice), std::move(pool),
+            std::move(commandBuffers))));
 }
 
 std::optional<VulkanError> VulkanCommandPool::allocate() {
@@ -62,12 +62,10 @@ std::optional<VulkanError> VulkanCommandPool::allocate() {
     }
 
     commandBuffers.reserve(commandBuffers.size() + allocationCount);
-    const uint32_t oldSize = commandBuffers.size();
+    // const uint32_t oldSize = commandBuffers.size();
     for (auto& commandBuffer: cBs) {
         commandBuffers.push_back(std::make_unique<vk::raii::CommandBuffer>(std::move(commandBuffer)));
     }
-
-    addFree(freeCommandBuffers, allocationCount, oldSize);
 
     return std::nullopt; // no error
 }
@@ -83,38 +81,14 @@ std::optional<VulkanError> VulkanCommandPool::reset() const {
     return std::nullopt;
 }
 
-VulkanCommandPool::CommandBufferResult VulkanCommandPool::getAvailableCommandBuffer() {
-    if (freeCommandBuffers.empty()) {
-        if (const auto allocationResult = allocate()) {
-            return CommandBufferResult::err(*allocationResult);
-        }
-    }
-    const uint32_t index = freeCommandBuffers.back();
-    freeCommandBuffers.pop_back();
-
-    return CommandBufferResult::ok(commandBuffers[index]);
+void VulkanCommandBuffer::begin() {
 }
-
-void VulkanCommandPool::addFree(std::vector<uint32_t> &free, const uint32_t count, const uint32_t begin) {
-    const size_t oldSize = free.size();
-    free.reserve(oldSize + count);
-    std::iota(free.begin() + oldSize, free.end(), begin);
-}
-
-VulkanCommandBuffer::CommandBufferResult VulkanCommandBuffer::create(std::weak_ptr<VulkanDevice> device,
-    std::shared_ptr<VulkanCommandPool> commandPool) {
-    return CommandBufferResult::ok(
-        std::unique_ptr<VulkanCommandBuffer>(new VulkanCommandBuffer(std::move(device),
-            std::move(commandPool))));
-}
-
-VulkanCommandPool::CommandBufferResult VulkanCommandBuffer::getAvailableCommandBuffer() const {
-    return commandPool->getAvailableCommandBuffer();
+void VulkanCommandBuffer::end() {
 }
 
 VulkanCommandBuffer::~VulkanCommandBuffer() {
     if (const auto device = weakDevice.lock()) {
-        device->releaseCommandEncoder(&*commandPool);
+        device->releaseCommandBuffer(handle);
     }
 }
 

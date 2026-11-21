@@ -41,6 +41,9 @@ public:
 
     std::unique_ptr<renderium::TextureView::Impl>
         createView(const renderium::TextureViewDescriptor &descriptor) override;
+
+    [[nodiscard]] DeviceState<Api>& getDeviceState() const { return *deviceState; }
+    [[nodiscard]] resource::ResourceId getId() const { return id; }
 private:
     resource::ResourceId id;
     std::shared_ptr<DeviceState<Api>> deviceState;

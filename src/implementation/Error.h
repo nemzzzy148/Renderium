@@ -12,6 +12,7 @@ namespace rhi {
 namespace vulkan {
 enum class VulkanError {
     UnhandledException,
+    InvalidArgument,
     InstanceCreationFailed,
     DeviceCreationFailed,
     FailedToWaitOnDevice,
@@ -44,7 +45,12 @@ enum class VulkanError {
     PipelineCreationError,
     CommandPoolCreationError,
     CommandBufferCreationError,
-    FailedToResetCommandPool
+    FailedToResetCommandPool,
+    TimelineSemaphoreCreationFailed,
+    FailedToGetValueOfTimelineSemaphore,
+    ResetPoolInUse,
+    TooEarlyToResetPool,
+    CommandPoolNotEmpty
 };
 }
 

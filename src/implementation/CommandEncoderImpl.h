@@ -12,7 +12,6 @@
 #include "Texture.h"
 
 namespace rhi {
-
 template<track::Usage Usage>
 struct Transformation {
     resource::ResourceId id;
@@ -49,7 +48,7 @@ private:
     CommandCollection generateCommandCollection();
 
     template<track::Usage Usage>
-    static void insertChanges(track::ScopeTracker<Usage>& scope, CommandCollection& collection, CommandUnitType type);
+    static void insertChanges(const track::ScopeTracker<Usage>& scope, CommandCollection& collection, CommandUnitType type);
     template<typename Unit>
     static Unit& insertCommand(CommandCollection& collection, CommandUnitType type);
 

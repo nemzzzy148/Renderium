@@ -4,6 +4,7 @@
 
 #include "PassImpl.h"
 
+#include "API.h"
 #include "PipelineImpl.h"
 #include "Texture.h"
 
@@ -17,12 +18,12 @@ void PassImpl<PassType::Render, Api>::begin(const renderium::RenderPassDescripto
     for (auto& attachment : descriptor.colorAttachments) {
         if (!attachment.textureView.textureResource) continue; // validation(view was created with a dead texture)
         auto resource = static_cast<const TextureResource<Api>&>(*attachment.textureView.textureResource);
-        if (&*resource.deviceState != &*deviceState) continue; // validation(devices don't match)
+        if (&resource.getDeviceState() != &*deviceState) continue; // validation(devices don't match)
 
-        const resource::ResourceId id = resource.id;
+        const resource::ResourceId id = resource.getId();
         if (textureScope.hasUsage(id)) continue; // already has attachment
         textureScope.addUsage(id,
-            resource.deviceState->textureTracker.get(id), renderium::TextureUsages::RenderAttachment);
+            resource.getDeviceState().textureTracker.get(id), renderium::TextureUsages::RenderAttachment);
     }
 }
 
@@ -33,10 +34,10 @@ void PassImpl<PassType::Render, Api>::setPipeline(const renderium::detail::Resou
     if (!device) return;
 
     const auto& pipelineResource = static_cast<const RenderPipelineResource<Api>&>(pipeline);
-    if (&*device != &*pipelineResource.deviceState) return; // not the same device
+    if (&*device != &pipelineResource.getDeviceState()) return; // not the same device
 
     auto& [id] = insertCommand<SetPipelineCommand>(CommandType::SetPipeline);
-    id = pipelineResource.id;
+    id = pipelineResource.getId();
 }
 
 template<typename Api>
@@ -59,12 +60,13 @@ template<typename Api>
 template<typename Command>
 Command & PassImpl<PassType::Render, Api>::insertCommand(CommandType type) {
     const uint32_t offset = data.size();
-    data.resize(offset + sizeof(CommandType) + sizeof(Command));
-    std::memcpy(&data[offset], &type, sizeof(CommandType));
+    data.resize(offset + sizeof(Command));
 
-    commands.push(offset);
+    commands.push({type, offset});
 
-    return *new (&data[offset + sizeof(CommandType)])Command{};
+    return *new (&data[offset])Command{};
 }
+
+template class PassImpl<PassType::Render, VulkanApi>;
 
 }

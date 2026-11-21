@@ -66,10 +66,12 @@ private:
     template<typename Command>
     Command& insertCommand(CommandType type);
 
-    std::queue<uint32_t> commands; // command type and offset in bytes inside data.
+    std::queue<std::pair<CommandType, uint32_t>> commands; // command type and offset in bytes inside data.
     bool hasEnded = false;
 
     std::weak_ptr<DeviceState<Api>> weakDeviceState;
+
+    friend class CommandEncoderImpl<Api>;
 };
 
 }

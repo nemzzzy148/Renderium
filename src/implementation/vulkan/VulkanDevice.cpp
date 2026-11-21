@@ -3,6 +3,7 @@
 //
 
 #include "VulkanDevice.h"
+#include <memory>
 #include <ranges>
 
 #include "Device.h"
@@ -14,8 +15,7 @@
 #include "VulkanTexture.h"
 #include "VulkanBuffer.h"
 #include "../Error.h"
-#include "CommandEncoder.h"
-#include "VulkanCommandEncoder.h"
+#include "VulkanCommandBuffer.h"
 
 namespace rhi::vulkan {
 
@@ -63,10 +63,10 @@ VulkanDevice::VulkanDeviceResult VulkanDevice::createDevice(const vk::raii::Phys
 }
 
 VulkanDevice::VulkanDevice(VulkanDevice&& other) noexcept
-    : std::enable_shared_from_this<VulkanDevice>(), instance(std::move(other.instance)),
+    : instance(std::move(other.instance)),
       physicalDevice(std::move(other.physicalDevice)), queueFamilyIndex(other.queueFamilyIndex),
       device(std::move(other.device)), memoryManager(std::move(other.memoryManager),
-          *physicalDevice, *device), commandPoolManager(std::move(other.commandPoolManager), *this) {}
+      *physicalDevice, *device), commandPoolManager(std::move(other.commandPoolManager), *this) {}
 
 VulkanDevice::DeviceResult VulkanDevice::create(std::shared_ptr<VulkanInstance> instance,
         std::shared_ptr<vk::raii::PhysicalDevice> physicalDevice,
@@ -74,13 +74,30 @@ VulkanDevice::DeviceResult VulkanDevice::create(std::shared_ptr<VulkanInstance> 
         const bool surfaceSupport, const uint32_t queueFamilyIndex) {
     // device
     auto deviceResult = createDevice(*physicalDevice, surfaceSupport, queueFamilyIndex);
-    if (!deviceResult.isOk()) return DeviceResult::err(deviceResult.unwrapError());
+    if (!deviceResult.isOk()) {
+        return DeviceResult::err(deviceResult.unwrapError());
+    }
     auto device = deviceResult.unwrap();
+
+    auto timelineResult = VulkanTimelineSemaphore::create(device);
+    if (!timelineResult.isOk()) {
+        return DeviceResult::err(timelineResult.unwrapError());
+    }
 
     return DeviceResult::ok(VulkanDevice(
         std::move(instance), std::move(physicalDevice),
-        std::make_unique<vk::raii::Device>(std::move(device)), queueFamilyIndex));
+        std::make_unique<vk::raii::Device>(std::move(device)),
+        std::move(timelineResult.unwrap()), queueFamilyIndex));
 }
+
+VulkanDevice::PollResult VulkanDevice::poll() const {
+    auto pollingResult = timeline->getValue();
+    if (!pollingResult.isOk()) {
+        return PollResult::err(pollingResult.unwrapError());
+    }
+    return PollResult::ok(static_cast<uint32_t>(pollingResult.unwrap()));
+}
+
 // --- texture and buffer creation ---
 
 VulkanDevice::BufferResult VulkanDevice::createBuffer(const renderium::BufferDescriptor &descriptor) {
@@ -155,21 +172,27 @@ VulkanDevice::TextureResult VulkanDevice::createTexture(const renderium::Texture
     }, allocation, std::move(image)));
 }
 
-VulkanDevice::CommandEncoderResult VulkanDevice::createCommandEncoder() {
-    auto poolResult = commandPoolManager.obtainCommandPool();
-    if (!poolResult.isOk()) {
-        return CommandEncoderResult::err(poolResult.unwrapError());
-    }
-    auto encoderResult = VulkanCommandEncoder::create(weak_from_this(), std::move(poolResult.unwrap()));
-    if (!encoderResult.isOk()) {
-        return CommandEncoderResult::err(encoderResult.unwrapError());
-    }
+VulkanDevice::VulkanTimelineSemaphore::TimelineResult VulkanDevice::VulkanTimelineSemaphore::create(vk::raii::Device& device) {
+    constexpr vk::SemaphoreTypeCreateInfo timelineCreateInfo {
+        .semaphoreType = vk::SemaphoreType::eTimeline,
+        .initialValue = 0
+    };
+    const vk::SemaphoreCreateInfo semaphoreInfo { .pNext = &timelineCreateInfo };
 
-    return CommandEncoderResult::ok(std::move(encoderResult.unwrap()));
+    auto [result, semaphore] = device.createSemaphore(semaphoreInfo);
+    if (result != vk::Result::eSuccess) {
+        return TimelineResult::err(VulkanError::TimelineSemaphoreCreationFailed);
+    }
+    return TimelineResult::ok(std::unique_ptr<VulkanTimelineSemaphore>(
+        new VulkanTimelineSemaphore(std::move(semaphore))));
 }
 
-void VulkanDevice::releaseCommandEncoder(const VulkanCommandPool* pool) {
-    commandPoolManager.releaseCommandPool(pool);
+VulkanDevice::VulkanTimelineSemaphore::ValueResult VulkanDevice::VulkanTimelineSemaphore::getValue() {
+    auto [result, value] = semaphore.getCounterValue();
+    if (result != vk::Result::eSuccess) {
+        return ValueResult::err(VulkanError::FailedToGetValueOfTimelineSemaphore);
+    }
+    return ValueResult::ok(value);
 }
 
 VulkanDevice::MemoryManager::MemoryManager(const vk::raii::PhysicalDevice& physicalDevice, const vk::raii::Device& device)
@@ -281,44 +304,108 @@ MemoryAllocation VulkanDevice::MemoryManager::allocate(Heap &heap, const uint32_
     return {allocation.poolIndex, allocation.nodeIndex, memoryType, true};
 }
 
-VulkanDevice::CommandPoolManager::CommandPoolManager(CommandPoolManager &&commandPoolManager,
-    VulkanDevice& device) : commandPools(std::move(commandPoolManager.commandPools)),
-    freePools(std::move(commandPoolManager.freePools)),
-    poolsInUse(std::move(commandPoolManager.poolsInUse)), device(device), lock(std::mutex()) {}
-
-VulkanDevice::CommandPoolManager::CommandPoolResult VulkanDevice::CommandPoolManager::obtainCommandPool() {
-    std::lock_guard guard(lock);
-
-    if (freePools.empty()) {
-        auto result = createCommandPool();
-        if (!result.isOk()) return std::move(result);
-        commandPools.emplace_back(std::move(result.unwrap()));
-        poolsInUse.emplace_back(true);
-        return CommandPoolResult::ok(commandPools.back());
-    }
-
-    const uint32_t poolIndex = freePools.back();
-    freePools.pop_back();
-    poolsInUse[poolIndex] = true;
-    std::shared_ptr<VulkanCommandPool> commandPool = commandPools[poolIndex];
-    return CommandPoolResult::ok(std::move(commandPool));
+VulkanDevice::CommandBufferResult VulkanDevice::createCommandBuffer() {
+    return commandPoolManager.obtainCommandBuffer();
 }
 
-void VulkanDevice::CommandPoolManager::releaseCommandPool(const VulkanCommandPool *commandPool) {
-    std::lock_guard guard(lock);
+void VulkanDevice::releaseCommandBuffer(const uint32_t handle) {
+    commandPoolManager.releaseCommandBuffer(handle);
+}
 
-    for (uint32_t i = 0; i < commandPools.size(); ++i) {
-        if (commandPools[i].get() != commandPool || !poolsInUse[i]) {
-            continue;
-        }
-        poolsInUse[i] = false;
-        freePools.emplace_back(i);
-        return;
+VulkanDevice::CommandPoolManager::CommandPoolManager(VulkanDevice &device) :
+    commandPools(std::vector<CommandPoolEntry>()),
+    device(device), lock(std::mutex()) {}
+
+VulkanDevice::CommandPoolManager::CommandPoolManager(CommandPoolManager &&commandPoolManager,
+                                                     VulkanDevice& device) : commandPools(std::move(commandPoolManager.commandPools)),
+                                                                             device(device), lock(std::mutex()) {}
+
+VulkanDevice::CommandPoolManager::CommandBufferResult VulkanDevice::CommandPoolManager::obtainCommandBuffer() {
+    auto getTimelineResult = device.timeline->getValue();
+    if (!getTimelineResult.isOk()) {
+        return CommandBufferResult::err(VulkanError::FailedToGetValueOfTimelineSemaphore);
     }
+    uint64_t currentTimelineIndex = getTimelineResult.unwrap();
+
+    std::lock_guard guard(lock);
+    auto it = std::ranges::find_if(commandPools,
+        [&currentTimelineIndex](auto& pool) {
+        if (pool.beingUsed) {
+            return false;
+        }
+
+        // Pool still has unused command buffers left
+        if (pool.lastIdx < pool.commandPool->size()) {
+            return true;
+        }
+
+        // Pool is full -> check if the GPU is done with all buffers in it
+        if (pool.lastSubmittedTimelineIndex <= currentTimelineIndex) {
+            auto resetResult = pool.reset(currentTimelineIndex);
+            if (resetResult.has_value()) return false; // FATAL
+            return true;
+        }
+
+        // Pool is full- > GPU is still executing commands from it
+        return false;
+    });
+
+    // No pools found, creating a new one
+    if (it == commandPools.end()) {
+        auto result = createCommandPool();
+        if (!result.isOk()) {
+            return CommandBufferResult::err(result.unwrapError());
+        }
+        auto commandPool = std::move(result.unwrap());
+        std::shared_ptr<vk::raii::CommandBuffer> commandBuffer = (*commandPool)[0];
+
+        commandPools.push_back({
+            .commandPool = std::move(commandPool),
+            .lastSubmittedTimelineIndex = 0,
+            .lastIdx = 1,
+            .beingUsed = true
+        });
+
+        return CommandBufferResult::ok(std::make_unique<VulkanCommandBuffer>(
+            device.weak_from_this(), 1, std::move(commandBuffer)));
+    }
+
+    // pool found
+
+    auto commandBuffer = it->getAvailableCommandBuffer();
+    return CommandBufferResult::ok(std::make_unique<VulkanCommandBuffer>(
+        device.weak_from_this(), it->lastIdx, std::move(commandBuffer)));
+}
+
+void VulkanDevice::CommandPoolManager::releaseCommandBuffer(const uint32_t handle) {
+    if (handle >= commandPools.size()) return;
+    commandPools[handle].beingUsed = false;
 }
 
 VulkanDevice::CommandPoolManager::CommandPoolResult VulkanDevice::CommandPoolManager::createCommandPool() const {
-    return VulkanCommandPool::create(device.shared_from_this(), device.queueFamilyIndex);
+    auto result = VulkanCommandPool::create(device.weak_from_this(), device.getQueueFamilyIndex());
+    if (!result.isOk()) {
+        return CommandPoolResult::err(result.unwrapError());
+    }
+    return CommandPoolResult::ok(std::move(result.unwrap()));
+}
+
+std::shared_ptr<vk::raii::CommandBuffer> VulkanDevice::CommandPoolManager::CommandPoolEntry::getAvailableCommandBuffer() {
+    return (*commandPool)[++lastIdx];
+}
+
+std::optional<VulkanError> VulkanDevice::CommandPoolManager::CommandPoolEntry::reset(
+    uint64_t currentCompletedTimelineIndex) {
+    if (beingUsed) return VulkanError::ResetPoolInUse;
+    if (lastSubmittedTimelineIndex > currentCompletedTimelineIndex)
+        return VulkanError::TooEarlyToResetPool;
+
+    if (auto resetResult = commandPool->reset()) {
+        return resetResult;
+    }
+
+    lastIdx = 0;
+    return std::nullopt;
 }
 
 }

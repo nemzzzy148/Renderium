@@ -13,46 +13,50 @@ enum class VulkanError;
 
 class VulkanCommandPool {
 public:
-    using CommandPoolResult = renderium::Result<std::shared_ptr<VulkanCommandPool>, VulkanError>;
-    static CommandPoolResult create(std::shared_ptr<VulkanDevice> device, uint32_t queueFamilyIndex);
+    using CommandPoolResult = renderium::Result<std::unique_ptr<VulkanCommandPool>, VulkanError>;
+    static CommandPoolResult create(std::weak_ptr<VulkanDevice> weakDevice, uint32_t queueFamilyIndex);
 
-    [[nodiscard]] size_t size() const { return commandBuffers.size(); }
+    [[nodiscard]] const std::vector<std::shared_ptr<vk::raii::CommandBuffer>>& getCommandBuffers() {
+        return commandBuffers;
+    }
 
     std::optional<VulkanError> allocate();
-    std::optional<VulkanError> reset() const; // Only when command buffers are not in use! Multithreading
+    [[nodiscard]] std::optional<VulkanError> reset() const; // Only when command buffers are not in use! Multithreading
 
-    using CommandBufferResult = renderium::Result<std::shared_ptr<vk::raii::CommandBuffer>, VulkanError>;
-    CommandBufferResult getAvailableCommandBuffer();
+    const std::shared_ptr<vk::raii::CommandBuffer>& operator[] (const size_t index) const {
+        return commandBuffers[index];
+    }
+
+    [[nodiscard]] size_t size() const { return commandBuffers.size(); }
 private:
     explicit VulkanCommandPool(std::weak_ptr<VulkanDevice> device, vk::raii::CommandPool commandPool,
-    std::vector<std::shared_ptr<vk::raii::CommandBuffer>> commandBuffers, std::vector<uint32_t> freeCommandBuffers)
+    std::vector<std::shared_ptr<vk::raii::CommandBuffer>> commandBuffers)
         : weakDevice(std::move(device)), commandPool(std::move(commandPool)),
-        commandBuffers(std::move(commandBuffers)), freeCommandBuffers(std::move(freeCommandBuffers)) {}
+        commandBuffers(std::move(commandBuffers)) {}
 
     static constexpr size_t allocationCount = 16;
-
-    static void addFree(std::vector<uint32_t>& free, uint32_t count, uint32_t begin);
 
     std::weak_ptr<VulkanDevice> weakDevice;
     vk::raii::CommandPool commandPool;
     std::vector<std::shared_ptr<vk::raii::CommandBuffer>> commandBuffers;
-    std::vector<uint32_t> freeCommandBuffers;
 };
 
 class VulkanCommandBuffer {
 public:
-    using CommandBufferResult = renderium::Result<std::unique_ptr<VulkanCommandBuffer>, VulkanError>;
-    static CommandBufferResult create(std::weak_ptr<VulkanDevice> device, std::shared_ptr<VulkanCommandPool> commandPool);
+    void begin();
 
-    [[nodiscard]] VulkanCommandPool::CommandBufferResult getAvailableCommandBuffer() const;
+    void end();
 
     ~VulkanCommandBuffer();
-private:
-    explicit VulkanCommandBuffer(std::weak_ptr<VulkanDevice> device, std::shared_ptr<VulkanCommandPool> commandPool)
-        : weakDevice(std::move(device)), commandPool(std::move(commandPool)) {}
+    explicit VulkanCommandBuffer(std::weak_ptr<VulkanDevice> weakDevice, const uint32_t handle,
+        std::shared_ptr<vk::raii::CommandBuffer> commandBuffer) : weakDevice(std::move(weakDevice)),
+        handle(handle), commandBuffer(std::move(commandBuffer)) {}
 
+    [[nodiscard]] vk::raii::CommandBuffer& getCommandBuffer() const { return *commandBuffer; }
+private:
     std::weak_ptr<VulkanDevice> weakDevice;
-    std::shared_ptr<VulkanCommandPool> commandPool;
+    uint32_t handle;
+    std::shared_ptr<vk::raii::CommandBuffer> commandBuffer;
 
     friend class VulkanDevice;
 

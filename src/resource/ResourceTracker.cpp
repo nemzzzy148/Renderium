@@ -4,6 +4,12 @@
 
 #include "ResourceTracker.h"
 
+namespace rhi {
+class IRenderPipeline;
+class IBuffer;
+class ITexture;
+}
+
 namespace resource {
 
 void ResourceTracker::addDependencies(const std::vector<ResourceId> &ids, const uint32_t timelineIndex) {
@@ -37,5 +43,12 @@ void ResourceTracker::removeDependencies(ResourceManager<T> &resourceManager, co
         dependencies.pop();
     }
 }
+
+template void ResourceTracker::removeDependencies<rhi::IRenderPipeline>(
+    ResourceManager<rhi::IRenderPipeline>&, const uint32_t);
+template void ResourceTracker::removeDependencies<rhi::IBuffer>(
+    ResourceManager<rhi::IBuffer>&, const uint32_t);
+template void ResourceTracker::removeDependencies<rhi::ITexture>(
+    ResourceManager<rhi::ITexture>&, const uint32_t);
 
 }

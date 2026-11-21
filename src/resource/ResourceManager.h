@@ -43,6 +43,7 @@ public:
     const std::unordered_set<ResourceId>& getDeletionQueue();
     void releaseResource(ResourceId id);
 
+    T* get(ResourceId id);
     T* get(uint32_t handle, uint32_t version);
 private:
     struct Resource {

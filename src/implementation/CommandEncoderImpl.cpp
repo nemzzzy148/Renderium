@@ -4,7 +4,9 @@
 
 #include "CommandEncoderImpl.h"
 
+#include "API.h"
 #include "PassImpl.h"
+#include "CommandBufferImpl.h"
 
 namespace rhi {
 
@@ -12,7 +14,7 @@ template<typename Api>
 std::shared_ptr<IPassImpl> CommandEncoderImpl<Api>::beginRenderPass(
     const renderium::RenderPassDescriptor &descriptor) {
     if (hasFinished) return nullptr;
-    passes.emplace(std::make_shared<IPassImpl>(new PassImpl<PassType::Render, Api>(deviceState)));
+    passes.emplace(std::shared_ptr<IPassImpl>(new PassImpl<PassType::Render, Api>(deviceState)));
     return passes.back();
 }
 
@@ -24,8 +26,8 @@ std::unique_ptr<renderium::CommandBuffer::Impl> CommandEncoderImpl<Api>::finish(
 
     auto commandCollection = generateCommandCollection(); // queue is invalid after this
 
-    return std::unique_ptr<renderium::CommandBuffer::Impl>(
-        new CommandBufferImpl<Api>(std::move(deviceState), std::move(commandBuffer), std::move(commandCollection)));
+    return std::unique_ptr<renderium::CommandBuffer::Impl>(new CommandBufferImpl<Api>(
+        std::move(deviceState), std::move(commandBuffer), std::move(commandCollection)));
 }
 
 template<typename Api>
@@ -55,13 +57,14 @@ CommandCollection CommandEncoderImpl<Api>::generateCommandCollection() {
 
 template<typename Api>
 template<track::Usage Usage>
-void CommandEncoderImpl<Api>::insertChanges(track::ScopeTracker<Usage> &scope, CommandCollection &collection, const CommandUnitType type) {
-    for (auto& change : scope.getChanges()) {
+void CommandEncoderImpl<Api>::insertChanges(const track::ScopeTracker<Usage>& scope, CommandCollection &collection, const CommandUnitType type) {
+    for (const auto& change : scope.getChanges()) {
         if (!change.second.begin.has_value() && change.second.begin == change.second.end) continue;
-        auto& command = insertCommand<Transformation<renderium::BufferUsages>>(collection, type);
-        command.id = change.first;
-        command.beginUsage = change.second.begin;
-        command.endUsage = change.second.end;
+        auto&[id, beginUsage, endUsage] =
+            insertCommand<Transformation<Usage>>(collection, type);
+        id = change.first;
+        beginUsage.value() = change.second.begin.value();
+        endUsage = change.second.end;
     }
 }
 
@@ -76,5 +79,7 @@ Unit& CommandEncoderImpl<Api>::insertCommand(CommandCollection& collection, cons
 
     return * new(&collection.data[size + sizeof(CommandUnitType)])Unit{};
 }
+
+template class CommandEncoderImpl<VulkanApi>;
 
 }

@@ -43,10 +43,12 @@ public:
 
     // later implement that present just returns a premade texture.
     std::shared_ptr<renderium::detail::TextureResource> getCurrentTexture() override;
+
+    // implement
+    void present() override;
 private:
     explicit SurfaceImpl(Surface surface)
         : surface(std::move(surface)) {}
-
     Surface surface;
     std::shared_ptr<DeviceState<Api>> deviceState;
 

@@ -100,6 +100,7 @@ add_library(Renderium SHARED
         src/resource/ResourceTracker.h
         src/implementation/CommandTranslation.cpp
         src/implementation/CommandTranslation.h
+        src/implementation/CommandBufferImpl.cpp
 )
 
 target_include_directories( Renderium PUBLIC

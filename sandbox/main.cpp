@@ -189,6 +189,7 @@ int main() {
 
         queue.submit(commandBuffer);
 
+        surface.present();
 
         // pass set pipeline
         // pass draw 3

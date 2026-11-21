@@ -14,8 +14,6 @@
 #include "CommandEncoderImpl.h"
 #include "../resource/ResourceManager.h"
 
-#define RETURN_INVALID_UNIQUE(T) return std::unique_ptr<renderium::T::Impl>(new T##Impl<Api>());
-#define RETURN_INVALID_SHARED(T) return std::shared_ptr<renderium::T::Impl>(new T##Impl<Api>());
 
 namespace rhi {
 
@@ -106,7 +104,7 @@ DeviceImpl<Api>::SharedTextureResource DeviceImpl<Api>::createTexture(
 
 template<typename Api>
 std::unique_ptr<renderium::CommandEncoder::Impl> DeviceImpl<Api>::createCommandEncoder() {
-    auto result = deviceState->device->createCommandEncoder();
+    auto result = deviceState->device->createCommandBuffer();
 
     auto process = Process(deviceState->errorState);
     if (!result.isOk()) {

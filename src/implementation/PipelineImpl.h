@@ -27,6 +27,9 @@ public:
     ~RenderPipelineResource() override {
         deviceState->renderPipelines.removeRef(id.handle, id.version);
     }
+
+    [[nodiscard]] const DeviceState<Api>& getDeviceState() const { return *deviceState; }
+    [[nodiscard]] const resource::ResourceId& getId() const { return id; }
 private:
     resource::ResourceId id;
     std::shared_ptr<DeviceState<Api>> deviceState;

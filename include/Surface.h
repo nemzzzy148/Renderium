@@ -61,6 +61,8 @@ public:
     [[nodiscard]] SurfaceCapabilities getCapabilities(const Device& device) const;
     void configure(const SurfaceConfiguration& configuration) const;
     [[nodiscard]] SurfaceTexture getCurrentTexture() const;
+
+    void present() const;
 private:
     struct Impl {
         virtual ~Impl() = default;
@@ -78,6 +80,8 @@ private:
             .viewFormats = {TextureFormat::BGRA8Unorm}
         };
         virtual std::shared_ptr<detail::TextureResource> getCurrentTexture() = 0;
+
+        virtual void present() = 0;
     };
     explicit Surface(std::unique_ptr<Impl> impl) : impl(std::move(impl)) {}
 

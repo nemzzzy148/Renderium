@@ -13,14 +13,14 @@ struct RenderPassDescriptor;
 }
 
 namespace rhi::vulkan {
+class VulkanCommandBuffer;
 class VulkanRenderPipeline;
 enum class VulkanError;
-class VulkanCommandEncoder;
 
 class VulkanRenderPass {
-    explicit VulkanRenderPass(std::shared_ptr<VulkanCommandEncoder> commandEncoder,
-        std::shared_ptr<vk::raii::CommandBuffer> commandBuffer) : commandBuffer(std::move(commandBuffer)),
-        commandEncoder(std::move(commandEncoder)) {}
+    explicit VulkanRenderPass(std::shared_ptr<VulkanCommandBuffer> commandBuffer,
+        std::shared_ptr<vk::raii::CommandBuffer> vulkanBuffer) : vulkanBuffer(std::move(vulkanBuffer)),
+        commandBuffer(std::move(commandBuffer)) {}
 
     void begin(const renderium::RenderPassDescriptor& descriptor);
 
@@ -30,11 +30,9 @@ class VulkanRenderPass {
     void end();
 public:
     using VulkanRenderPassResult = renderium::Result<VulkanRenderPass, VulkanError>;
-    static VulkanRenderPassResult create(std::shared_ptr<VulkanCommandEncoder> commandEncoder,
-        const renderium::RenderPassDescriptor& descriptor);
 private:
-    std::shared_ptr<vk::raii::CommandBuffer> commandBuffer;
-    std::shared_ptr<VulkanCommandEncoder> commandEncoder;
+    std::shared_ptr<vk::raii::CommandBuffer> vulkanBuffer;
+    std::shared_ptr<VulkanCommandBuffer> commandBuffer;
 };
 
 }

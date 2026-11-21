@@ -13,7 +13,13 @@ namespace rhi {
 
 template<typename Api>
 class CommandBufferImpl : public renderium::CommandBuffer::Impl {
+public:
     using CommandBuffer = Api::CommandBuffer;
+
+    void begin();
+    Api::CommandBuffer& getNativeCommandBuffer();
+    void end();
+private:
     explicit CommandBufferImpl(std::shared_ptr<DeviceState<Api>> deviceState,
         std::unique_ptr<CommandBuffer> commandBuffer, CommandCollection collection)
         : deviceState(std::move(deviceState)), commandBuffer(std::move(commandBuffer))
@@ -23,6 +29,7 @@ class CommandBufferImpl : public renderium::CommandBuffer::Impl {
     std::unique_ptr<CommandBuffer> commandBuffer;
 
     CommandCollection collection;
+    friend class CommandEncoderImpl<Api>;
 };
 
 }
