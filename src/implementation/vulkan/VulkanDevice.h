@@ -190,7 +190,7 @@ private:
         const uint32_t familyQueueIndex)
         : instance(std::move(instance)), physicalDevice(std::move(physicalDevice)),
         queueFamilyIndex(familyQueueIndex), device(std::move(device)),
-        timeline(std::move(timeline)), memoryManager(*physicalDevice, *device), commandPoolManager(*this) {}
+        timeline(std::move(timeline)), memoryManager(*(this->physicalDevice), *(this->device)), commandPoolManager(*this) {}
 
     friend class VulkanQueue;
 };

@@ -47,12 +47,17 @@ VulkanDevice::VulkanDeviceResult VulkanDevice::createDevice(const vk::raii::Phys
         .pQueuePriorities = &queuePriority
     };
 
+    std::vector<const char*> extensions;
+    if (surfaceSupport) {
+        extensions.push_back(vk::KHRSwapchainExtensionName);
+    }
+
     vk::DeviceCreateInfo deviceCreateInfo{
         .pNext = featureChain.get<vk::PhysicalDeviceFeatures2>(),
         .queueCreateInfoCount = 1,
         .pQueueCreateInfos = &queueCreateInfo,
-        .enabledExtensionCount = static_cast<uint32_t>(surfaceSupport ? 1 : 0),
-        .ppEnabledExtensionNames = &vk::KHRSwapchainExtensionName
+        .enabledExtensionCount = static_cast<uint32_t>(extensions.size()),
+        .ppEnabledExtensionNames = extensions.data()
     };
 
     auto [result, device] = physicalDevice.createDevice(deviceCreateInfo);
@@ -63,8 +68,8 @@ VulkanDevice::VulkanDeviceResult VulkanDevice::createDevice(const vk::raii::Phys
 }
 
 VulkanDevice::VulkanDevice(VulkanDevice&& other) noexcept
-    : instance(std::move(other.instance)),
-      physicalDevice(std::move(other.physicalDevice)), queueFamilyIndex(other.queueFamilyIndex),
+    : instance(std::move(other.instance)), physicalDevice(std::move(other.physicalDevice)),
+      queueFamilyIndex(other.queueFamilyIndex),
       device(std::move(other.device)), memoryManager(std::move(other.memoryManager),
       *physicalDevice, *device), commandPoolManager(std::move(other.commandPoolManager), *this) {}
 
@@ -83,6 +88,7 @@ VulkanDevice::DeviceResult VulkanDevice::create(std::shared_ptr<VulkanInstance> 
     if (!timelineResult.isOk()) {
         return DeviceResult::err(timelineResult.unwrapError());
     }
+
 
     return DeviceResult::ok(VulkanDevice(
         std::move(instance), std::move(physicalDevice),

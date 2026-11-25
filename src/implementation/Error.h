@@ -50,7 +50,8 @@ enum class VulkanError {
     FailedToGetValueOfTimelineSemaphore,
     ResetPoolInUse,
     TooEarlyToResetPool,
-    CommandPoolNotEmpty
+    CommandPoolNotEmpty,
+    NoRequiredExtensions
 };
 }
 

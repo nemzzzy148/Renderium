@@ -46,6 +46,7 @@ private:
         : deviceState(std::move(device)), commandBuffer(std::move(commandBuffer)) {}
 
     CommandCollection generateCommandCollection();
+    void generateRenderPassCommands(CommandCollection& collection, std::shared_ptr<IPassImpl> pass);
 
     template<track::Usage Usage>
     static void insertChanges(const track::ScopeTracker<Usage>& scope, CommandCollection& collection, CommandUnitType type);

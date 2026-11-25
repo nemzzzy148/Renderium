@@ -5,6 +5,7 @@
 #include "TLSF.h"
 
 #include <bit>
+#include <limits>
 
 namespace rhi {
 

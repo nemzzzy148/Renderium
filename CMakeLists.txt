@@ -3,16 +3,23 @@ project(Renderium)
 
 set(CMAKE_CXX_STANDARD 23)
 
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 include(FindSlang)
 
 find_package(Vulkan REQUIRED)
 
-find_package(glfw3 REQUIRED)
-
-include_directories(/opt/homebrew/include)
+include(FetchContent)
+FetchContent_Declare(
+        glfw
+        GIT_REPOSITORY https://github.com/glfw/glfw
+        GIT_TAG 3.4
+)
+set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(glfw)
 
 add_library(Renderium SHARED
         src/Instance.cpp
@@ -21,7 +28,6 @@ add_library(Renderium SHARED
         src/implementation/vulkan/VulkanSurface.cpp
         src/implementation/vulkan/VulkanPipeline.cpp
         src/implementation/vulkan/VulkanDevice.cpp
-        sandbox/main.cpp
         include/Window.h
         src/implementation/WindowImpl.h
         src/window/glfw/GlfwWindow.cpp
@@ -114,6 +120,13 @@ target_compile_definitions(Renderium PUBLIC
         VULKAN_HPP_NO_EXCEPTIONS
         VK_ENABLE_BETA_EXTENSIONS
 )
+if(WIN32)
+    target_compile_definitions(Renderium PRIVATE
+            VK_USE_PLATFORM_WIN32_KHR
+            WIN32_LEAN_AND_MEAN
+            NOMINMAX
+    )
+endif()
 
 
 add_subdirectory(sandbox)
@@ -130,9 +143,3 @@ foreach(_file ${SLANG_RUNTIME_FILES})
             "${_file}"
             "$<TARGET_FILE_DIR:Renderium>")
 endforeach()
-
-add_custom_command(TARGET Renderium POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        "${SLANG_STANDARD_MODULE_DIR}"
-        "$<TARGET_FILE_DIR:Renderium>/slang-standard-module-${SLANG_VERSION}"
-)

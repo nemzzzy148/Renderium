@@ -28,7 +28,9 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(slang_dist)
 
 find_package(slang CONFIG REQUIRED
-        PATHS "${slang_dist_SOURCE_DIR}/lib/cmake/slang"
+        PATHS
+        "${slang_dist_SOURCE_DIR}/cmake"
+        "${slang_dist_SOURCE_DIR}/lib/cmake/slang"
         NO_DEFAULT_PATH
 )
 
@@ -85,5 +87,3 @@ set(SLANG_RUNTIME_FILES
         ${_slang_compiler_lib}
         ${shared_lib}
 )
-
-set(SLANG_STANDARD_MODULE_DIR "${SLANG_LIB_DIR}/slang-standard-module-${SLANG_VERSION}")

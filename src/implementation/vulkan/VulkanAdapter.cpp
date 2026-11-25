@@ -4,6 +4,8 @@
 
 #include "VulkanAdapter.h"
 
+#include <cmath>
+
 #include "VulkanInstance.h"
 #include "../Error.h"
 

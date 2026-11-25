@@ -41,18 +41,21 @@ CommandCollection CommandEncoderImpl<Api>::generateCommandCollection() {
         std::shared_ptr<IPassImpl> pass = std::move(passes.front());
         passes.pop();
 
-        if (pass->type == PassType::Render) {
-            const auto& renderPass = static_cast<const PassImpl<PassType::Render, Api>&>(*pass);
-            insertChanges(renderPass.bufferScope, collection, CommandUnitType::BufferTransformation);
-            insertChanges(renderPass.textureScope, collection, CommandUnitType::TextureTransformation);
-            auto& command = insertCommand<std::shared_ptr<IPassImpl>>
-                (collection, CommandUnitType::RenderPass);
-            command = std::move(pass);
-        }
+        if (pass->type == PassType::Render) generateRenderPassCommands(collection, std::move(pass));
         // implement compute
     }
 
     return std::move(collection);
+}
+
+template<typename Api>
+void CommandEncoderImpl<Api>::generateRenderPassCommands(CommandCollection &collection, std::shared_ptr<IPassImpl> pass) {
+    const auto& renderPass = static_cast<const PassImpl<PassType::Render, Api>&>(*pass);
+    insertChanges(renderPass.bufferScope, collection, CommandUnitType::BufferTransformation);
+    insertChanges(renderPass.textureScope, collection, CommandUnitType::TextureTransformation);
+    auto& command = insertCommand<std::shared_ptr<IPassImpl>>
+        (collection, CommandUnitType::RenderPass);
+    command = std::move(pass);
 }
 
 template<typename Api>

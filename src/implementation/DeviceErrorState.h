@@ -7,6 +7,7 @@
 #include <future>
 #include <map>
 #include <mutex>
+#include <optional>
 #include <unordered_map>
 #include <vector>
 

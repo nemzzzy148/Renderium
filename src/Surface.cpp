@@ -12,7 +12,6 @@ SurfaceCapabilities Surface::getCapabilities(const Device &device) const {
 
 void Surface::configure(const SurfaceConfiguration &configuration) const {
     if (!impl->configure(configuration)) {
-        std::putchar('a');
         impl->currentTextureState = {
             .size = {configuration.width, configuration.height, 1},
             .mipLevelCount = 1,
