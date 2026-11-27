@@ -1,4 +1,7 @@
-add_executable(sandbox main.cpp)
+add_executable(sandbox main.cpp
+        Engine.cpp
+        Engine.h
+        Shader.h)
 
 target_link_libraries(sandbox PRIVATE Renderium)
 

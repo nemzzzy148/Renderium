@@ -46,6 +46,8 @@ public:
 
     [[nodiscard]] WindowBackend getBackend() const { return backend; }
     [[nodiscard]] void* getNativeWindowHandle() const { return impl->getNativeWindowHandle(); }
+
+    Window(Window&& other) noexcept : backend(other.backend), impl(std::move(other.impl)) {}
 private:
     const WindowBackend backend;
 

@@ -64,6 +64,9 @@ public:
     [[nodiscard]] RenderPipeline createRenderPipeline(const RenderPipelineDescriptor& descriptor) const;
 
     [[nodiscard]] CommandEncoder createCommandEncoder() const;
+
+    Device(Device&& other) noexcept : features(other.features), limits(other.limits),
+        adapterInfo(other.adapterInfo), impl(std::move(other.impl)), queueImpl(std::move(other.queueImpl)) {}
 private:
     struct Impl {
         virtual ~Impl() = default;

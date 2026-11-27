@@ -35,6 +35,8 @@ public:
 
     using AdapterResult = Result<Adapter, RequestError>;
     [[nodiscard]] AdapterResult requestAdapter(const RequestAdapterOptions& options) const;
+
+    Instance(Instance&& other) noexcept : impl(std::move(other.impl)), backend(other.backend) {}
 private:
     struct Impl {
         virtual ~Impl() = default;

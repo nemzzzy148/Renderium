@@ -63,6 +63,8 @@ public:
     [[nodiscard]] SurfaceTexture getCurrentTexture() const;
 
     void present() const;
+
+    Surface(Surface&& other) noexcept : impl(std::move(other.impl)) {}
 private:
     struct Impl {
         virtual ~Impl() = default;
