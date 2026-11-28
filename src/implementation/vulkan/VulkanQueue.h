@@ -15,6 +15,8 @@ class VulkanQueue {
 public:
     using QueueResult = renderium::Result<VulkanQueue, VulkanError>;
     static QueueResult create(const VulkanDevice& device);
+
+    [[nodiscard]] const vk::raii::Queue& getQueue() const  { return queue; }
 private:
     explicit VulkanQueue(vk::raii::Queue queue);
     vk::raii::Queue queue = nullptr;

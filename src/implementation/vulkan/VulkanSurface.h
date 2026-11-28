@@ -25,10 +25,17 @@ struct VulkanApi;
 }
 
 namespace rhi::vulkan {
+class VulkanQueue;
 class VulkanTexture;
 class VulkanDevice;
 enum class VulkanError;
 class VulkanInstance;
+
+struct SwapchainContext {
+    vk::Image image = nullptr;
+    std::shared_ptr<vk::raii::Semaphore> presentCompleteSemaphore = nullptr;
+    std::shared_ptr<vk::raii::Semaphore> renderFinishedSemaphore = nullptr;
+};
 
 class VulkanSurface {
 public:
@@ -40,10 +47,15 @@ public:
     using TextureResult = renderium::Result<VulkanTexture, VulkanError>;
     [[nodiscard]] TextureResult getCurrentTexture() const;
 private:
+    [[nodiscard]] std::shared_ptr<vk::raii::Semaphore> createSemaphore() const; // return nullptr == fail
     std::optional<VulkanError> destroySwapChain();
     std::optional<VulkanError> createSwapChain(const SurfaceImplConfiguration<VulkanApi>& configuration);
 public:
     std::optional<VulkanError> configure(const SurfaceImplConfiguration<VulkanApi>& configuration);
+
+    using ContextResult = renderium::Result<SwapchainContext, VulkanError>;
+    ContextResult begin();
+    std::optional<VulkanError> end(const VulkanQueue& queue);
 private:
     explicit VulkanSurface(vk::raii::SurfaceKHR surface) : surface(std::move(surface)) {}
 
@@ -51,9 +63,12 @@ private:
     vk::raii::SwapchainKHR swapChain = nullptr;
     std::vector<vk::Image> images;
 
-    vk::raii::Fence fence = nullptr;
-    std::vector<vk::raii::Semaphore> presentCompleteSemaphores;
-    std::vector<vk::raii::Semaphore> renderFinishedSemaphores;
+    uint32_t maxFramesInFlight = 3;
+    uint32_t frameIndex = 0;
+    uint32_t imageIndex = 0;
+    std::vector<vk::raii::Fence> fences;
+    std::vector<std::shared_ptr<vk::raii::Semaphore>> presentCompleteSemaphores;
+    std::vector<std::shared_ptr<vk::raii::Semaphore>> renderFinishedSemaphores;
 
     std::shared_ptr<const VulkanDevice> device;
 

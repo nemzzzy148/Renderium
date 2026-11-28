@@ -23,6 +23,7 @@ enum class VulkanError {
     WindowBackendFailedToCreateSurface,
     SwapChainCreationFailed,
     SwapChainOutOfDate,
+    SwapChainPresentationFailed,
     UnableToGetSwapChainImages,
     FailedToCreateSwapChainSemaphores,
     FailedToCreateSwapChainImageViews,
@@ -51,7 +52,10 @@ enum class VulkanError {
     ResetPoolInUse,
     TooEarlyToResetPool,
     CommandPoolNotEmpty,
-    NoRequiredExtensions
+    NoRequiredExtensions,
+    FailedToWaitForFence,
+    FailedToAcquireNextSwapChainImage,
+    FailedToResetFence,
 };
 }
 
